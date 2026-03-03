@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\MedicalRecord;
+use App\Models\Pet;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+
+class MedicalRecordController extends Controller
+{
+    public function create(Pet $pet)
+    {
+        // Authorize branch
+        if ($pet->branch_id !== Auth::user()->branch_id) {
+            abort(403);
+        }
+
+        return Inertia::render('MedicalRecords/Create', [
+            'pet' => $pet->load('owner')
+        ]);
+    }
+
+    public function store(Request $request, Pet $pet)
+    {
+        // Authorize branch
+        if ($pet->branch_id !== Auth::user()->branch_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'type' => 'required|in:consultation,follow-up,emergency,specialty',
+            'subjective' => 'required|string',
+            'objective' => 'required|string',
+            'assessment' => 'required|string',
+            'plan' => 'required|string',
+            'vital_signs.weight' => 'nullable|numeric',
+            'vital_signs.temp' => 'nullable|numeric',
+            'vital_signs.hr' => 'nullable|integer',
+            'vital_signs.rr' => 'nullable|integer',
+            'attachments.*' => 'nullable|file|max:10240', // 10MB limit
+        ]);
+
+        $medicalRecord = new MedicalRecord($validated);
+        $medicalRecord->pet_id = $pet->id;
+        $medicalRecord->user_id = Auth::id();
+        $medicalRecord->branch_id = Auth::user()->branch_id;
+        $medicalRecord->save();
+
+        // Handle Attachments
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('medical-records/' . $medicalRecord->id, 'public');
+                $medicalRecord->attachments()->create([
+                    'file_path' => $path,
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_type' => $file->getClientMimeType(),
+                    'file_size' => $file->getSize(),
+                ]);
+            }
+        }
+
+        // Update pet weight if provided
+        if (isset($validated['vital_signs']['weight'])) {
+            $pet->update(['weight' => $validated['vital_signs']['weight']]);
+        }
+
+        return redirect()->route('pets.show', $pet->id)
+            ->with('message', 'Registro médico guardado con éxito y ' . ($request->hasFile('attachments') ? count($request->file('attachments')) : 0) . ' archivos adjuntos.');
+    }
+
+    public function show(MedicalRecord $medicalRecord)
+    {
+        if ($medicalRecord->branch_id !== Auth::user()->branch_id) {
+            abort(403);
+        }
+
+        return Inertia::render('MedicalRecords/Show', [
+            'record' => $medicalRecord->load(['pet.owner', 'veterinarian', 'attachments'])
+        ]);
+    }
+}

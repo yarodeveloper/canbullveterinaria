@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --color-primary: #84329B;
+        --color-secondary: #C4D600;
+        --color-accent: #63666A;
+        
+        --background-light: #ffffff;
+        --text-light: #1f2937;
+        
+        --background-dark: #111827;
+        --text-dark: #f3f4f6;
+    }
+
+    .dark {
+        color-scheme: dark;
+    }
+
+    body {
+        @apply transition-colors duration-300;
+        background-color: var(--background-light);
+        color: var(--text-light);
+    }
+
+    .dark body {
+        background-color: var(--background-dark);
+        color: var(--text-dark);
+    }
+}
+
+@layer components {
+    .btn-primary {
+        background-color: var(--color-primary);
+        color: white;
+    }
+    
+    .text-brand-primary {
+        color: var(--color-primary);
+    }
+    
+    .bg-brand-primary {
+        background-color: var(--color-primary);
+    }
+}

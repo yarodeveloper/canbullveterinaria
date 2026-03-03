@@ -1,0 +1,917 @@
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, useForm, Link, usePage, router } from '@inertiajs/react';
+import React, { useState, useMemo, useEffect } from 'react';
+
+// Autocomplete UI Component
+const Autocomplete = ({ placeholder, icon, value, onChange, options, onSelect, displayKey, onKeyDown }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    return (
+        <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                {icon}
+            </div>
+            <input
+                type="text"
+                className="w-full bg-[#212A3E] border border-[#2A3347] rounded-2xl py-3.5 pl-12 pr-4 focus:ring-2 focus:ring-purple-500 text-gray-100 placeholder-[#7E8A9A] font-medium transition-colors"
+                placeholder={placeholder}
+                value={value}
+                onChange={(e) => { onChange(e.target.value); setIsOpen(true); }}
+                onKeyDown={onKeyDown}
+                onFocus={() => setIsOpen(true)}
+                onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+            />
+            {isOpen && options.length > 0 && (
+                <div className="absolute z-50 w-full mt-2 bg-[#212A3E] border border-[#2A3347] rounded-2xl shadow-2xl max-h-60 overflow-y-auto">
+                    {options.map((opt, i) => (
+                        <div key={i} className="px-4 py-3 hover:bg-[#2A3347] cursor-pointer text-gray-200 text-sm font-semibold border-b border-[#2A3347] last:border-0" onClick={() => onSelect(opt)}>
+                            {displayKey ? opt[displayKey] : (opt.name || 'Sin nombre')}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default function Create({ auth, clients, products, pets, selectedClientId, activeRegister, currentStats, generalPublicClient }) {
+    const { data, setData, post, processing, errors } = useForm({
+        user_id: selectedClientId || generalPublicClient?.id || '',
+        items: [],
+        payment_method: 'cash',
+        mixed_cash_amount: '',
+        notes: '',
+    });
+
+    const { flash } = usePage().props;
+
+    // Permission Check Helper
+    const hasPermission = (permission) => {
+        return auth.user?.role === 'admin' || auth.permissions?.includes(permission);
+    };
+
+    useEffect(() => {
+        if (flash && flash.print_movement_id) {
+            window.open(route('cash.print', flash.print_movement_id), '_blank', 'noopener,noreferrer');
+        }
+    }, [flash]);
+
+    // Form for Opening Register
+    const { data: openData, setData: setOpenData, post: postOpen, processing: processingOpen, errors: openErrors, reset: resetOpen } = useForm({
+        opening_amount: '',
+        notes: ''
+    });
+
+    const handleOpenSubmit = (e) => {
+        e.preventDefault();
+        postOpen(route('cash-register.open'), {
+            onSuccess: () => resetOpen(),
+        });
+    };
+
+    // Form for Withdrawal
+    const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+    const { data: withdrawalData, setData: setWithdrawalData, post: postWithdrawal, processing: processingWithdrawal, reset: resetWithdrawal } = useForm({
+        amount: '',
+        description: '',
+        type: 'out',
+        method: 'cash'
+    });
+
+    const handleWithdrawalSubmit = (e) => {
+        e.preventDefault();
+        postWithdrawal(route('cash.store'), {
+            onSuccess: () => {
+                setShowWithdrawalModal(false);
+                resetWithdrawal();
+                router.reload({ only: ['currentStats'] });
+            }
+        });
+    };
+
+    // Form for Closing
+    const [showCloseModal, setShowCloseModal] = useState(false);
+    const { data: closeData, setData: setCloseData, post: postClose, processing: processingClose, errors: closeErrors, reset: resetClose } = useForm({
+        closing_amount: '',
+        notes: ''
+    });
+
+    const handleCloseSubmit = (e) => {
+        e.preventDefault();
+        if (activeRegister) {
+            postClose(route('cash-register.close', activeRegister.id), {
+                onSuccess: () => {
+                    setShowCloseModal(false);
+                    resetClose();
+                }
+            });
+        }
+    };
+
+    // Local states
+    const [showInventoryModal, setShowInventoryModal] = useState(false);
+    const [inventorySearch, setInventorySearch] = useState('');
+    const [clientSearch, setClientSearch] = useState('');
+    const [petSearch, setPetSearch] = useState('');
+    const [productSearch, setProductSearch] = useState('');
+    const [selectedPet, setSelectedPet] = useState(null);
+    const [selectedClient, setSelectedClient] = useState(
+        clients.find(c => c.id === selectedClientId) || generalPublicClient || null
+    );
+    const [receivedAmount, setReceivedAmount] = useState('');
+
+    // Filter helpers
+    const filteredClients = useMemo(() => {
+        if (!clientSearch) return [];
+        return clients.filter(c => c.name.toLowerCase().includes(clientSearch.toLowerCase())).slice(0, 5);
+    }, [clientSearch, clients]);
+
+    const filteredPets = useMemo(() => {
+        if (!petSearch) return [];
+        return pets?.filter(p => p.name.toLowerCase().includes(petSearch.toLowerCase())).slice(0, 5) || [];
+    }, [petSearch, pets]);
+
+    const filteredProducts = useMemo(() => {
+        if (!productSearch) return [];
+        const search = productSearch.toLowerCase();
+        return products.filter(p =>
+            p.name.toLowerCase().includes(search) ||
+            (p.barcode && p.barcode.toLowerCase().includes(search)) ||
+            (p.sku && p.sku.toLowerCase().includes(search))
+        ).slice(0, 8);
+    }, [productSearch, products]);
+
+    const filteredInventory = useMemo(() => {
+        if (!inventorySearch) return [];
+        const search = inventorySearch.toLowerCase();
+        return products.filter(p =>
+            p.name.toLowerCase().includes(search) ||
+            (p.barcode && p.barcode.toLowerCase().includes(search)) ||
+            (p.sku && p.sku.toLowerCase().includes(search))
+        ).slice(0, 10);
+    }, [inventorySearch, products]);
+
+    const loadClientFromPet = (pet) => {
+        setSelectedPet(pet);
+        setPetSearch('');
+        // Prefer explicit owner, or first owner in owners relation
+        let owner = null;
+        if (pet.owners && pet.owners.length > 0) {
+            owner = pet.owners[0]; // takes the first owner (could improve by letting them select if multiple)
+        } else if (pet.owner) {
+            owner = pet.owner;
+        } else if (pet.user_id) {
+            owner = clients.find(c => c.id === pet.user_id);
+        }
+
+        if (owner) {
+            setSelectedClient(owner);
+            setData('user_id', owner.id);
+            setClientSearch('');
+        }
+    };
+
+    const handleClientSelect = (client) => {
+        setSelectedClient(client);
+        setData('user_id', client.id);
+        setClientSearch('');
+    };
+
+    const handleQuickSale = () => {
+        if (generalPublicClient) {
+            handleClientSelect(generalPublicClient);
+        }
+    };
+
+    const handleProductSelect = (product) => {
+        setData('items', [
+            ...data.items,
+            {
+                product_id: product.id,
+                concept: product.name,
+                unit_price: product.price,
+                quantity: 1,
+                // Assumes "Servicio" if type isn't specified, or you can deduce based on your DB schema if available. We will default to product for items.
+                type: product.type === 'service' ? 'service' : 'product',
+            }
+        ]);
+        setProductSearch('');
+    };
+
+    const handleProductKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            // Buscar si escribieron un código de barras exacto
+            const exactMatch = products.find(p => p.barcode === productSearch || p.sku === productSearch);
+            if (exactMatch) {
+                handleProductSelect(exactMatch);
+            } else if (filteredProducts.length === 1) {
+                // Si solo hay un resultado filtrado al presionar Enter, añadirlo
+                handleProductSelect(filteredProducts[0]);
+            }
+        }
+    };
+
+    const updateQuantity = (index, delta) => {
+        const newItems = [...data.items];
+        if (newItems[index].quantity + delta > 0) {
+            newItems[index].quantity += delta;
+            setData('items', newItems);
+        }
+    };
+
+    const removeItem = (index) => {
+        setData('items', data.items.filter((_, i) => i !== index));
+    };
+
+    const emptyCart = () => {
+        setData('items', []);
+    };
+
+    // Calculate totals matching previous logic
+    const subtotal = data.items.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0);
+    const tax = data.items.reduce((acc, item) => {
+        if (item.type === 'product') {
+            return acc + (item.quantity * item.unit_price * 0.16);
+        }
+        return acc;
+    }, 0);
+    const total = subtotal + tax;
+
+    const submit = (e) => {
+        e.preventDefault();
+        post(route('receipts.store'));
+    };
+
+    return (
+        <AuthenticatedLayout user={auth.user}>
+            <Head title="Punto de Venta" />
+
+            {!activeRegister ? (
+                <div className="min-h-[calc(100vh-65px)] bg-[#111623] flex items-center justify-center p-6 print:hidden">
+                    <div className="bg-[#1A2131] rounded-[2.5rem] border border-[#2A3347] shadow-2xl p-10 max-w-xl w-full text-center">
+                        <div className="w-24 h-24 bg-[#2D235C] rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-[0_0_40px_-5px_#A78BFA]">
+                            🔒
+                        </div >
+                        <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">POS Bloqueado</h2>
+
+                        {hasPermission('manage cash register') ? (
+                            <>
+                                <p className="text-[#7E8A9A] font-bold mb-8 text-sm">Debes abrir el turno de caja e ingresar tu fondo inicial de monedas para empezar a operar y cobrar.</p>
+                                <form onSubmit={handleOpenSubmit} className="space-y-6 text-left">
+                                    <div>
+                                        <label className="text-[10px] font-black text-[#7E8A9A] uppercase tracking-widest ml-1 block mb-2">Fondo Inicial en Monedas ($)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={openData.opening_amount}
+                                                onChange={e => setOpenData('opening_amount', e.target.value)}
+                                                placeholder="Ej. 500"
+                                                className="w-full bg-[#111623] border border-[#2A3347] rounded-2xl py-4 pl-12 pr-6 focus:ring-2 focus:ring-purple-500 font-black text-white text-lg transition-colors"
+                                                required
+                                            />
+                                        </div>
+                                        {openErrors && openErrors.opening_amount && <span className="text-red-500 text-xs font-bold mt-1 block px-2">{openErrors.opening_amount}</span>}
+                                        {openErrors && openErrors.error && <span className="text-red-500 text-xs font-bold mt-1 block px-2">{openErrors.error}</span>}
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={processingOpen}
+                                        className="w-full bg-gradient-to-r from-[#AF5FFF] via-[#9146FF] to-[#6E2BFF] text-white py-5 rounded-2xl font-black uppercase tracking-[0.15em] shadow-[0_0_30px_-5px_#9146FF] hover:shadow-[0_0_50px_-5px_#9146FF] transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50"
+                                    >
+                                        {processingOpen ? 'Abriendo Turno...' : 'Abrir Turno Ahora'}
+                                    </button>
+                                </form>
+                            </>
+                        ) : (
+                            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl mt-4">
+                                <p className="text-red-400 text-sm font-bold uppercase tracking-widest">El turno actual está cerrado.</p>
+                                <p className="text-gray-400 text-xs mt-2">Solicita a tu Administrador o Gerente que realice la apertura de caja para poder operar.</p>
+                            </div>
+                        )}
+                    </div >
+                </div >
+            ) : (
+                <div id="pos-container" className="min-h-screen bg-[#111623] pt-6 pb-20 px-6 font-sans text-slate-200 selection:bg-purple-500/30 print:hidden">
+                    <div className="max-w-[1400px] mx-auto space-y-6">
+
+                        {/* Top Top Action Bar (El HUB) */}
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#1A2131] border border-[#2A3347] rounded-[2rem] p-4 shadow-xl">
+                            <div className="flex items-center gap-4 px-4 w-full md:w-auto">
+                                <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-xl shadow-lg shadow-emerald-500/10 shrink-0">
+                                    🔓
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none">Turno Activo</p>
+                                    <p className="text-xs font-bold text-gray-400 mt-1">Saldo en Caja: <span className="text-white">${currentStats ? parseFloat(currentStats.expected_amount).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '0.00'}</span></p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
+                                <button
+                                    onClick={() => setShowInventoryModal(true)}
+                                    className="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition flex items-center gap-2 shrink-0 border border-blue-500/20"
+                                >
+                                    📦 Consulta Almacén
+                                </button>
+                                {hasPermission('manage withdrawals') && (
+                                    <button
+                                        onClick={() => setShowWithdrawalModal(true)}
+                                        className="bg-[#2A3347] hover:bg-[#34405A] text-[#A78BFA] px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition flex items-center gap-2 shrink-0 border border-[#A78BFA]/20"
+                                    >
+                                        💸 Retiro de Caja
+                                    </button>
+                                )}
+                                {hasPermission('manage cash register') && (
+                                    <button
+                                        onClick={() => setShowCloseModal(true)}
+                                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition flex items-center gap-2 shrink-0 border border-red-500/20"
+                                    >
+                                        🔐 Corte Z (Cerrar)
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Top Search Bars */}
+                        <div className="flex flex-col md:flex-row gap-4 lg:gap-6">
+                            <div className="flex-1">
+                                <Autocomplete
+                                    placeholder="Buscar Cliente..."
+                                    icon={
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                    }
+                                    value={clientSearch}
+                                    onChange={setClientSearch}
+                                    options={filteredClients}
+                                    onSelect={handleClientSelect}
+                                />
+                            </div>
+                            <Autocomplete
+                                placeholder="Buscar Mascota..."
+                                icon={
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>
+                                }
+                                value={petSearch}
+                                onChange={setPetSearch}
+                                options={filteredPets}
+                                onSelect={loadClientFromPet}
+                                displayKey="name"
+                            />
+                        </div>
+
+                        {/* Product Search Bar */}
+                        <div className="w-full relative">
+                            <Autocomplete
+                                placeholder="Buscar Producto por nombre o escanea código de barras..."
+                                icon={
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+                                }
+                                value={productSearch}
+                                onChange={setProductSearch}
+                                options={filteredProducts}
+                                onSelect={handleProductSelect}
+                                onKeyDown={handleProductKeyDown}
+                            />
+                        </div>
+
+                        <div className="flex flex-col xl:flex-row gap-6">
+
+                            {/* Left Panel: Receipt Concepts */}
+                            <div className="flex-1 bg-[#1A2131] rounded-[2rem] border border-[#2A3347] flex flex-col relative overflow-hidden min-h-[500px] shadow-2xl">
+                                <div className="p-6 md:p-8 flex justify-between items-center border-b border-[#2A3347]/50">
+                                    <h3 className="text-sm font-black text-gray-300 uppercase tracking-widest">Conceptos del Recibo</h3>
+                                    <div className="bg-[#2D235C] text-[#A78BFA] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                                        {data.items.length} {data.items.length === 1 ? 'Ítem Seleccionado' : 'Ítems Seleccionados'}
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 overflow-x-auto p-6 md:p-8">
+                                    {data.items.length > 0 ? (
+                                        <table className="w-full text-left bg-transparent border-spacing-y-4 border-separate">
+                                            <thead>
+                                                <tr className="text-[10px] font-black text-[#7E8A9A] uppercase tracking-widest">
+                                                    <th className="pb-4">Producto o Servicio</th>
+                                                    <th className="pb-4">Tipo</th>
+                                                    <th className="pb-4 text-center">Cant.</th>
+                                                    <th className="pb-4">P. Unit</th>
+                                                    <th className="pb-4">Total</th>
+                                                    <th className="pb-4"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {data.items.map((item, idx) => (
+                                                    <tr key={idx} className="group">
+                                                        <td className="py-4 border-t border-[#2A3347]/40 w-[35%]">
+                                                            <p className="font-bold text-gray-100">{item.concept}</p>
+                                                            <p className="text-xs text-[#7E8A9A] mt-0.5">{item.type === 'product' ? 'Nutrición/Producto' : 'Servicio Profesional'}</p>
+                                                        </td>
+                                                        <td className="py-4 border-t border-[#2A3347]/40">
+                                                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${item.type === 'product' ? 'bg-[#2D235C] text-[#A78BFA]' : 'bg-[#1E3A5F] text-[#60A5FA]'}`}>
+                                                                {item.type}
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-4 border-t border-[#2A3347]/40 w-[15%]">
+                                                            <div className="flex items-center justify-center gap-3">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => updateQuantity(idx, -1)}
+                                                                    className="w-7 h-7 flex items-center justify-center bg-[#2A3347] rounded hover:bg-[#34405A] transition text-gray-300 font-black"
+                                                                >-</button>
+                                                                <span className="font-bold text-white w-4 text-center">{item.quantity}</span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => updateQuantity(idx, 1)}
+                                                                    className="w-7 h-7 flex items-center justify-center bg-[#2A3347] rounded hover:bg-[#34405A] transition text-gray-300 font-black"
+                                                                >+</button>
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-4 border-t border-[#2A3347]/40 font-bold text-gray-300">
+                                                            ${parseFloat(item.unit_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                        </td>
+                                                        <td className="py-4 border-t border-[#2A3347]/40 text-lg font-black text-white">
+                                                            ${((item.quantity * item.unit_price) + (item.type === 'product' ? item.quantity * item.unit_price * 0.16 : 0)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                        </td>
+                                                        <td className="py-4 border-t border-[#2A3347]/40 text-right">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeItem(idx)}
+                                                                className="text-[#7E8A9A] hover:text-red-400 transition"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    ) : (
+                                        <div className="h-full flex flex-col items-center justify-center opacity-30 mt-10">
+                                            <svg className="w-20 h-20 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                            <p className="text-xl font-bold uppercase tracking-widest">El carrito está vacío</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Bottom Fixed Area Left Panel */}
+                                <div className="p-6 md:p-8 border-t border-[#2A3347] flex justify-between items-end mt-auto">
+                                    <div className="flex gap-12">
+                                        <div>
+                                            <p className="text-[10px] font-black text-[#7E8A9A] uppercase tracking-widest mb-1">Subtotal</p>
+                                            <p className="text-2xl font-black text-white">${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-[#7E8A9A] uppercase tracking-widest mb-1">Impuestos</p>
+                                            <p className="text-2xl font-black text-white">${tax.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={emptyCart}
+                                        type="button"
+                                        className="flex items-center gap-2 text-xs font-black text-[#7E8A9A] uppercase tracking-widest hover:text-white transition"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                        Vaciar Carrito
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Right Panel: Checkout Summary */}
+                            <div className="w-full xl:w-[420px] flex col flex-col gap-6">
+                                <div className="bg-[#1A2131] rounded-[2rem] border border-[#2A3347] p-8 shadow-2xl flex-1 flex flex-col">
+                                    <h3 className="text-sm font-black text-gray-300 uppercase tracking-widest mb-6">Resumen de Venta</h3>
+
+                                    {/* User Card */}
+                                    <div className="bg-[#242A45] rounded-2xl p-4 border border-[#343C5C] flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-[#3A3266] flex items-center justify-center text-[#A78BFA]">
+                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-white leading-tight">{selectedClient ? selectedClient.name : 'Seleccione Cliente'}</p>
+                                                {selectedPet && (
+                                                    <p className="text-[10px] font-semibold text-[#7E8A9A] mt-1 flex items-center gap-1.5">
+                                                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.686 2 6 4.686 6 8c0 1.25.385 2.41 1.042 3.37l.006.009L12 22l4.952-10.621.006-.009A5.968 5.968 0 0018 8c0-3.314-2.686-6-6-6zM8 8a4 4 0 118 0 4 4 0 01-8 0z" /></svg>
+                                                        {selectedPet.name} {selectedPet.breed ? `(${selectedPet.breed})` : ''}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleQuickSale}
+                                            title="Regresar a Venta Rápida (Público General)"
+                                            className="h-8 px-3 rounded-lg bg-[#2D235C] hover:bg-[#3A3266] flex items-center justify-center text-[#A78BFA] transition border border-[#A78BFA]/20 text-[10px] font-bold uppercase tracking-widest gap-1"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                            Rápida
+                                        </button>
+                                    </div>
+
+                                    {/* Form Fields */}
+                                    <div className="space-y-5 mb-auto">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-[#7E8A9A] uppercase tracking-widest ml-1 block">Método de Pago</label>
+                                            <div className="relative">
+                                                <select
+                                                    value={data.payment_method}
+                                                    onChange={e => setData('payment_method', e.target.value)}
+                                                    className="w-full bg-[#111623] border border-[#2A3347] rounded-xl py-3.5 px-4 focus:ring-2 focus:ring-purple-500 font-bold text-white appearance-none transition-colors"
+                                                >
+                                                    <option value="cash">Efectivo</option>
+                                                    <option value="card">Tarjeta Crédito/Débito</option>
+                                                    <option value="transfer">Transferencia</option>
+                                                    <option value="mixed">Mixto (Efectivo y Tarjeta)</option>
+                                                    <option value="credit">Fiado / Crédito</option>
+                                                </select>
+                                                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {data.payment_method === 'cash' && (
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black text-[#7E8A9A] uppercase tracking-widest ml-1 block">Importe Recibido</label>
+                                                <div className="relative">
+                                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 font-bold">$</div>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={receivedAmount}
+                                                        onChange={e => setReceivedAmount(e.target.value)}
+                                                        className="w-full bg-[#111623] border border-[#2A3347] rounded-xl py-3.5 pl-8 pr-4 focus:ring-2 focus:ring-purple-500 font-bold text-white transition-colors"
+                                                        placeholder="0.00"
+                                                    />
+                                                </div>
+                                                {receivedAmount !== '' && Number(receivedAmount) >= total && (
+                                                    <div className="mt-2 p-3 bg-[#2D235C]/30 border border-[#2D235C] rounded-xl flex justify-between items-center">
+                                                        <span className="text-[10px] font-bold text-[#A78BFA] uppercase tracking-widest block">Cambio a devolver:</span>
+                                                        <span className="text-xl font-black text-[#A78BFA]">${(Number(receivedAmount) - total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {data.payment_method === 'mixed' && (
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black text-[#7E8A9A] uppercase tracking-widest ml-1 block">¿Cuánto es en Efectivo?</label>
+                                                <div className="relative">
+                                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 font-bold">$</div>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={data.mixed_cash_amount}
+                                                        onChange={e => setData('mixed_cash_amount', e.target.value)}
+                                                        className="w-full bg-[#111623] border border-[#2A3347] rounded-xl py-3.5 pl-8 pr-4 focus:ring-2 focus:ring-purple-500 font-bold text-white transition-colors"
+                                                        placeholder="0.00"
+                                                    />
+                                                </div>
+                                                {data.mixed_cash_amount !== '' && (
+                                                    <div className="mt-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex justify-between items-center">
+                                                        <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest block">Restante con Tarjeta:</span>
+                                                        <span className="text-xl font-black text-blue-400">${Math.max(0, total - Number(data.mixed_cash_amount)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {data.payment_method === 'credit' && selectedClient?.id === generalPublicClient?.id && (
+                                            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-center">
+                                                <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest">No puedes fiar a Público en General. Selecciona o añade un cliente particular.</p>
+                                            </div>
+                                        )}
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-[#7E8A9A] uppercase tracking-widest ml-1 block">Notas de la Venta</label>
+                                            <textarea
+                                                value={data.notes}
+                                                onChange={e => setData('notes', e.target.value)}
+                                                className="w-full bg-[#111623] border border-[#2A3347] rounded-xl py-3.5 px-4 focus:ring-2 focus:ring-purple-500 font-medium text-white placeholder-[#4A5568] transition-colors"
+                                                rows="3"
+                                                placeholder="Añadir observaciones aquí..."
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Total and Submit */}
+                                    <div className="mt-8">
+                                        <div className={`rounded-t-3xl rounded-b-xl p-8 text-white relative overflow-hidden shadow-2xl transition-all duration-300 ${data.payment_method === 'mixed' ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 shadow-[0_0_40px_-5px_rgba(59,130,246,0.3)]' :
+                                            data.payment_method === 'credit' ? 'bg-gradient-to-r from-orange-600 via-orange-500 to-red-500 shadow-[0_0_40px_-5px_rgba(249,115,22,0.3)]' :
+                                                'bg-gradient-to-r from-[#AF5FFF] via-[#9146FF] to-[#6E2BFF] shadow-[0_0_40px_-5px_rgba(145,70,255,0.4)]'
+                                            }`}>
+                                            <div className="absolute top-0 right-0 -mt-10 -mr-10 opacity-20 transform rotate-12 bg-white/10 p-10 rounded-full blur-2xl"></div>
+                                            <p className="text-[11px] font-black uppercase tracking-[0.2em] mb-2 text-white/80">Total a Cobrar</p>
+                                            <div className="flex gap-4 items-end justify-between">
+                                                <h3 className="text-5xl font-black tracking-tighter">${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</h3>
+
+                                                {data.payment_method === 'mixed' ? (
+                                                    <svg className="w-16 h-16 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>
+                                                ) : data.payment_method === 'credit' ? (
+                                                    <svg className="w-16 h-16 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                ) : (
+                                                    <svg className="w-16 h-16 text-white/30" fill="currentColor" viewBox="0 0 24 24"><path d="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-9-1c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-6v11c0 1.1-.9 2-2 2H4v-2h17V7h2z" /></svg>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={submit}
+                                            disabled={processing || data.items.length === 0 || !data.user_id || (data.payment_method === 'credit' && selectedClient?.id === generalPublicClient?.id) || (data.payment_method === 'mixed' && !data.mixed_cash_amount)}
+                                            className="w-full mt-4 bg-white text-gray-900 py-[1.125rem] rounded-2xl text-[13px] font-black uppercase tracking-[0.15em] hover:bg-gray-100 transition shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                                        >
+                                            {processing ? 'Procesando...' : 'Finalizar y Cobrar'}
+                                            {!processing && <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Auxiliary buttons */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => window.print()}
+                                        disabled={data.items.length === 0}
+                                        className="bg-transparent border border-[#2A3347] hover:bg-[#1A2131] hover:border-[#3A4357] text-[#A78BFA] font-black text-xs uppercase tracking-widest py-4 rounded-2xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                        Presupuesto
+                                    </button>
+                                    <Link href={route('receipts.index')} className="bg-transparent border border-[#2A3347] hover:bg-[#1A2131] hover:border-red-500/50 hover:text-red-400 text-[#7E8A9A] font-black text-xs uppercase tracking-widest py-4 rounded-2xl transition flex items-center justify-center gap-2">
+                                        <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+                                        Anular
+                                    </Link>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            )}
+
+            {/* Modals para HUB Central */}
+            {showWithdrawalModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0F19]/80 backdrop-blur-sm print:hidden">
+                    <div className="bg-[#1A2131] rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-[#2A3347]">
+                        <div className="p-6 border-b border-[#2A3347] flex justify-between items-center bg-[#111623]/50">
+                            <h3 className="text-lg font-black uppercase tracking-tighter text-white">Retesar Efectivo</h3>
+                            <button onClick={() => setShowWithdrawalModal(false)} className="text-2xl text-gray-400 hover:text-red-500 transition">×</button>
+                        </div>
+                        <form onSubmit={handleWithdrawalSubmit} className="p-6 space-y-6">
+                            <p className="text-[11px] font-bold text-[#7E8A9A]">Registra aquí salidas por pagos a proveedores u otros egresos extra. Al confirmar se imprimirá tu comprobante automáticamente y se descontará del saldo.</p>
+
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-[#A78BFA] uppercase tracking-widest ml-1">Monto a Retirar ($)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        value={withdrawalData.amount}
+                                        onChange={e => setWithdrawalData('amount', e.target.value)}
+                                        className="w-full bg-[#111623] border border-[#2A3347] rounded-2xl py-3 px-4 focus:ring-2 focus:ring-[#A78BFA] font-black text-xl text-center text-white"
+                                        placeholder="0.00"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-[#7E8A9A] uppercase tracking-widest ml-1">Motivo (Obligatorio)</label>
+                                    <textarea
+                                        value={withdrawalData.description}
+                                        onChange={e => setWithdrawalData('description', e.target.value)}
+                                        className="w-full bg-[#111623] border border-[#2A3347] rounded-2xl py-3 px-4 focus:ring-2 focus:ring-[#A78BFA] font-medium text-white"
+                                        rows="3"
+                                        placeholder="Ej. Pago comprobante #45..."
+                                        required
+                                    ></textarea>
+                                </div>
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={processingWithdrawal}
+                                className="w-full bg-[#2D235C] hover:bg-[#3A3266] text-[#A78BFA] border border-[#A78BFA]/30 py-4 rounded-2xl font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+                            >
+                                {processingWithdrawal ? 'Registrando...' : 'Confirmar Retiro o Gasto'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )
+            }
+
+            {
+                showCloseModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0F19]/80 backdrop-blur-sm print:hidden">
+                        <div className="bg-[#1A2131] rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-red-500/30">
+                            <div className="p-6 border-b border-[#2A3347] flex justify-between items-center bg-red-500/10">
+                                <h3 className="text-lg font-black uppercase tracking-tighter text-white">Corte Z / Cierre de Turno</h3>
+                                <button onClick={() => setShowCloseModal(false)} className="text-2xl text-gray-400 hover:text-red-500 transition">×</button>
+                            </div>
+                            <form onSubmit={handleCloseSubmit} className="p-6 space-y-6">
+                                <div className="bg-[#111623] rounded-2xl p-4 border border-[#2A3347] text-center mb-6 text-xl">
+                                    <p className="text-[10px] font-black text-[#7E8A9A] uppercase tracking-widest mb-1">El sistema espera que haya en caja:</p>
+                                    <p className="font-black text-white">${currentStats ? parseFloat(currentStats.expected_amount).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '0.00'}</p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-red-400 uppercase tracking-widest ml-1">¿Cuánto dinero físico contaste en total? ($)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={closeData.closing_amount}
+                                            onChange={e => setCloseData('closing_amount', e.target.value)}
+                                            className="w-full bg-[#111623] border border-[#2A3347] rounded-2xl py-4 px-4 focus:ring-2 focus:ring-red-500 font-black text-2xl text-center text-white"
+                                            placeholder="0.00"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={processingClose}
+                                    className="w-full bg-red-600 hover:bg-red-500 text-white shadow-[0_0_30px_-5px_rgba(220,38,38,0.5)] py-4 rounded-2xl font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    {processingClose ? 'Cerrando Turno...' : 'Realizar Corte Final y Salir'}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Contenedor de impresión oculto en pantalla */}
+            < div id="print-quote" className="hidden print:block print:bg-white print:text-black p-4 font-sans max-w-4xl mx-auto text-sm" >
+                <div className="mb-4 border-b pb-2 flex justify-between items-end">
+                    <div>
+                        <h1 className="text-2xl font-black text-gray-900 tracking-tighter mb-0 italic leading-none">CANBULL</h1>
+                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">Sistema Veterinario</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="font-black text-gray-600 text-sm uppercase tracking-widest leading-none mb-1">PRESUPUESTO ESTIMADO</p>
+                        <p className="font-bold text-gray-500 text-xs">{new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                    </div>
+                </div>
+
+                <div className="mb-4 flex justify-between items-center text-xs">
+                    <div>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Cotización a nombre de:</p>
+                        <h3 className="text-base font-black text-gray-900 uppercase leading-none">{selectedClient ? selectedClient.name : 'Público en General'}</h3>
+                        {selectedPet && <p className="font-bold text-gray-500 mt-0.5 uppercase tracking-widest text-[10px]">Paciente: <span className="text-gray-900">{selectedPet.name}</span></p>}
+                    </div>
+                </div>
+
+                <table className="w-full text-left mb-6 text-xs">
+                    <thead>
+                        <tr className="text-[9px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-300">
+                            <th className="py-1.5 px-1 w-1/2">Concepto</th>
+                            <th className="py-1.5 px-1 text-center">Cant.</th>
+                            <th className="py-1.5 px-1 text-right">P. Unitario</th>
+                            <th className="py-1.5 px-1 text-right">Importe</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                        {data.items.map((item, idx) => (
+                            <tr key={idx}>
+                                <td className="py-1.5 px-1">
+                                    <p className="font-bold text-gray-900 uppercase leading-tight">{item.concept}</p>
+                                    <p className="text-[8px] text-gray-500 uppercase tracking-wider">{item.type === 'service' ? 'Servicio' : 'Producto'}</p>
+                                </td>
+                                <td className="py-1.5 px-1 text-center font-bold text-gray-700">{item.quantity}</td>
+                                <td className="py-1.5 px-1 text-right font-bold text-gray-700">${parseFloat(item.unit_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                                <td className="py-1.5 px-1 text-right font-black text-gray-900">${(parseFloat(item.quantity) * parseFloat(item.unit_price)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                <div className="flex justify-end pt-2">
+                    <div className="w-48 space-y-1.5">
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="font-bold text-gray-500 uppercase tracking-widest text-[9px]">Subtotal</span>
+                            <span className="font-black text-gray-900">${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="font-bold text-gray-500 uppercase tracking-widest text-[9px]">Impuestos</span>
+                            <span className="font-black text-gray-900">${tax.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-1 border-t-2 border-gray-900 mt-1">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-900">Total</span>
+                            <span className="text-base font-black text-gray-900">${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-4 border-t border-gray-200 text-center">
+                    <p className="text-gray-500 text-[8px] font-bold uppercase tracking-[0.1em] mb-1">Este documento NO tiene validez fiscal ni representa comprobante de pago.</p>
+                    <p className="text-gray-400 text-[8px] italic">Precios sujetos a cambios sin previo aviso.</p>
+                </div>
+            </div >
+
+            {/* Global overrides internal for aesthetics matching image exactly */}
+            < style dangerouslySetInnerHTML={{
+                __html: `
+                body { background-color: #111623 !important; }
+                input::placeholder { font-weight: 500; }
+                ::-webkit-scrollbar { width: 8px; height: 8px; }
+                ::-webkit-scrollbar-track { background: #111623; }
+                ::-webkit-scrollbar-thumb { background: #2A3347; border-radius: 4px; }
+                ::-webkit-scrollbar-thumb:hover { background: #34405A; }
+                @media print {
+                    body { background-color: white !important; }
+                    /* Ocultar barra de navegacion de Inertia */
+                    nav { display: none !important; }
+                    header { display: none !important; }
+                    @page { margin: 1cm; }
+                }
+            `}} />
+
+            {/* Inventory Inquiry Modal */}
+            {showInventoryModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-md">
+                    <div className="bg-[#1A2131] rounded-[2.5rem] shadow-2xl w-full max-w-2xl border border-[#2A3347] overflow-hidden">
+                        <div className="p-8 border-b border-[#2A3347] flex justify-between items-center bg-[#151B2B]">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20">
+                                    📦
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-white uppercase tracking-tight">Consulta de Almacén</h3>
+                                    <p className="text-gray-400 text-xs font-bold leading-none mt-1">Busca y verifica existencias y precios al instante</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowInventoryModal(false)} className="text-2xl text-gray-500 hover:text-white transition-colors">×</button>
+                        </div>
+                        <div className="p-8">
+                            <div className="relative mb-6">
+                                <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 text-xl">
+                                    🔍
+                                </span>
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    className="w-full bg-[#111623] border border-[#2A3347] rounded-2xl py-4 pl-12 pr-6 focus:ring-2 focus:ring-blue-500 text-white font-bold transition-colors shadow-inner"
+                                    placeholder="Buscar por Nombre, Código de Barras o SKU..."
+                                    value={inventorySearch}
+                                    onChange={e => setInventorySearch(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="max-h-80 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-[#2A3347] scrollbar-track-transparent">
+                                {filteredInventory.length > 0 ? (
+                                    filteredInventory.map((item, index) => (
+                                        <div key={index} className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#212A3E] border border-[#2A3347] p-4 rounded-2xl hover:bg-[#252E43] transition">
+                                            <div className="flex items-center gap-4 mb-3 sm:mb-0">
+                                                <div className="w-12 h-12 bg-[#1A2131] rounded-xl flex items-center justify-center text-xl shrink-0">
+                                                    {item.category?.icon || '🛒'}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-black text-white text-base leading-tight uppercase tracking-tight">{item.name}</h4>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-[9px] font-bold text-gray-400 bg-[#111623] px-2 py-0.5 rounded-full border border-[#2A3347]">
+                                                            {item.category?.name || 'S/C'}
+                                                        </span>
+                                                        <span className="text-gray-500 text-[10px] font-bold uppercase">{item.sku || 'N/A'}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-6 items-end self-end sm:self-center bg-[#151B2B] px-4 py-2 rounded-xl border border-[#2A3347]">
+                                                <div className="text-center border-r border-[#2A3347] pr-6">
+                                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-0.5">Precio Unit.</p>
+                                                    <p className="text-sm font-black text-emerald-400">${parseFloat(item.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                                                </div>
+                                                <div className="text-center pl-2">
+                                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-0.5">En Stock</p>
+                                                    <p className={`text-xl font-black leading-none ${item.current_stock > (item.min_stock || 0) ? 'text-blue-400' : 'text-amber-500'}`}>
+                                                        {parseFloat(item.current_stock) || 0}
+                                                        <span className="text-[10px] text-gray-500 ml-1">{item.unit || 'pz'}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    inventorySearch.length > 0 ? (
+                                        <div className="text-center text-gray-500 font-bold uppercase text-xs py-10 bg-[#111623] rounded-2xl border border-dashed border-[#2A3347]">
+                                            No se encontraron productos en el almacén
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-gray-600 font-bold uppercase text-[10px] tracking-widest py-14 flex flex-col items-center gap-2">
+                                            <span className="text-3xl opacity-50 mb-2">⌨️</span>
+                                            Escribe un nombre o escanea un código para consultar existencias
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </AuthenticatedLayout>
+    );
+}
