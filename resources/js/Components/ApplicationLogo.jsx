@@ -2,7 +2,7 @@ import { usePage } from '@inertiajs/react';
 
 export default function ApplicationLogo(props) {
     const { settings } = usePage().props;
-    const logoUrl = settings?.site_logo;
+    const logoUrl = settings?.site_logo?.startsWith('/') ? settings.site_logo : (settings?.site_logo ? '/' + settings.site_logo : null);
 
     if (logoUrl) {
         return (

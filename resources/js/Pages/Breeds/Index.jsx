@@ -81,14 +81,25 @@ export default function Index({ auth, breeds }) {
 
                             {/* Pagination */}
                             <div className="mt-6 flex justify-center">
-                                {breeds.links.map((link, i) => (
-                                    <Link
-                                        key={i}
-                                        href={link.url}
-                                        className={`px-3 py-1 mx-1 rounded border ${link.active ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100'}`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
+                                {breeds.links.map((link, i) => {
+                                    if (!link.url) {
+                                        return (
+                                            <span
+                                                key={i}
+                                                className="px-3 py-1 mx-1 rounded border opacity-50 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        );
+                                    }
+                                    return (
+                                        <Link
+                                            key={i}
+                                            href={link.url}
+                                            className={`px-3 py-1 mx-1 rounded border ${link.active ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100'}`}
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                        />
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>

@@ -20,7 +20,12 @@ export default function AuthenticatedLayout({ header, children }) {
     return (
         <ThemeProvider>
             <Head>
-                {settings?.site_favicon && <link rel="icon" href={settings.site_favicon} />}
+                {settings?.site_favicon && (
+                    <link
+                        rel="icon"
+                        href={settings.site_favicon.startsWith('/') ? settings.site_favicon : '/' + settings.site_favicon}
+                    />
+                )}
             </Head>
             <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
                 <nav className="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -83,13 +88,13 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 href={route('cash-register.index')}
                                                 active={route().current('cash-register.*')}
                                             >
-                                                Turno de Caja
+                                                Turno Caja
                                             </NavLink>
                                             <NavLink
                                                 href={route('receipts.index')}
                                                 active={route().current('receipts.*')}
                                             >
-                                                Punto de Venta (POS)
+                                                PDV
                                             </NavLink>
                                             <NavLink
                                                 href={route('cash.index')}
@@ -313,13 +318,13 @@ export default function AuthenticatedLayout({ header, children }) {
                                 href={route('cash-register.index')}
                                 active={route().current('cash-register.*')}
                             >
-                                Turno de Caja
+                                Turno Caja
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 href={route('receipts.index')}
                                 active={route().current('receipts.*')}
                             >
-                                Punto de Venta (POS)
+                                PDV
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 href={route('cash.index')}
