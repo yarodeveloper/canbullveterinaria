@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export default function Show({ auth, product, transactions }) {
+export default function Show({ auth, product, transactions, categories }) {
     const [showLotModal, setShowLotModal] = useState(false);
     const [showAdjustModal, setShowAdjustModal] = useState(false);
 
@@ -23,6 +23,8 @@ export default function Show({ auth, product, transactions }) {
         lot_number: '',
         expiration_date: '',
         quantity: '',
+        unit_cost: '',
+        provider: '',
         notes: ''
     });
 
@@ -78,6 +80,8 @@ export default function Show({ auth, product, transactions }) {
         unit: product.unit || 'pieza',
         min_stock: product.min_stock || 0,
         price: product.price || '',
+        tax_iva: product.tax_iva !== undefined ? product.tax_iva : 16,
+        tax_ieps: product.tax_ieps !== undefined ? product.tax_ieps : 0,
         is_controlled: product.is_controlled || false,
         is_active: product.is_active !== undefined ? product.is_active : true, // Ensure we send boolean
     });
@@ -105,14 +109,7 @@ export default function Show({ auth, product, transactions }) {
                         </h2>
                     </div>
                     <div className="flex gap-3">
-                        {auth.user?.role === 'admin' && (
-                            <button
-                                onClick={() => setShowEditModal(true)}
-                                className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border dark:border-gray-700 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-gray-50 transition shadow-sm"
-                            >
-                                ✏️ Editar Catálogo
-                            </button>
-                        )}
+                        {/* Botón de editar movido a la tarjeta */}
                         <button
                             onClick={() => setShowLotModal(true)}
                             className="bg-brand-primary text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-primary-50"
@@ -130,14 +127,26 @@ export default function Show({ auth, product, transactions }) {
                     <div className="lg:grid lg:grid-cols-3 lg:gap-8">
                         {/* Panel Izquierdo: Resumen Producto */}
                         <div className="space-y-6">
-                            <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border dark:border-gray-700 p-8 shadow-xl">
-                                <div className="flex items-center gap-5 border-b dark:border-gray-700 pb-5 mb-5">
+                            <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border dark:border-gray-700 p-8 shadow-xl relative">
+                                {hasPermission('manage inventory') || auth.user?.role === 'admin' ? (
+                                    <button
+                                        onClick={() => setShowEditModal(true)}
+                                        className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center bg-gray-50 dark:bg-gray-700 hover:bg-brand-primary hover:text-white text-gray-400 rounded-xl transition-all shadow-sm"
+                                        title="Editar Catálogo"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                        </svg>
+                                    </button>
+                                ) : null}
+
+                                <div className="flex items-center gap-5 border-b dark:border-gray-700 pb-5 mb-5 pr-10">
                                     <div className="w-16 h-16 shrink-0 bg-brand-primary/10 rounded-[1.2rem] flex items-center justify-center text-3xl">
-                                        {product.category.icon}
+                                        {product.category?.icon || ''}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-snug truncate" title={product.name}>{product.name}</h3>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{product.category.name}</p>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{product.category?.name || 'SIN CATEGORÍA'}</p>
                                     </div>
                                 </div>
 
@@ -154,6 +163,22 @@ export default function Show({ auth, product, transactions }) {
                                         <span className="text-[11px] font-black text-gray-400 uppercase">Unidad</span>
                                         <span className="font-bold uppercase">{product.unit}</span>
                                     </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-[11px] font-black text-gray-400 uppercase">Precio</span>
+                                        <span className="font-black text-gray-900 dark:text-gray-100">${parseFloat(product.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    {parseFloat(product.tax_iva) > 0 && (
+                                        <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 p-2 rounded-lg">
+                                            <span className="text-[11px] font-black text-gray-500 uppercase">IVA</span>
+                                            <span className="font-bold text-gray-600 dark:text-gray-300">{parseFloat(product.tax_iva)}%</span>
+                                        </div>
+                                    )}
+                                    {parseFloat(product.tax_ieps) > 0 && (
+                                        <div className="flex justify-between items-center bg-orange-50 dark:bg-orange-900/20 p-2 rounded-lg">
+                                            <span className="text-[11px] font-black text-orange-500 uppercase">IEPS</span>
+                                            <span className="font-bold text-orange-500">{parseFloat(product.tax_ieps)}%</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-center">
                                         <span className="text-[11px] font-black text-gray-400 uppercase">Stock Mínimo</span>
                                         <span className="font-bold">{parseFloat(product.min_stock)}</span>
@@ -247,63 +272,104 @@ export default function Show({ auth, product, transactions }) {
             {/* Modal de Entrada de Lote */}
             {showLotModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border dark:border-gray-700">
-                        <div className="p-8 border-b dark:border-gray-700 flex justify-between items-center">
-                            <h3 className="text-xl font-black uppercase tracking-tighter">Entrada de Mercancía</h3>
-                            <button onClick={() => setShowLotModal(false)} className="text-2xl opacity-30 hover:opacity-100">×</button>
+                    <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden border dark:border-gray-700">
+                        <div className="p-8 border-b dark:border-gray-700 flex justify-between items-start bg-gray-50/50 dark:bg-gray-900/40">
+                            <div>
+                                <h3 className="text-xl font-black uppercase tracking-tighter text-gray-900 dark:text-gray-100">Entrada de Mercancía</h3>
+                                <p className="text-xs font-black text-brand-primary mt-1 uppercase tracking-widest">{product.name}</p>
+                            </div>
+                            <button type="button" onClick={() => setShowLotModal(false)} className="text-2xl opacity-30 hover:opacity-100 transition-opacity -mt-1 hover:text-red-500">×</button>
                         </div>
-                        <form onSubmit={submitLot} className="p-8 space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
+                        <form onSubmit={submitLot} className="p-8 space-y-6 max-h-[75vh] overflow-y-auto">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1"># de Lote</label>
                                     <input
                                         type="text"
                                         value={data.lot_number}
                                         onChange={e => setData('lot_number', e.target.value)}
-                                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold"
+                                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold shadow-inner"
                                         placeholder="Ej: AB-123"
                                         required
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cantidad</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha de Caducidad</label>
+                                    <input
+                                        type="date"
+                                        value={data.expiration_date}
+                                        onChange={e => setData('expiration_date', e.target.value)}
+                                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold shadow-inner"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cantidad Que Ingresa</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         value={data.quantity}
                                         onChange={e => setData('quantity', e.target.value)}
-                                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold"
+                                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold text-xl shadow-inner"
                                         placeholder="0.00"
                                         required
                                     />
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Costo Unitario <span className="text-gray-400 text-[8px]">(SIN IVA)</span></label>
+                                    <div className="relative">
+                                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={data.unit_cost}
+                                            onChange={e => setData('unit_cost', e.target.value)}
+                                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 pl-10 pr-6 focus:ring-2 focus:ring-brand-primary font-bold shadow-inner"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                    <p className="text-[9px] text-gray-400 ml-1 font-bold">Ayuda a calcular utilidad futura.</p>
+                                </div>
                             </div>
+
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha de Caducidad</label>
-                                <input
-                                    type="date"
-                                    value={data.expiration_date}
-                                    onChange={e => setData('expiration_date', e.target.value)}
-                                    className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold"
-                                />
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Proveedor / Laboratorio</label>
+                                <div className="relative">
+                                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">🏢</span>
+                                    <input
+                                        type="text"
+                                        value={data.provider}
+                                        onChange={e => setData('provider', e.target.value)}
+                                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 pl-12 pr-6 focus:ring-2 focus:ring-brand-primary font-bold shadow-inner text-sm"
+                                        placeholder="Nombre del proveedor o laboratorio que surte"
+                                    />
+                                </div>
                             </div>
+
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Notas de Entrada</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Folio de Factura / Notas / Receta</label>
                                 <textarea
                                     value={data.notes}
                                     onChange={e => setData('notes', e.target.value)}
-                                    className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-medium"
+                                    className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-medium shadow-inner"
                                     rows="2"
-                                    placeholder="Factura, proveedor, observación..."
+                                    placeholder="Factura, Remisión, Código Autorizante..."
                                 ></textarea>
+                                {!!product.is_controlled && <p className="text-red-500 text-[10px] font-bold mt-1 ml-1 bg-red-50 p-2 rounded-lg">* Requiere justificar datos de receta médica (medicamento controlado).</p>}
                             </div>
-                            <button
-                                type="submit"
-                                disabled={processing}
-                                className="w-full bg-brand-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary-50 transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                {processing ? 'Registrando...' : 'Confirmar Ingreso'}
-                            </button>
+
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="w-full bg-brand-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary-50 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50"
+                                >
+                                    {processing ? 'Registrando...' : 'Confirmar Ingreso al Inventario'}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -387,16 +453,35 @@ export default function Show({ auth, product, transactions }) {
                         </div>
                         <form onSubmit={submitEdit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nombre del Artículo</label>
-                                <input
-                                    type="text"
-                                    value={editData.name}
-                                    onChange={e => setEditData('name', e.target.value)}
-                                    className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold"
-                                    required
-                                />
-                                {editErrors.name && <p className="text-red-500 text-xs mt-1 ml-1 font-bold">{editErrors.name}</p>}
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Categoría</label>
+                                    <select
+                                        value={editData.product_category_id}
+                                        onChange={e => setEditData('product_category_id', e.target.value)}
+                                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold"
+                                        required
+                                    >
+                                        <option value="" disabled>Seleccionar...</option>
+                                        {categories && categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>
+                                                {cat.icon} {cat.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {editErrors.product_category_id && <p className="text-red-500 text-xs mt-1 ml-1 font-bold">{editErrors.product_category_id}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nombre del Artículo</label>
+                                    <input
+                                        type="text"
+                                        value={editData.name}
+                                        onChange={e => setEditData('name', e.target.value)}
+                                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold"
+                                        required
+                                    />
+                                    {editErrors.name && <p className="text-red-500 text-xs mt-1 ml-1 font-bold">{editErrors.name}</p>}
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-6">
@@ -451,6 +536,39 @@ export default function Show({ auth, product, transactions }) {
                                         className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold"
                                         required
                                     />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">IVA (%)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={editData.tax_iva}
+                                            onChange={e => setEditData('tax_iva', e.target.value)}
+                                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 pl-6 pr-8 focus:ring-2 focus:ring-brand-primary font-bold text-gray-900 dark:text-gray-100"
+                                            required
+                                        />
+                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 font-bold">%</span>
+                                    </div>
+                                    {editErrors.tax_iva && <p className="text-red-500 text-xs mt-1 ml-1 font-bold">{editErrors.tax_iva}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">IEPS (%)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={editData.tax_ieps}
+                                            onChange={e => setEditData('tax_ieps', e.target.value)}
+                                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 pl-6 pr-8 focus:ring-2 focus:ring-brand-primary font-bold text-gray-900 dark:text-gray-100"
+                                            required
+                                        />
+                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 font-bold">%</span>
+                                    </div>
+                                    {editErrors.tax_ieps && <p className="text-red-500 text-xs mt-1 ml-1 font-bold">{editErrors.tax_ieps}</p>}
                                 </div>
                             </div>
 

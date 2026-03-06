@@ -91,7 +91,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 Turno Caja
                                             </NavLink>
                                             <NavLink
-                                                href={route('receipts.index')}
+                                                href={route('receipts.create')}
                                                 active={route().current('receipts.*')}
                                             >
                                                 PDV
@@ -321,7 +321,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 Turno Caja
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
-                                href={route('receipts.index')}
+                                href={route('receipts.create')}
                                 active={route().current('receipts.*')}
                             >
                                 PDV

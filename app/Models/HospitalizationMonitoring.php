@@ -26,6 +26,9 @@ class HospitalizationMonitoring extends Model
         'urination',
         'defecation',
         'notes',
+        'lymph_nodes',
+        'abdominal_palpation',
+        'bcs',
     ];
 
     public function hospitalization()

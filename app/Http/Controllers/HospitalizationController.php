@@ -123,6 +123,9 @@ class HospitalizationController extends Controller
             'urination' => 'nullable|string',
             'defecation' => 'nullable|string',
             'notes' => 'nullable|string',
+            'lymph_nodes' => 'nullable|string',
+            'abdominal_palpation' => 'nullable|string',
+            'bcs' => 'nullable|string',
         ]);
 
         $monitoring = new HospitalizationMonitoring($validated);

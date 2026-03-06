@@ -44,7 +44,7 @@ export default function Index({ auth, hospitalizations, filters }) {
             user={auth.user}
             header={
                 <div className="flex justify-between items-center">
-                    <h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Zonas de Hospitalización</h2>
+                    <h2 className="font-semibold text-xl text-slate-800 dark:text-slate-200 leading-tight">Zonas de Hospitalización</h2>
                     <Link
                         href={route('hospitalizations.create')}
                         className="bg-brand-primary text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-primary-100"
@@ -58,11 +58,11 @@ export default function Index({ auth, hospitalizations, filters }) {
 
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-[2rem] border dark:border-gray-700">
+                    <div className="bg-white dark:bg-[#1B2132] overflow-hidden shadow-sm sm:rounded-[2rem] border dark:border-gray-700">
                         {/* Filtros */}
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col md:flex-row gap-4 items-center justify-between">
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-700/50 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col md:flex-row gap-4 items-center justify-between">
                             <div className="w-full md:w-1/2 relative group">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-primary transition-colors">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 group-focus-within:text-brand-primary transition-colors">
                                     🔍
                                 </span>
                                 <input
@@ -70,14 +70,14 @@ export default function Index({ auth, hospitalizations, filters }) {
                                     placeholder="Buscar paciente o motivo..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-brand-primary/50 focus:border-brand-primary focus:ring-brand-primary rounded-2xl pl-12 pr-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 transition-all shadow-sm"
+                                    className="w-full bg-white dark:bg-[#1B2132] border-slate-300 dark:border-slate-700 hover:border-brand-primary/50 focus:border-brand-primary focus:ring-brand-primary rounded-2xl pl-12 pr-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300 transition-all shadow-sm"
                                 />
                             </div>
                             <div className="w-full md:w-auto">
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="w-full md:w-48 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:border-brand-primary focus:ring-brand-primary rounded-2xl py-3 px-4 text-sm font-bold text-gray-700 dark:text-gray-300 shadow-sm transition-all"
+                                    className="w-full md:w-48 bg-white dark:bg-[#1B2132] border-slate-300 dark:border-slate-700 focus:border-brand-primary focus:ring-brand-primary rounded-2xl py-3 px-4 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm transition-all"
                                 >
                                     <option value="all">TODOS LOS ESTADOS</option>
                                     <option value="active">Activos</option>
@@ -104,7 +104,7 @@ export default function Index({ auth, hospitalizations, filters }) {
                                                         </div>
                                                         <div className="min-w-0 flex-1">
                                                             <div className="flex items-center gap-3">
-                                                                <p className="text-base font-black text-gray-900 dark:text-white truncate">
+                                                                <p className="text-base font-black text-slate-900 dark:text-white truncate">
                                                                     {hospitalization.pet.name}
                                                                 </p>
                                                                 <span className={`px-2.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-widest ${getStatusStyle(hospitalization.status)}`}>
@@ -124,13 +124,13 @@ export default function Index({ auth, hospitalizations, filters }) {
                                                     {/* Info Fecha y Acciones */}
                                                     <div className="flex items-center gap-6 ml-4">
                                                         <div className="text-right hidden sm:block">
-                                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Ingresado</p>
-                                                            <p className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                                                            <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">Ingresado</p>
+                                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
                                                                 {format(new Date(hospitalization.admission_date), "d MMM, HH:mm", { locale: es })}
                                                             </p>
                                                         </div>
                                                         <div className="hidden md:flex flex-shrink-0">
-                                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 group-hover:border-brand-primary group-hover:text-brand-primary text-gray-300 transition-colors">
+                                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-[#1B2132] border-2 border-slate-200 dark:border-slate-700/50 group-hover:border-brand-primary group-hover:text-brand-primary text-gray-300 transition-colors">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                                                                     <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                                                                 </svg>
@@ -145,10 +145,10 @@ export default function Index({ auth, hospitalizations, filters }) {
                             ) : (
                                 <div className="text-center py-20 px-6">
                                     <div className="text-6xl mb-6 opacity-20 transform hover:scale-110 transition-transform">🏥</div>
-                                    <h3 className="text-xl font-black text-gray-400 uppercase tracking-widest mb-2">
+                                    <h3 className="text-xl font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
                                         {searchTerm || statusFilter !== 'all' ? 'No se encontraron resultados' : 'No hay pacientes hospitalizados'}
                                     </h3>
-                                    <p className="text-gray-400 text-sm mb-8">
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
                                         {searchTerm || statusFilter !== 'all'
                                             ? 'Intenta borrar algunos filtros.'
                                             : 'Las zonas de hospitalización se encuentran completamente libres.'}

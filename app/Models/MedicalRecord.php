@@ -17,14 +17,18 @@ class MedicalRecord extends Model
         'branch_id',
         'type',
         'subjective',
+        'anamnesis',
         'objective',
         'assessment',
         'plan',
         'vital_signs',
+        'physical_state',
     ];
 
     protected $casts = [
         'vital_signs' => 'json',
+        'anamnesis' => 'json',
+        'physical_state' => 'json',
     ];
 
     public function pet()

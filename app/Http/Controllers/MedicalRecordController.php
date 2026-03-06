@@ -39,6 +39,13 @@ class MedicalRecordController extends Controller
             'vital_signs.temp' => 'nullable|numeric',
             'vital_signs.hr' => 'nullable|integer',
             'vital_signs.rr' => 'nullable|integer',
+            'vital_signs.mucous' => 'nullable|string',
+            'vital_signs.bcs' => 'nullable|string',
+            'vital_signs.tllc' => 'nullable|numeric',
+            'vital_signs.lymph_nodes' => 'nullable|string',
+            'vital_signs.abdominal_palpation' => 'nullable|string',
+            'anamnesis' => 'nullable|array',
+            'physical_state' => 'nullable|string',
             'attachments.*' => 'nullable|file|max:10240', // 10MB limit
         ]);
 

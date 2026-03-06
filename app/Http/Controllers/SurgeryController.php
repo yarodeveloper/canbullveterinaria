@@ -107,9 +107,17 @@ class SurgeryController extends Controller
                 $q->where('branch_id', $surgery->branch_id)->orWhereNull('branch_id');
             })->where('is_active', true)->get();
 
+        $branchId = Auth::user()->branch_id;
+        $veterinarians = User::where('branch_id', $branchId)
+            ->whereIn('role', ['admin', 'veterinarian'])
+            ->get();
+        $branches = \App\Models\Branch::all();
+
         return Inertia::render('Surgeries/Show', [
             'surgery' => $surgery,
-            'templates' => $templates
+            'templates' => $templates,
+            'veterinarians' => $veterinarians,
+            'branches' => $branches
         ]);
     }
 
@@ -119,10 +127,15 @@ class SurgeryController extends Controller
             'status' => 'nullable|string',
             'start_time' => 'nullable|date',
             'end_time' => 'nullable|date',
+            'pre_op_notes' => 'nullable|string',
             'intra_op_notes' => 'nullable|string',
             'post_op_notes' => 'nullable|string',
             'checklist' => 'nullable|array',
             'vital_signs' => 'nullable|array',
+            'veterinarian_id' => 'nullable|exists:users,id',
+            'anesthesiologist_id' => 'nullable|exists:users,id',
+            'asa_classification' => 'nullable|string',
+            'branch_id' => 'nullable|exists:branches,id',
         ]);
 
         $surgery->update($validated);

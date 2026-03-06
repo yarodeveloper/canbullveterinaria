@@ -7,77 +7,118 @@ import PetAvatar from '@/Components/PetAvatar';
 import { BehaviorBadge } from '@/Components/BehaviorSelector';
 
 const TimelineItem = ({ event }) => {
-    let icon = "🩺";
-    let bgIcon = "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50";
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    let dotColor = "bg-indigo-500";
     let title = "Consulta Médica General";
     let badgeType = event.type || "CONSULTA";
-    let badgeColor = "bg-indigo-50 text-indigo-600 border-indigo-100";
-    let doctor = event.veterinarian?.name || event.lead_surgeon?.name || "Desconocido";
+    let badgeColor = "bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800/50";
     let date = new Date(event.timeline_date);
-    let url = "#";
-    let urlText = "VER DETALLES";
 
     if (event.timeline_type === "vaccine") {
-        icon = "💉";
-        bgIcon = "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50";
+        dotColor = "bg-emerald-500";
         title = event.name || "Vacunación";
-        badgeType = event.type || "PREVENTIVO";
-        badgeColor = "bg-emerald-50 text-emerald-600 border-emerald-100";
+        badgeType = event.type || "VACUNA";
+        badgeColor = "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50";
     } else if (event.timeline_type === "surgery") {
-        icon = "✂️";
-        bgIcon = "bg-purple-100 text-purple-600 dark:bg-purple-900/50";
+        dotColor = "bg-purple-500";
         title = event.surgery_type || "Cirugía";
         badgeType = "CIRUGÍA";
-        badgeColor = "bg-purple-50 text-purple-600 border-purple-100";
+        badgeColor = "bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800/50";
     } else if (event.timeline_type === "hospitalization") {
-        icon = "🏥";
-        bgIcon = "bg-teal-100 text-teal-600 dark:bg-teal-900/50";
+        dotColor = "bg-teal-500";
         title = "Hospitalización";
         badgeType = "HOSPITALIZACIÓN";
-        badgeColor = "bg-teal-50 text-teal-600 border-teal-100";
+        badgeColor = "bg-teal-50 text-teal-600 border-teal-200 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-800/50";
+    } else if (event.timeline_type === "lab") {
+        dotColor = "bg-orange-500";
+        title = "Laboratorio";
+        badgeType = "LABS";
+        badgeColor = "bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800/50";
     }
 
-    return (
-        <div className="relative pl-16 group">
-            {/* Dot */}
-            <div className={"absolute left-4 top-1 w-8 h-8 rounded-full border-4 border-white dark:border-gray-800 z-10 group-hover:scale-110 transition-transform flex items-center justify-center text-sm shadow-sm " + bgIcon}>
-                {icon}
-            </div>
+    const dateStr = date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase().replace('.', '');
+    const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).toUpperCase();
 
-            <div className="bg-white dark:bg-gray-900/30 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 transition-all hover:shadow-lg">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                    <div>
-                        <div className="flex items-center gap-3 mb-1">
-                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest">
-                                {date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} • {date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
-                            </span>
-                            <span className={"text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest border " + badgeColor}>
-                                {badgeType}
-                            </span>
-                        </div>
+    return (
+        <div className="relative group flex flex-col border-b border-gray-100 dark:border-gray-800/60 transition-colors -mx-4 sm:-mx-8 pr-4 sm:pr-8 pl-[60px] sm:pl-[100px] last:border-b-0 hover:bg-gray-50/60 dark:hover:bg-gray-800/40">
+            {/* Dot */}
+            <div className={`absolute left-[34px] sm:left-[66px] top-7 w-3 h-3 rounded-full z-10 shadow-[0_0_0_4px_white] dark:shadow-[0_0_0_4px_#1f2937] ${dotColor}`}></div>
+
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between py-5">
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 flex-1 overflow-hidden">
+                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400 shrink-0 uppercase tracking-wider">
+                        {dateStr} - {timeStr}
+                    </span>
+
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest border shrink-0 ${badgeColor}`}>
+                            {badgeType}
+                        </span>
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h4>
                     </div>
                 </div>
 
-                <div className="mb-4">
-                    <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">{title}</h4>
-
+                <div className="shrink-0 mt-3 sm:mt-0 flex items-center">
                     {event.timeline_type === "consultation" && (
-                        <Link href={route("medical-records.show", event.id)} className="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1 transition">
-                            VER DETALLES <IconEye className="w-3 h-3" />
+                        <Link href={route("medical-records.show", event.id)} className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1 transition hover:opacity-70">
+                            VER SOAP
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-50" viewBox="0 0 20 20" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                         </Link>
                     )}
                     {event.timeline_type === "surgery" && (
-                        <Link href={route("surgeries.show", event.id)} className="text-xs font-bold text-purple-600 hover:text-purple-800 dark:text-purple-400 uppercase tracking-widest flex items-center gap-1 transition">
-                            VER DETALLES <IconEye className="w-3 h-3" />
+                        <Link href={route("surgeries.show", event.id)} className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest flex items-center gap-1 transition hover:opacity-70">
+                            VER DETALLES
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-50" viewBox="0 0 20 20" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                         </Link>
                     )}
                     {event.timeline_type === "hospitalization" && (
-                        <Link href={route("hospitalizations.show", event.id)} className="text-xs font-bold text-teal-600 hover:text-teal-800 dark:text-teal-400 uppercase tracking-widest flex items-center gap-1 transition">
-                            VER KARDEX <IconEye className="w-3 h-3" />
+                        <Link href={route("hospitalizations.show", event.id)} className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest flex items-center gap-1 transition hover:opacity-70">
+                            VER KARDEX
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-50" viewBox="0 0 20 20" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                         </Link>
+                    )}
+                    {event.timeline_type === "vaccine" && (
+                        <button onClick={() => setIsExpanded(!isExpanded)} className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1 transition hover:opacity-70">
+                            VER CARNET
+                            <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 opacity-50 transition-transform ${isExpanded ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                        </button>
                     )}
                 </div>
             </div>
+
+            {/* Expansible Content for Vaccines / Preventatives */}
+            {isExpanded && event.timeline_type === "vaccine" && (
+                <div className="pb-5 pt-1 text-sm animate-fade-in">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Marca / Lote</p>
+                                <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.brand || "N/A"}{event.lot_number ? ` (Lote: ${event.lot_number})` : ''}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Próxima Dosis</p>
+                                <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.next_due_date ? new Date(event.next_due_date).toLocaleDateString() : 'No requerida'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Peso</p>
+                                <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.weight_at_time ? `${event.weight_at_time} kg` : 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Aplicador</p>
+                                <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.veterinarian?.name || "Desconocido"}</p>
+                            </div>
+                        </div>
+                        {event.notes && (
+                            <div className="pt-3 mt-1 border-t border-emerald-200/50 dark:border-emerald-800/30">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1 tracking-wider">Notas</p>
+                                <p className="text-[11px] text-gray-600 dark:text-gray-400 italic">{event.notes}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -135,7 +176,8 @@ export default function Show({ auth, pet, protocols, clients }) {
     const filteredTimeline = timelineEvents.filter(event => {
         if (timelineFilter === 'all') return true;
         if (timelineFilter === 'consultations' && event.timeline_type === 'consultation') return true;
-        if (timelineFilter === 'surgery' && (event.timeline_type === 'surgery' || event.timeline_type === 'hospitalization')) return true;
+        if (timelineFilter === 'surgery' && event.timeline_type === 'surgery') return true;
+        if (timelineFilter === 'hospitalization' && event.timeline_type === 'hospitalization') return true;
         if (timelineFilter === 'lab' && event.timeline_type === 'vaccine') return true;
         return false;
     });
@@ -400,23 +442,24 @@ export default function Show({ auth, pet, protocols, clients }) {
                         {/* PANEL CENTRAL: Línea de Vida Clínica (50%) */}
                         <div className="lg:col-span-5 xl:col-span-6 space-y-6">
                             <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-[2.5rem] border dark:border-gray-700">
-                                <div className="p-8 border-b dark:border-gray-700 flex flex-col xl:flex-row justify-between xl:items-center bg-white dark:bg-gray-900/20 gap-6">
+                                <div className="p-8 border-b dark:border-gray-700 flex flex-col xl:flex-row justify-between xl:items-center bg-white dark:bg-gray-900/20 gap-4">
                                     <div>
-                                        <h3 className="text-xl font-black tracking-tight text-gray-900 dark:text-white">Clinical Life Timeline</h3>
-                                        <p className="text-sm text-gray-400 font-medium">Chronological history of all medical events</p>
+                                        <h3 className="text-xl font-black tracking-tight text-gray-900 dark:text-white leading-tight">Clinical Life Timeline</h3>
+                                        <p className="text-xs text-gray-400 font-medium tracking-wide">Chronological history of all medical events</p>
                                     </div>
-                                    <div className="flex bg-gray-50/80 dark:bg-gray-800/80 rounded-full p-1 border border-gray-100 dark:border-gray-700 overflow-x-auto hide-scrollbar sm:max-w-max">
-                                        <button onClick={() => setTimelineFilter('all')} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase whitespace-nowrap transition-shadow flex-1 sm:flex-none ${timelineFilter === 'all' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Todas</button>
-                                        <button onClick={() => setTimelineFilter('consultations')} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase whitespace-nowrap flex-1 sm:flex-none ${timelineFilter === 'consultations' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Consultas</button>
-                                        <button onClick={() => setTimelineFilter('surgery')} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase whitespace-nowrap flex-1 sm:flex-none ${timelineFilter === 'surgery' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Cirugías</button>
-                                        <button onClick={() => setTimelineFilter('lab')} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase whitespace-nowrap flex-1 sm:flex-none ${timelineFilter === 'lab' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Lab / Vacunas</button>
+                                    <div className="flex bg-gray-50/80 dark:bg-gray-800/80 rounded-full p-1 border border-gray-100 dark:border-gray-700 overflow-x-auto hide-scrollbar shrink-0">
+                                        <button onClick={() => setTimelineFilter('all')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase whitespace-nowrap transition-shadow flex-1 sm:flex-none ${timelineFilter === 'all' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Todas</button>
+                                        <button onClick={() => setTimelineFilter('consultations')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase whitespace-nowrap flex-1 sm:flex-none ${timelineFilter === 'consultations' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Consultas</button>
+                                        <button onClick={() => setTimelineFilter('surgery')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase whitespace-nowrap flex-1 sm:flex-none ${timelineFilter === 'surgery' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Cirugías</button>
+                                        <button onClick={() => setTimelineFilter('hospitalization')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase whitespace-nowrap flex-1 sm:flex-none ${timelineFilter === 'hospitalization' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Hospitalización</button>
+                                        <button onClick={() => setTimelineFilter('lab')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase whitespace-nowrap flex-1 sm:flex-none ${timelineFilter === 'lab' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Lab/Vacunas</button>
                                     </div>
                                 </div>
-                                <div className="p-8">
+                                <div className="p-4 sm:p-8">
                                     {filteredTimeline.length > 0 ? (
-                                        <div className="space-y-12 relative">
+                                        <div className="space-y-0 relative">
                                             {/* Vertical Line */}
-                                            <div className="absolute left-[2.1rem] top-4 bottom-4 w-px bg-gray-200 dark:bg-gray-700"></div>
+                                            <div className="absolute left-[23px] sm:left-[39px] top-6 bottom-6 w-[2px] bg-gray-100 dark:bg-gray-800/80"></div>
 
                                             {filteredTimeline.map(event => (
                                                 <TimelineItem key={`${event.timeline_type}-${event.id}`} event={event} />
@@ -497,67 +540,8 @@ export default function Show({ auth, pet, protocols, clients }) {
                             <PreventiveControl pet={pet} auth={auth} protocols={protocols} />
 
                             <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                                <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center">
-                                    <h3 className="text-lg font-bold">Documentos y Consentimientos</h3>
-                                    <div className="flex space-x-2">
-                                        <button onClick={() => setShowDocumentModal(true)} type="button" className="text-[10px] flex items-center justify-center bg-gray-50 border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-400 p-2 rounded transition font-bold" title="Subir Documento (PDF/Imagen)">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                            </svg>
-                                        </button>
-                                        <Link
-                                            href={route('consents.create', [pet.id, { type: 'surgery' }])}
-                                            className="text-[10px] font-bold bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 px-3 py-2 rounded flex items-center uppercase tracking-widest text-gray-700 dark:text-gray-300"
-                                        >
-                                            + Cx
-                                        </Link>
-                                        <Link
-                                            href={route('consents.create', [pet.id, { type: 'euthanasia' }])}
-                                            className="text-[10px] font-bold bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded flex items-center uppercase tracking-widest"
-                                        >
-                                            + Eutanasia
-                                        </Link>
-                                    </div>
-                                </div>
-                                <div className="p-6">
-                                    {pet.consents?.length > 0 ? (
-                                        <ul className="divide-y dark:divide-gray-700">
-                                            {pet.consents.map(consent => (
-                                                <li key={consent.id} className="py-3 flex justify-between items-center">
-                                                    <div>
-                                                        <p className="font-medium text-sm capitalize">{consent.type}</p>
-                                                        <p className="text-xs text-gray-500">Firmado el {new Date(consent.signed_at).toLocaleDateString()}</p>
-                                                    </div>
-                                                    <div className="flex space-x-1">
-                                                        <Link
-                                                            href={route('consents.show', consent.id)}
-                                                            className="p-1 text-indigo-600 hover:bg-indigo-50 rounded transition"
-                                                            title="Ver Detalle"
-                                                        >
-                                                            <IconEye className="w-5 h-5" />
-                                                        </Link>
-                                                        <Link
-                                                            href="#"
-                                                            className="p-1 text-gray-400 hover:bg-gray-50 rounded transition"
-                                                            title="Imprimir"
-                                                        >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.89l-2.1 2.1c-.245.245-.245.642 0 .887l.062.062a.627.627 0 00.887 0l2.1-2.1M6.72 13.89l3.52 3.52c.245.245.642.245.887 0l.062-.062a.627.627 0 000-.887l-3.52-3.52m3.52-3.52l2.1-2.1c.245-.245.245-.642 0-.887l-.062-.062a.627.627 0 00-.887 0l-2.1 2.1M10.24 10.37l-3.52 3.52" />
-                                                            </svg>
-                                                        </Link>
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <p className="text-gray-500 text-center py-4 text-sm italic">No hay documentos adjuntos ni firmados aún.</p>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                                <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50/30 dark:bg-gray-900/10">
-                                    <h3 className="text-lg font-bold">Próximas Citas</h3>
+                                <div className="p-4 sm:p-5 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50/30 dark:bg-gray-900/10">
+                                    <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Próximas Citas</h3>
                                     <div className="flex items-center gap-3">
                                         <Link href={route('appointments.index')} className="text-indigo-600 text-[10px] uppercase font-bold hover:underline tracking-widest hidden sm:block">Ver Calendario</Link>
                                         <Link href={route('appointments.create', { pet_id: pet.id })} className="bg-indigo-500 hover:bg-indigo-600 text-white text-[10px] font-bold px-4 py-2 rounded-lg uppercase tracking-widest transition shadow-sm">
@@ -565,7 +549,7 @@ export default function Show({ auth, pet, protocols, clients }) {
                                         </Link>
                                     </div>
                                 </div>
-                                <div className="p-6">
+                                <div className="p-4 sm:p-5">
                                     {pet.appointments?.length > 0 ? (
                                         <div className="space-y-3">
                                             {pet.appointments.map(app => (
@@ -591,14 +575,106 @@ export default function Show({ auth, pet, protocols, clients }) {
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-6">
-                                            <p className="text-gray-500 text-sm italic mb-4">No hay citas programadas.</p>
+                                        <div className="text-center py-4">
+                                            <p className="text-gray-500 text-xs italic mb-4">No hay citas programadas.</p>
                                             <Link
                                                 href={route('appointments.create', { pet_id: pet.id })}
-                                                className="text-xs font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-4 py-2 rounded-lg"
+                                                className="text-xs font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-4 py-2 rounded-lg hover:bg-indigo-100 transition"
                                             >
                                                 + Agendar Cita
                                             </Link>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                                <div className="p-4 sm:p-5 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50/30 dark:bg-gray-900/10">
+                                    <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Documentos y Consentimientos</h3>
+                                    <div className="flex space-x-2">
+                                        <button onClick={() => setShowDocumentModal(true)} type="button" className="text-[10px] flex items-center justify-center bg-white dark:bg-gray-800 border dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-400 px-3 py-1.5 rounded transition font-bold uppercase tracking-widest shadow-sm" title="Subir Documento (PDF/Imagen)">
+                                            + Subir
+                                        </button>
+                                        <Link
+                                            href={route('consents.create', [pet.id, { type: 'surgery' }])}
+                                            className="text-[10px] font-bold bg-white dark:bg-gray-800 border dark:border-gray-600 hover:text-indigo-600 px-3 py-1.5 rounded flex items-center uppercase tracking-widest text-gray-700 dark:text-gray-300 shadow-sm transition"
+                                        >
+                                            + Cx
+                                        </Link>
+                                        <Link
+                                            href={route('consents.create', [pet.id, { type: 'euthanasia' }])}
+                                            className="text-[10px] font-bold bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded flex items-center uppercase tracking-widest shadow-sm transition"
+                                        >
+                                            + Eutanasia
+                                        </Link>
+                                    </div>
+                                </div>
+                                <div className="p-4 sm:px-5">
+                                    {(pet.consents?.length > 0 || pet.documents?.length > 0) ? (
+                                        <ul className="divide-y dark:divide-gray-700">
+                                            {pet.documents?.map(doc => (
+                                                <li key={`doc-${doc.id}`} className="py-3 flex justify-between items-center group">
+                                                    <div>
+                                                        <p className="font-bold text-sm text-gray-900 dark:text-gray-100">{doc.name}</p>
+                                                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
+                                                            Subido: {new Date(doc.created_at).toLocaleDateString()}
+                                                            {doc.uploader && ` por ${doc.uploader.name}`}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex space-x-1">
+                                                        <a
+                                                            href={route('pet-documents.download', doc.id)}
+                                                            className="p-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 rounded transition"
+                                                            title="Descargar"
+                                                            download
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                            </svg>
+                                                        </a>
+                                                        <button
+                                                            onClick={() => deleteDocument(doc.id)}
+                                                            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition opacity-0 group-hover:opacity-100"
+                                                            title="Eliminar"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                            {pet.consents?.map(consent => (
+                                                <li key={`consent-${consent.id}`} className="py-3 flex justify-between items-center group">
+                                                    <div>
+                                                        <p className="font-bold text-sm text-gray-900 dark:text-gray-100 capitalize">Consentimiento {consent.type}</p>
+                                                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Firmado: {new Date(consent.signed_at).toLocaleDateString()}</p>
+                                                    </div>
+                                                    <div className="flex space-x-1">
+                                                        <Link
+                                                            href={route('consents.show', consent.id)}
+                                                            className="p-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 rounded transition"
+                                                            title="Ver Detalle"
+                                                        >
+                                                            <IconEye className="w-4 h-4" />
+                                                        </Link>
+                                                        <Link
+                                                            href="#"
+                                                            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 rounded transition"
+                                                            title="Imprimir"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.89l-2.1 2.1c-.245.245-.245.642 0 .887l.062.062a.627.627 0 00.887 0l2.1-2.1M6.72 13.89l3.52 3.52c.245.245.642.245.887 0l.062-.062a.627.627 0 000-.887l-3.52-3.52m3.52-3.52l2.1-2.1c.245-.245.245-.642 0-.887l-.062-.062a.627.627 0 00-.887 0l-2.1 2.1M10.24 10.37l-3.52 3.52" />
+                                                            </svg>
+                                                        </Link>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <div className="text-center py-6">
+                                            <p className="text-gray-400 text-xs uppercase tracking-widest font-bold mb-1">Caja Vacia</p>
+                                            <p className="text-gray-500 text-sm italic">No hay documentos adjuntos ni firmados aún.</p>
                                         </div>
                                     )}
                                 </div>
@@ -607,70 +683,70 @@ export default function Show({ auth, pet, protocols, clients }) {
                     </div>
                 </div>
             </div>
-                        {showDocumentModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                        <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                            <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-                                <div>
-                                    <h3 className="font-black uppercase tracking-tight text-lg text-gray-900 dark:text-gray-100">Bandeja Flotante</h3>
-                                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Adjuntar documento a {pet.name}</p>
+            {showDocumentModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+                            <div>
+                                <h3 className="font-black uppercase tracking-tight text-lg text-gray-900 dark:text-gray-100">Bandeja Flotante</h3>
+                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Adjuntar documento a {pet.name}</p>
+                            </div>
+                            <button onClick={() => setShowDocumentModal(false)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        <form onSubmit={submitDocument} className="p-6 space-y-5">
+                            <div>
+                                <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-1 shadow-sm">Nombre / Título del Archivo</label>
+                                <input
+                                    type="text"
+                                    value={docData.name}
+                                    onChange={e => setDocData('name', e.target.value)}
+                                    placeholder="Ej. Resultados Hemograma, Placa Torax..."
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-sm"
+                                    required
+                                />
+                                {docErrors.name && <p className="text-red-500 text-xs mt-1">{docErrors.name}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-1">Archivo (PDF / Imágenes)</label>
+                                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-xl hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors bg-gray-50 dark:bg-gray-900/30">
+                                    <div className="space-y-1 text-center">
+                                        <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                        <div className="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
+                                            <label htmlFor="file-upload" className="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-bold text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                <span>{!docData.document ? 'Selecciona un archivo' : docData.document.name}</span>
+                                                <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={e => setDocData('document', e.target.files[0])} required />
+                                            </label>
+                                        </div>
+                                        {!docData.document && <p className="text-xs text-gray-500 uppercase font-bold tracking-widest">PNG, JPG, PDF hasta 10MB</p>}
+                                    </div>
                                 </div>
-                                <button onClick={() => setShowDocumentModal(false)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                {docErrors.document && <p className="text-red-500 text-xs mt-1">{docErrors.document}</p>}
+                            </div>
+                            <div className="pt-2 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDocumentModal(false)}
+                                    className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-gray-800 transition text-gray-700 dark:text-gray-300"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={docProcessing || !docData.document}
+                                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {docProcessing ? 'Subiendo...' : 'Subir y Guardar'}
                                 </button>
                             </div>
-                            <form onSubmit={submitDocument} className="p-6 space-y-5">
-                                <div>
-                                    <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-1 shadow-sm">Nombre / Título del Archivo</label>
-                                    <input
-                                        type="text"
-                                        value={docData.name}
-                                        onChange={e => setDocData('name', e.target.value)}
-                                        placeholder="Ej. Resultados Hemograma, Placa Torax..."
-                                        className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-sm"
-                                        required
-                                    />
-                                    {docErrors.name && <p className="text-red-500 text-xs mt-1">{docErrors.name}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-1">Archivo (PDF / Imágenes)</label>
-                                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-xl hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors bg-gray-50 dark:bg-gray-900/30">
-                                        <div className="space-y-1 text-center">
-                                            <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                            </svg>
-                                            <div className="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
-                                                <label htmlFor="file-upload" className="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-bold text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                                                    <span>{!docData.document ? 'Selecciona un archivo' : docData.document.name}</span>
-                                                    <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={e => setDocData('document', e.target.files[0])} required />
-                                                </label>
-                                            </div>
-                                            {!docData.document && <p className="text-xs text-gray-500 uppercase font-bold tracking-widest">PNG, JPG, PDF hasta 10MB</p>}
-                                        </div>
-                                    </div>
-                                    {docErrors.document && <p className="text-red-500 text-xs mt-1">{docErrors.document}</p>}
-                                </div>
-                                <div className="pt-2 flex gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowDocumentModal(false)}
-                                        className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-gray-800 transition text-gray-700 dark:text-gray-300"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={docProcessing || !docData.document}
-                                        className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {docProcessing ? 'Subiendo...' : 'Subir y Guardar'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                        </form>
                     </div>
-                )}
-</AuthenticatedLayout>
+                </div>
+            )}
+        </AuthenticatedLayout>
     );
 }
 

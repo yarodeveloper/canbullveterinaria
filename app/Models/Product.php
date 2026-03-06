@@ -20,6 +20,8 @@ class Product extends Model
         'unit',
         'min_stock',
         'price',
+        'tax_iva',
+        'tax_ieps',
         'is_controlled',
         'is_active',
     ];

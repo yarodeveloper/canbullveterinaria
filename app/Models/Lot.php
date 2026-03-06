@@ -19,6 +19,8 @@ class Lot extends Model
         'initial_quantity',
         'current_quantity',
         'status',
+        'unit_cost',
+        'provider',
     ];
 
     protected $casts = [

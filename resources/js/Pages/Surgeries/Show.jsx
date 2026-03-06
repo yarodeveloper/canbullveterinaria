@@ -4,8 +4,52 @@ import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export default function Show({ auth, surgery, templates }) {
-    const [vitalSigns, setVitalSigns] = useState(surgery.vital_signs || { weight: '', hr: '', rr: '', temp: '', crt: '' });
+const VITAL_RANGES = {
+    Canino: {
+        Cachorro: { hr: [100, 120], rr: [15, 20], temp: [38.5, 39.5], crt: [0.5, 1.5] },
+        Adulto: { hr: [80, 100], rr: [10, 30], temp: [38, 39], crt: [1, 2] },
+        Seniles: { hr: [70, 90], rr: [14, 18], temp: [37.5, 38.5], crt: [1.5, 2.5] }
+    },
+    Felino: {
+        Cachorro: { hr: [130, 150], rr: [15, 35], temp: [38, 38.5], crt: [0.5, 1] },
+        Adulto: { hr: [120, 140], rr: [20, 40], temp: [38, 39], crt: [1, 2] },
+        Seniles: { hr: [100, 120], rr: [15, 30], temp: [36.7, 38.9], crt: [1.5, 2] }
+    }
+};
+
+const getAgeGroup = (dobString) => {
+    if (!dobString) return 'Adulto';
+    const dob = new Date(dobString);
+    const now = new Date();
+    let months = (now.getFullYear() - dob.getFullYear()) * 12 + (now.getMonth() - dob.getMonth());
+    if (months < 12) return 'Cachorro';
+    if (months > 84) return 'Seniles';
+    return 'Adulto';
+};
+
+const checkRange = (species, dobString, type, value) => {
+    if (!value || isNaN(parseFloat(value)) || value === '') return null;
+    let sp = 'Felino';
+    if (species?.toLowerCase() === 'canino' || species?.toLowerCase() === 'perro') sp = 'Canino';
+
+    const ageGroup = getAgeGroup(dobString);
+    const range = VITAL_RANGES[sp]?.[ageGroup]?.[type];
+    if (!range) return null;
+
+    const val = parseFloat(value);
+    if (val < range[0]) return 'low';
+    if (val > range[1]) return 'high';
+    return 'normal';
+};
+
+const WarningIcon = ({ status, range }) => {
+    if (status === 'low') return <span title={`Anormal (Bajo). Rango normal: ${range[0]} - ${range[1]}`} className="text-[9px] text-blue-500 font-black animate-pulse bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded ml-1 whitespace-nowrap border border-blue-200 dark:border-blue-800">▼ BAJO ({range[0]}-{range[1]})</span>;
+    if (status === 'high') return <span title={`Anormal (Alto). Rango normal: ${range[0]} - ${range[1]}`} className="text-[9px] text-red-500 font-black animate-pulse bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded ml-1 whitespace-nowrap border border-red-200 dark:border-red-800">▲ ALTO ({range[0]}-{range[1]})</span>;
+    return null;
+};
+
+export default function Show({ auth, surgery, templates, veterinarians, branches }) {
+    const [vitalSigns, setVitalSigns] = useState(surgery.vital_signs || { weight: '', hr: '', rr: '', temp: '', crt: '', bcs: '' });
     const [activeTab, setActiveTab] = useState('pre_op');
     const [checklist, setChecklist] = useState(surgery.checklist || { pre_op: [], intra_op: [], post_op: [] });
     const [notes, setNotes] = useState({
@@ -14,6 +58,31 @@ export default function Show({ auth, surgery, templates }) {
         post: surgery.post_op_notes || ''
     });
     const [isEditingPreOp, setIsEditingPreOp] = useState(false);
+    const [isEditingTeam, setIsEditingTeam] = useState(false);
+    const [teamData, setTeamData] = useState({
+        veterinarian_id: surgery.veterinarian_id || '',
+        anesthesiologist_id: surgery.anesthesiologist_id || '',
+        asa_classification: surgery.asa_classification || '',
+        branch_id: surgery.branch_id || ''
+    });
+
+    const EditIcon = ({ onClick }) => (
+        <button
+            onClick={onClick}
+            type="button"
+            className="absolute top-4 right-4 text-gray-400 dark:text-gray-500 hover:text-brand-primary transition-colors z-20 block p-1"
+            title="Editar Información"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
+        </button>
+    );
+
+    const saveTeam = () => {
+        updateSurgery(teamData);
+        setIsEditingTeam(false);
+    };
 
     const toggleCheckItem = (group, index) => {
         const newChecklist = { ...checklist };
@@ -103,37 +172,88 @@ export default function Show({ auth, surgery, templates }) {
                                     </div>
 
                                     <div className="space-y-6 border-t dark:border-gray-700 pt-6">
-                                        <div>
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 leading-none">Equipo Médico</p>
-                                            <div className="space-y-3">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center text-sm">🔪</div>
-                                                    <div>
-                                                        <p className="text-[9px] font-bold text-gray-500 uppercase leading-none">Cirujano</p>
-                                                        <p className="text-sm font-black text-gray-800 dark:text-gray-200">{surgery.lead_surgeon.name}</p>
+                                        <div className="relative group bg-white dark:bg-gray-800 rounded-2xl">
+                                            {isEditingTeam ? (
+                                                <div className="space-y-4">
+                                                    <div className="flex justify-between items-center mb-4">
+                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Editar Equipo Médico</p>
                                                     </div>
-                                                </div>
-                                                {surgery.anesthesiologist && (
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center text-sm">💉</div>
+                                                    <div>
+                                                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Cirujano</label>
+                                                        <select value={teamData.veterinarian_id} onChange={e => setTeamData({ ...teamData, veterinarian_id: e.target.value })} className="w-full text-sm rounded-xl py-2 px-3 border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-brand-primary focus:border-brand-primary">
+                                                            <option value="">Selecciona cirujano...</option>
+                                                            {veterinarians?.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Anestesiólogo</label>
+                                                        <select value={teamData.anesthesiologist_id} onChange={e => setTeamData({ ...teamData, anesthesiologist_id: e.target.value })} className="w-full text-sm rounded-xl py-2 px-3 border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-brand-primary focus:border-brand-primary">
+                                                            <option value="">Selecciona anestesiólogo...</option>
+                                                            {veterinarians?.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                                                        </select>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4">
                                                         <div>
-                                                            <p className="text-[9px] font-bold text-gray-500 uppercase leading-none">Anestesiólogo</p>
-                                                            <p className="text-sm font-black text-gray-800 dark:text-gray-200">{surgery.anesthesiologist.name}</p>
+                                                            <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Riesgo ASA</label>
+                                                            <select value={teamData.asa_classification} onChange={e => setTeamData({ ...teamData, asa_classification: e.target.value })} className="w-full text-sm rounded-xl py-2 px-3 border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-brand-primary focus:border-brand-primary">
+                                                                <option value="">N/A</option>
+                                                                <option value="I">ASA I</option>
+                                                                <option value="II">ASA II</option>
+                                                                <option value="III">ASA III</option>
+                                                                <option value="IV">ASA IV</option>
+                                                                <option value="V">ASA V</option>
+                                                            </select>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Sucursal</label>
+                                                            <select value={teamData.branch_id} onChange={e => setTeamData({ ...teamData, branch_id: e.target.value })} className="w-full text-sm rounded-xl py-2 px-3 border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-brand-primary focus:border-brand-primary">
+                                                                <option value="">Selecciona...</option>
+                                                                {branches?.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                                            </select>
                                                         </div>
                                                     </div>
-                                                )}
-                                            </div>
-                                        </div>
+                                                    <div className="flex gap-2 pt-2">
+                                                        <button onClick={saveTeam} className="flex-1 bg-brand-primary text-white font-bold py-2 rounded-xl text-xs">Guardar</button>
+                                                        <button onClick={() => setIsEditingTeam(false)} className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold py-2 rounded-xl text-xs">Cancelar</button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    {!isEditingTeam && <EditIcon onClick={() => setIsEditingTeam(true)} />}
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 leading-none">Equipo Médico</p>
+                                                        <div className="space-y-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center text-sm">🔪</div>
+                                                                <div>
+                                                                    <p className="text-[9px] font-bold text-gray-500 uppercase leading-none">Cirujano</p>
+                                                                    <p className="text-sm font-black text-gray-800 dark:text-gray-200">{surgery.lead_surgeon?.name || 'No asignado'}</p>
+                                                                </div>
+                                                            </div>
+                                                            {surgery.anesthesiologist && (
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center text-sm">💉</div>
+                                                                    <div>
+                                                                        <p className="text-[9px] font-bold text-gray-500 uppercase leading-none">Anestesiólogo</p>
+                                                                        <p className="text-sm font-black text-gray-800 dark:text-gray-200">{surgery.anesthesiologist?.name || 'No asignado'}</p>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
 
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700">
-                                                <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Riesgo ASA</p>
-                                                <p className="text-xl font-black text-brand-primary text-center">ASA {surgery.asa_classification || '-'}</p>
-                                            </div>
-                                            <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700">
-                                                <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Sucursal</p>
-                                                <p className="text-[11px] font-bold text-gray-600 dark:text-gray-400 text-center leading-tight">{surgery.branch.name}</p>
-                                            </div>
+                                                    <div className="grid grid-cols-2 gap-4 mt-6">
+                                                        <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700">
+                                                            <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Riesgo ASA</p>
+                                                            <p className="text-[15px] font-black text-brand-primary text-center">ASA {surgery.asa_classification || '-'}</p>
+                                                        </div>
+                                                        <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700">
+                                                            <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Sucursal</p>
+                                                            <p className="text-[11px] font-bold text-gray-600 dark:text-gray-400 text-center leading-tight flex items-center justify-center h-full pb-1">{surgery.branch?.name}</p>
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
 
                                         {surgery.status === 'scheduled' && (
@@ -296,33 +416,58 @@ export default function Show({ auth, surgery, templates }) {
                                                         </button>
                                                     )}
                                                 </div>
-                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
                                                     <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-brand-primary focus-within:border-transparent">
-                                                        <label className="text-[9px] font-black text-gray-400 uppercase">Peso Actual</label>
+                                                        <label className="text-[9px] font-black text-gray-400 uppercase block mb-1">Peso Actual</label>
                                                         <div className="flex items-center text-xl font-black text-gray-900 dark:text-white mt-1">
                                                             <input type="text" value={vitalSigns.weight || ''} onChange={e => setVitalSigns({ ...vitalSigns, weight: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300" placeholder="0" />
                                                             <span className="text-gray-400 ml-1 text-sm font-bold">kg</span>
                                                         </div>
                                                     </div>
-                                                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-rose-500">
-                                                        <label className="text-[9px] font-black text-gray-400 uppercase">Frec. Cardíaca</label>
+                                                    <div className={`p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-amber-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'temp', vitalSigns.temp) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-500' : checkRange(surgery.pet.species, surgery.pet.dob, 'temp', vitalSigns.temp) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-500' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
+                                                        <div className="flex flex-wrap gap-1 items-center w-full mb-1">
+                                                            <label className="text-[9px] font-black text-gray-400 uppercase mr-auto">Temperatura</label>
+                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'temp', vitalSigns.temp)} range={VITAL_RANGES[surgery.pet.species?.toLowerCase() === 'canino' ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['temp']} />
+                                                        </div>
+                                                        <div className="flex items-center text-xl font-black text-gray-900 dark:text-white mt-1">
+                                                            <input type="text" value={vitalSigns.temp || ''} onChange={e => setVitalSigns({ ...vitalSigns, temp: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300" placeholder="0.0" />
+                                                            <span className="text-gray-400 ml-1 text-sm font-bold">°C</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-rose-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'hr', vitalSigns.hr) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-500' : checkRange(surgery.pet.species, surgery.pet.dob, 'hr', vitalSigns.hr) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-500' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
+                                                        <div className="flex flex-wrap gap-1 items-center w-full mb-1">
+                                                            <label className="text-[9px] font-black text-gray-400 uppercase mr-auto">Frec. Cardíaca</label>
+                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'hr', vitalSigns.hr)} range={VITAL_RANGES[surgery.pet.species?.toLowerCase() === 'canino' ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['hr']} />
+                                                        </div>
                                                         <div className="flex items-center text-xl font-black text-gray-900 dark:text-white mt-1">
                                                             <input type="text" value={vitalSigns.hr || ''} onChange={e => setVitalSigns({ ...vitalSigns, hr: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300 text-rose-500" placeholder="0" />
                                                             <span className="text-gray-400 ml-1 text-sm font-bold">bpm</span>
                                                         </div>
                                                     </div>
-                                                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-blue-500">
-                                                        <label className="text-[9px] font-black text-gray-400 uppercase">Frec. Respiratoria</label>
+                                                    <div className={`p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-blue-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'rr', vitalSigns.rr) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-500' : checkRange(surgery.pet.species, surgery.pet.dob, 'rr', vitalSigns.rr) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-500' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
+                                                        <div className="flex flex-wrap gap-1 items-center w-full mb-1">
+                                                            <label className="text-[9px] font-black text-gray-400 uppercase mr-auto">Frec. Respiratoria</label>
+                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'rr', vitalSigns.rr)} range={VITAL_RANGES[surgery.pet.species?.toLowerCase() === 'canino' ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['rr']} />
+                                                        </div>
                                                         <div className="flex items-center text-xl font-black text-gray-900 dark:text-white mt-1">
                                                             <input type="text" value={vitalSigns.rr || ''} onChange={e => setVitalSigns({ ...vitalSigns, rr: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300" placeholder="0" />
                                                             <span className="text-gray-400 ml-1 text-[10px] font-bold">rpm</span>
                                                         </div>
                                                     </div>
-                                                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-amber-500">
-                                                        <label className="text-[9px] font-black text-gray-400 uppercase">Temperatura</label>
+                                                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent">
+                                                        <label className="text-[9px] font-black text-gray-400 uppercase block mb-1">CC (Cond.)</label>
                                                         <div className="flex items-center text-xl font-black text-gray-900 dark:text-white mt-1">
-                                                            <input type="text" value={vitalSigns.temp || ''} onChange={e => setVitalSigns({ ...vitalSigns, temp: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300" placeholder="0.0" />
-                                                            <span className="text-gray-400 ml-1 text-sm font-bold">°C</span>
+                                                            <input type="text" value={vitalSigns.bcs || ''} onChange={e => setVitalSigns({ ...vitalSigns, bcs: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300" placeholder="Ej: 5" />
+                                                        </div>
+                                                    </div>
+                                                    <div className={`p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-indigo-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'crt', vitalSigns.crt) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-500' : checkRange(surgery.pet.species, surgery.pet.dob, 'crt', vitalSigns.crt) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-500' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
+                                                        <div className="flex flex-wrap gap-1 items-center w-full mb-1">
+                                                            <label className="text-[9px] font-black text-gray-400 uppercase mr-auto">TLLC (seg)</label>
+                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'crt', vitalSigns.crt)} range={VITAL_RANGES[surgery.pet.species?.toLowerCase() === 'canino' ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['crt']} />
+                                                        </div>
+                                                        <div className="flex items-center text-xl font-black text-gray-900 dark:text-white mt-1">
+                                                            <input type="text" value={vitalSigns.crt || ''} onChange={e => setVitalSigns({ ...vitalSigns, crt: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300" placeholder="0" />
+                                                            <span className="text-gray-400 ml-1 text-[10px] font-bold">s</span>
                                                         </div>
                                                     </div>
                                                 </div>

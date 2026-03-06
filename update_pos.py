@@ -1,4 +1,6 @@
-import { Head, useForm, Link, usePage, router } from '@inertiajs/react';
+import os
+
+jsx_content = """import { Head, useForm, Link, usePage, router } from '@inertiajs/react';
 import React, { useState, useMemo, useEffect } from 'react';
 
 export default function Create({ auth, clients, products, pets, selectedClientId, activeRegister, currentStats, generalPublicClient }) {
@@ -149,8 +151,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
     const subtotal = data.items.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0);
     const taxIvaAmount = data.items.reduce((acc, item) => acc + (item.quantity * item.unit_price * (item.tax_iva / 100)), 0);
     const taxIepsAmount = data.items.reduce((acc, item) => acc + (item.quantity * item.unit_price * (item.tax_ieps / 100)), 0);
-    const tax = taxIvaAmount + taxIepsAmount;
-    const total = subtotal + tax;
+    const total = subtotal + taxIvaAmount + taxIepsAmount;
 
     const submit = (e) => {
         e.preventDefault();
@@ -158,7 +159,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
     };
 
     return (
-        <div className="h-[100dvh] w-full flex flex-col bg-[#0f111a] text-gray-200 overflow-hidden font-sans">
+        <div className="h-screen w-full flex flex-col bg-[#0f111a] text-gray-200 overflow-hidden font-sans">
             <Head title="Punto de Venta" />
 
             {!activeRegister ? (
@@ -222,8 +223,8 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                 </div>
                                 <div className="flex-1 relative">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">🔍</div>
-                                    <input
-                                        type="text"
+                                    <input 
+                                        type="text" 
                                         className="w-full bg-transparent border-none py-2 pl-9 pr-4 text-sm font-bold text-white focus:ring-0 placeholder-gray-500"
                                         placeholder={`Buscar ${searchType === 'client' ? 'cliente' : 'mascota'}...`}
                                         value={generalSearch}
@@ -247,16 +248,16 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                     </div>
 
                     {/* MAIN CONTENT AREA */}
-                    <div className="flex-1 flex flex-col xl:flex-row gap-6 p-6 overflow-hidden min-h-0">
-
+                    <div className="flex-1 flex flex-col xl:flex-row gap-6 p-6 overflow-hidden">
+                        
                         {/* LEFT PANE */}
                         <div className="flex-[5] flex flex-col bg-[#1A2131] border border-[#2A3347] rounded-[2rem] overflow-hidden shadow-2xl relative">
                             {/* Product Search Bar */}
                             <div className="p-5 border-b border-[#2A3347] shrink-0 bg-[#111623]/20">
                                 <div className="relative">
                                     <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg">🛒</span>
-                                    <input
-                                        type="text"
+                                    <input 
+                                        type="text" 
                                         className="w-full bg-[#0B0F19] border border-[#2A3347] rounded-xl py-4 pl-14 pr-6 text-white font-bold focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors placeholder-[#4A5568]"
                                         placeholder="Escanea o busca productos y servicios..."
                                         value={productSearch}
@@ -274,7 +275,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                                         <p className="font-bold text-gray-200 group-hover:text-purple-400 transition-colors uppercase leading-tight">{p.name}</p>
                                                         <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">SKU: {p.sku || p.barcode || 'S/C'} • {p.type === 'product' ? 'Pro.' : 'Serv.'}</p>
                                                     </div>
-                                                    <p className="font-black text-white px-3 py-1 bg-[#111623] rounded-lg border border-[#2A3347] group-hover:border-purple-500/30 group-hover:text-purple-400">${parseFloat(p.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                                                    <p className="font-black text-white px-3 py-1 bg-[#111623] rounded-lg border border-[#2A3347] group-hover:border-purple-500/30 group-hover:text-purple-400">${parseFloat(p.price).toLocaleString('es-MX', {minimumFractionDigits:2})}</p>
                                                 </div>
                                             ))}
                                         </div>
@@ -312,10 +313,10 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                                     <button type="button" onClick={() => updateQuantity(idx, 1)} className="w-8 h-8 rounded-lg bg-[#111623] border border-[#2A3347] hover:bg-[#2A3347] hover:text-white text-gray-400 flex items-center justify-center font-bold transition">+</button>
                                                 </div>
                                                 <div className="w-32 text-right font-bold text-gray-400">
-                                                    ${parseFloat(item.unit_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                    ${parseFloat(item.unit_price).toLocaleString('es-MX', {minimumFractionDigits:2})}
                                                 </div>
                                                 <div className="w-32 text-right font-black text-white text-lg">
-                                                    ${((item.quantity * item.unit_price) + (item.quantity * item.unit_price * (item.tax_iva / 100)) + (item.quantity * item.unit_price * (item.tax_ieps / 100))).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                    ${((item.quantity * item.unit_price) + (item.quantity * item.unit_price * (item.tax_iva/100)) + (item.quantity * item.unit_price * (item.tax_ieps/100))).toLocaleString('es-MX', {minimumFractionDigits:2})}
                                                 </div>
                                                 <div className="w-12 flex justify-end">
                                                     <button type="button" onClick={() => removeItem(idx)} className="text-[#2A3347] group-hover:text-red-400 transition hover:bg-red-500/10 p-2 rounded-lg" title="Eliminar Ítem">✖</button>
@@ -329,33 +330,33 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                             {/* Client Active Info Bar (Bottom) */}
                             <div className="flex items-center justify-between p-5 bg-[#111623] border-t border-[#2A3347] shrink-0">
                                 <div className="flex items-center gap-4">
-                                    <div className="bg-[#1A2131] border border-[#2A3347] rounded-xl px-4 py-2 flex items-center gap-3">
-                                        <span className="text-xl opacity-60">👤</span>
-                                        <div>
-                                            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 leading-none mb-1">Dueño / Cliente</p>
-                                            <p className="font-black text-sm text-gray-200 uppercase leading-none">{selectedClient ? selectedClient.name : 'Público en General'}</p>
-                                        </div>
-                                    </div>
-                                    {selectedPet && (
-                                        <>
-                                            <div className="h-6 w-px bg-[#2A3347] rotate-[15deg] mx-1"></div>
-                                            <div className="bg-[#1A2131] border border-[#2A3347] rounded-xl px-4 py-2 flex items-center gap-3">
-                                                <span className="text-xl opacity-60">🐾</span>
-                                                <div>
-                                                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-purple-400 leading-none mb-1">Paciente</p>
-                                                    <p className="font-black text-sm text-white uppercase leading-none">{selectedPet.name}</p>
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
+                                   <div className="bg-[#1A2131] border border-[#2A3347] rounded-xl px-4 py-2 flex items-center gap-3">
+                                       <span className="text-xl opacity-60">👤</span>
+                                       <div>
+                                           <p className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 leading-none mb-1">Dueño / Cliente</p>
+                                           <p className="font-black text-sm text-gray-200 uppercase leading-none">{selectedClient ? selectedClient.name : 'Público en General'}</p>
+                                       </div>
+                                   </div>
+                                   {selectedPet && (
+                                       <>
+                                           <div className="h-6 w-px bg-[#2A3347] rotate-[15deg] mx-1"></div>
+                                           <div className="bg-[#1A2131] border border-[#2A3347] rounded-xl px-4 py-2 flex items-center gap-3">
+                                              <span className="text-xl opacity-60">🐾</span>
+                                              <div>
+                                                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-purple-400 leading-none mb-1">Paciente</p>
+                                                  <p className="font-black text-sm text-white uppercase leading-none">{selectedPet.name}</p>
+                                              </div>
+                                           </div>
+                                       </>
+                                   )}
                                 </div>
                                 <button type="button" onClick={emptyCart} disabled={data.items.length === 0} className="text-xs font-black uppercase tracking-widest text-gray-500 hover:text-red-400 transition bg-transparent border border-transparent hover:border-red-500/30 hover:bg-red-500/10 px-4 py-2 rounded-lg disabled:opacity-0">VACIAR CARRITO</button>
                             </div>
                         </div>
 
                         {/* RIGHT PANE: Summary and Controls */}
-                        <div className="flex-[2] flex flex-col gap-5 shrink-0 w-full xl:max-w-[420px] overflow-y-auto hide-scrollbar">
-
+                        <div className="flex-[2] flex flex-col gap-5 shrink-0 max-w-[420px]">
+                            
                             {/* Purple Card Total */}
                             <div className="bg-gradient-to-br from-purple-600 via-[#7928CA] to-[#5C1CA6] rounded-[2rem] p-7 shadow-2xl relative overflow-hidden shrink-0 border border-purple-400/20">
                                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 blur-3xl rounded-full mix-blend-overlay"></div>
@@ -363,20 +364,20 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                     <h3 className="text-white font-black text-[10px] uppercase tracking-[0.2em]">Resumen del Cobro</h3>
                                 </div>
                                 <div className="space-y-2 mb-6 text-sm font-bold relative z-10 text-purple-100">
-                                    <div className="flex justify-between border-b border-purple-500/30 pb-2"><span>Subtotal</span><span>${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span></div>
-                                    <div className="flex justify-between border-b border-purple-500/30 pb-2"><span>Impuestos</span><span>${tax.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span></div>
+                                    <div className="flex justify-between border-b border-purple-500/30 pb-2"><span>Subtotal</span><span>${subtotal.toLocaleString('es-MX', {minimumFractionDigits:2})}</span></div>
+                                    <div className="flex justify-between border-b border-purple-500/30 pb-2"><span>Impuestos</span><span>${tax.toLocaleString('es-MX', {minimumFractionDigits:2})}</span></div>
                                 </div>
                                 <div className="pt-2 flex flex-col items-end relative z-10">
                                     <span className="text-[10px] font-black uppercase tracking-[0.3em] mb-1 text-purple-200">Total Venta</span>
                                     <div className="flex items-start gap-1">
                                         <span className="text-3xl font-black mt-1">$</span>
-                                        <span className="text-6xl font-black tracking-tighter drop-shadow-lg">{total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                        <span className="text-6xl font-black tracking-tighter drop-shadow-lg">{total.toLocaleString('es-MX', {minimumFractionDigits:2})}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Payment Configuration container */}
-                            <div className="bg-[#1A2131] border border-[#2A3347] rounded-[2rem] p-7 flex-1 flex flex-col shadow-xl">
+                            <div className="bg-[#1A2131] border border-[#2A3347] rounded-[2rem] p-7 flex-1 flex flex-col shadow-xl overflow-y-auto scrollbar-thin scrollbar-thumb-[#2A3347] scrollbar-track-transparent">
                                 <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Método de Pago</h3>
                                 <div className="grid grid-cols-2 gap-3 mb-6 shrink-0">
                                     {[
@@ -390,7 +391,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                             type="button"
                                             onClick={() => {
                                                 setData('payment_method', method.id);
-                                                if (method.id !== 'cash' && method.id !== 'mixed') { setReceivedAmount(''); setData('mixed_cash_amount', ''); }
+                                                if(method.id !== 'cash' && method.id !== 'mixed') { setReceivedAmount(''); setData('mixed_cash_amount', ''); }
                                             }}
                                             className={`py-4 rounded-2xl flex flex-col items-center justify-center gap-2 border transition-all ${data.payment_method === method.id ? 'border-purple-500 bg-purple-500/10 text-purple-400 font-bold shadow-inner' : 'border-[#2A3347] bg-[#111623] hover:bg-[#252E43] text-gray-500'}`}
                                         >
@@ -399,12 +400,12 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                         </button>
                                     ))}
                                     <button
-                                        onClick={() => {
-                                            setData('payment_method', 'credit');
-                                            setReceivedAmount(''); setData('mixed_cash_amount', '');
-                                        }}
-                                        disabled={selectedClient?.id === generalPublicClient?.id}
-                                        className={`col-span-2 py-3 rounded-2xl flex items-center justify-center gap-2 border transition-all ${data.payment_method === 'credit' ? 'border-amber-500 bg-amber-500/10 text-amber-500 font-bold' : 'border-[#2A3347] bg-[#111623] hover:bg-[#252E43] text-gray-500'} ${selectedClient?.id === generalPublicClient?.id ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                         onClick={() => {
+                                             setData('payment_method', 'credit');
+                                             setReceivedAmount(''); setData('mixed_cash_amount', '');
+                                         }}
+                                         disabled={selectedClient?.id === generalPublicClient?.id}
+                                         className={`col-span-2 py-3 rounded-2xl flex items-center justify-center gap-2 border transition-all ${data.payment_method === 'credit' ? 'border-amber-500 bg-amber-500/10 text-amber-500 font-bold' : 'border-[#2A3347] bg-[#111623] hover:bg-[#252E43] text-gray-500'} ${selectedClient?.id === generalPublicClient?.id ? 'opacity-30 cursor-not-allowed' : ''}`}
                                     >
                                         <span>⏳</span><span className="text-[10px] uppercase tracking-widest">Fiado / Crédito Pospago</span>
                                     </button>
@@ -414,11 +415,11 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                 {data.payment_method === 'cash' && (
                                     <div className="mb-6 shrink-0 space-y-2 relative">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Importe Recibido ($)</label>
-                                        <input type="number" step="0.01" value={receivedAmount} onChange={e => setReceivedAmount(e.target.value)} className="w-full bg-[#0B0F19] text-white border border-[#2A3347] rounded-xl py-4 px-4 font-black transition text-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-left" placeholder="0.00" />
+                                        <input type="number" step="0.01" value={receivedAmount} onChange={e=>setReceivedAmount(e.target.value)} className="w-full bg-[#0B0F19] text-white border border-[#2A3347] rounded-xl py-4 px-4 font-black transition text-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500text-left" placeholder="0.00" />
                                         {receivedAmount && Number(receivedAmount) >= total && (
                                             <div className="mt-3 p-3 text-center bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
                                                 <span className="text-emerald-400 font-bold text-sm uppercase tracking-widest">Cambio Saliente: </span>
-                                                <span className="text-emerald-400 font-black text-lg">${(Number(receivedAmount) - total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                                <span className="text-emerald-400 font-black text-lg">${(Number(receivedAmount) - total).toLocaleString('es-MX', {minimumFractionDigits:2})}</span>
                                             </div>
                                         )}
                                     </div>
@@ -427,20 +428,20 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                 {data.payment_method === 'mixed' && (
                                     <div className="mb-6 shrink-0 space-y-2">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Efectivo Ingresado ($)</label>
-                                        <input type="number" step="0.01" value={data.mixed_cash_amount} onChange={e => setData('mixed_cash_amount', e.target.value)} className="w-full bg-[#0B0F19] text-white border border-[#2A3347] rounded-xl py-4 px-4 font-black transition text-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-left" placeholder="0.00" />
+                                        <input type="number" step="0.01" value={data.mixed_cash_amount} onChange={e=>setData('mixed_cash_amount', e.target.value)} className="w-full bg-[#0B0F19] text-white border border-[#2A3347] rounded-xl py-4 px-4 font-black transition text-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-left" placeholder="0.00" />
                                         {data.mixed_cash_amount && (
                                             <div className="mt-3 p-3 text-center bg-blue-500/10 border border-blue-500/20 rounded-xl">
                                                 <span className="text-blue-400 font-bold text-sm uppercase tracking-widest">A Cobrar en Tarjeta: </span>
-                                                <span className="text-blue-400 font-black text-lg">${Math.max(0, total - Number(data.mixed_cash_amount)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                                <span className="text-blue-400 font-black text-lg">${Math.max(0, total - Number(data.mixed_cash_amount)).toLocaleString('es-MX', {minimumFractionDigits:2})}</span>
                                             </div>
                                         )}
                                     </div>
                                 )}
 
                                 <div className="mt-auto space-y-2 shrink-0">
-                                    <input type="text" value={data.notes} onChange={e => setData('notes', e.target.value)} className="w-full bg-[#111623] border border-[#2A3347] rounded-xl py-4 px-4 font-bold text-white placeholder-gray-600 focus:border-purple-500 focus:ring-1 focus:ring-purple-500" placeholder="Añadir nota o folio a la venta..." />
+                                    <input type="text" value={data.notes} onChange={e=>setData('notes', e.target.value)} className="w-full bg-[#111623] border border-[#2A3347] rounded-xl py-4 px-4 font-bold text-white placeholder-gray-600 focus:border-purple-500 focus:ring-1 focus:ring-purple-500" placeholder="Añadir nota o folio a la venta..." />
                                 </div>
-
+                                
                                 <button type="button" onClick={submit} disabled={processing || data.items.length === 0 || !data.user_id || (data.payment_method === 'mixed' && !data.mixed_cash_amount)} className="w-full mt-4 bg-purple-600 hover:bg-purple-500 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-[0_0_30px_-5px_rgba(147,51,234,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shrink-0">
                                     {processing ? 'COBRANDO...' : 'COMPLETAR TRANSACCIÓN'}
                                 </button>
@@ -565,8 +566,8 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                     <p className="font-bold text-gray-900 uppercase leading-tight">{item.concept}</p>
                                 </td>
                                 <td className="py-1 text-center font-bold text-gray-700">{item.quantity}</td>
-                                <td className="py-1 text-right font-bold text-gray-700">${parseFloat(item.unit_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-                                <td className="py-1 text-right font-black text-gray-900">${(parseFloat(item.quantity) * parseFloat(item.unit_price)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                                <td className="py-1 text-right font-bold text-gray-700">${parseFloat(item.unit_price).toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
+                                <td className="py-1 text-right font-black text-gray-900">${(parseFloat(item.quantity) * parseFloat(item.unit_price)).toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -574,13 +575,13 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                 <div className="flex justify-end pt-2">
                     <div className="w-48 space-y-1">
                         <div className="flex justify-between items-center text-xs">
-                            <span className="font-bold text-gray-500 uppercase">Subtotal</span><span className="font-black text-gray-900">${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-bold text-gray-500 uppercase">Subtotal</span><span className="font-black text-gray-900">${subtotal.toLocaleString('es-MX', {minimumFractionDigits:2})}</span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
-                            <span className="font-bold text-gray-500 uppercase">Imps.</span><span className="font-black text-gray-900">${tax.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-bold text-gray-500 uppercase">Imps.</span><span className="font-black text-gray-900">${tax.toLocaleString('es-MX', {minimumFractionDigits:2})}</span>
                         </div>
                         <div className="flex justify-between items-center py-1 border-t-2 border-gray-900 mt-1">
-                            <span className="text-[10px] font-black uppercase text-gray-900">Total</span><span className="text-base font-black text-gray-900">${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                            <span className="text-[10px] font-black uppercase text-gray-900">Total</span><span className="text-base font-black text-gray-900">${total.toLocaleString('es-MX', {minimumFractionDigits:2})}</span>
                         </div>
                     </div>
                 </div>
@@ -594,8 +595,6 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                 ::-webkit-scrollbar-track { background: transparent; }
                 ::-webkit-scrollbar-thumb { background: #2A3347; border-radius: 4px; }
                 ::-webkit-scrollbar-thumb:hover { background: #34405A; }
-                .hide-scrollbar::-webkit-scrollbar { display: none; }
-                .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
                 @media print {
                     body { background-color: white !important; }
                     /* Ocultar barra de navegacion si existiese e hide print:hidden elements */
@@ -604,3 +603,8 @@ export default function Create({ auth, clients, products, pets, selectedClientId
         </div>
     );
 }
+"""
+
+out = open(r'c:\xampp2\htdocs\canbull\resources\js\Pages\Finance\Receipts\Create.jsx', 'w', encoding='utf-8')
+out.write(jsx_content)
+out.close()

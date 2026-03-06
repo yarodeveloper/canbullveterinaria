@@ -4,11 +4,21 @@ import React, { useState } from 'react';
 import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export default function Audit({ auth, alerts, products }) {
-    const [activeTab, setActiveTab] = useState('alerts'); // 'alerts' or 'count'
+export default function Audit({ auth, alerts, products, expiringLots = [] }) {
+    const [activeTab, setActiveTab] = useState('alerts'); // 'alerts', 'count', or 'expiring'
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [includeZeroStock, setIncludeZeroStock] = useState(true);
+
+    const getExpirationAlertParams = (lotDate) => {
+        if (!lotDate) return null;
+        const diffDays = differenceInDays(new Date(lotDate), new Date());
+        if (diffDays < 0) return { label: 'Vencido', color: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/50 dark:text-red-300', emoji: '⚠️' };
+        if (diffDays <= 30) return { label: 'Vence < 1 mes', color: 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/50 dark:text-orange-300', emoji: '🚨' };
+        if (diffDays <= 60) return { label: 'Vence < 2 meses', color: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/50 dark:text-amber-300', emoji: '⚠️' };
+        if (diffDays <= 90) return { label: 'Vence < 3 meses', color: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/50 dark:text-yellow-300', emoji: '⏱' };
+        return null;
+    };
 
     const uniqueCategories = [...new Set(products.map(p => p.category.name))].sort();
 
@@ -56,12 +66,18 @@ export default function Audit({ auth, alerts, products }) {
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8 print:m-0 print:p-0 print:w-full print:max-w-none">
 
                     {/* Tabs */}
-                    <div className="flex gap-4 border-b dark:border-gray-700 pb-4 print:hidden">
+                    <div className="flex flex-wrap gap-4 border-b dark:border-gray-700 pb-4 print:hidden">
                         <button
                             onClick={() => setActiveTab('alerts')}
                             className={`px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-colors shadow-sm ${activeTab === 'alerts' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-white dark:bg-gray-800 text-gray-500 hover:bg-gray-50'}`}
                         >
-                            Alertas de Stock & Caducidad ({alerts.length})
+                            Alertas Generales ({alerts.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('expiring')}
+                            className={`px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-colors shadow-sm ${activeTab === 'expiring' ? 'bg-orange-50 text-orange-600 border border-orange-200' : 'bg-white dark:bg-gray-800 text-gray-500 hover:bg-gray-50'}`}
+                        >
+                            Por Vencer Pronto ({expiringLots.length})
                         </button>
                         <button
                             onClick={() => setActiveTab('count')}
@@ -95,7 +111,7 @@ export default function Audit({ auth, alerts, products }) {
                                             <tbody className="divide-y dark:divide-gray-700">
                                                 {alerts.map(product => {
                                                     const isLowStock = product.current_stock <= product.min_stock;
-                                                    const expiringLots = product.lots.filter(lot => {
+                                                    const expiringLotsInAlert = product.lots.filter(lot => {
                                                         if (!lot.expiration_date) return false;
                                                         const days = differenceInDays(new Date(lot.expiration_date), new Date());
                                                         return days <= 90;
@@ -134,12 +150,12 @@ export default function Audit({ auth, alerts, products }) {
                                                                             ⚠️ Poco Stock / Reponer
                                                                         </span>
                                                                     )}
-                                                                    {expiringLots.map(lot => {
-                                                                        const days = differenceInDays(new Date(lot.expiration_date), new Date());
-                                                                        const isExpired = days < 0;
+                                                                    {expiringLotsInAlert.map(lot => {
+                                                                        const alertData = getExpirationAlertParams(lot.expiration_date);
+                                                                        if (!alertData) return null;
                                                                         return (
-                                                                            <span key={lot.id} className={`${isExpired ? 'bg-red-100 text-red-600 border-red-200' : 'bg-amber-100 text-amber-600 border-amber-200'} px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border`}>
-                                                                                {isExpired ? 'Lote Vencido' : `Lote Vence en ${days} días`}
+                                                                            <span key={lot.id} className={`${alertData.color} px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border`}>
+                                                                                {alertData.emoji} {alertData.label} (Lote: {lot.lot_number || 'N/A'})
                                                                             </span>
                                                                         );
                                                                     })}
@@ -161,6 +177,98 @@ export default function Audit({ auth, alerts, products }) {
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {activeTab === 'expiring' && (
+                        <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border dark:border-gray-700 shadow-xl overflow-hidden print:border-none print:shadow-none print:rounded-none">
+                            <div className="p-8 border-b dark:border-gray-700 flex flex-col lg:flex-row justify-between lg:items-center gap-6 print:hidden">
+                                <div>
+                                    <h3 className="text-xl font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight mb-2">Reporte de Caducidades (Próximos 3 meses)</h3>
+                                    <p className="text-xs text-gray-500 font-bold">Lotes ordenados del más próximo a vencer (o vencidos) a los más lejanos.</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => window.print()}
+                                        className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition active:scale-95"
+                                    >
+                                        🖨️ Imprimir
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="hidden print:block p-8 border-b-2 border-black text-center mb-6">
+                                <h1 className="text-3xl font-black uppercase tracking-widest mb-2">Reporte de Caducidades Próximas</h1>
+                                <p className="font-bold">Emisión: {format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: es })}</p>
+                            </div>
+
+                            <div className="overflow-x-auto print:overflow-visible">
+                                <table className="w-full text-left print:text-sm">
+                                    <thead>
+                                        <tr className="bg-gray-50 dark:bg-gray-900/40 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b dark:border-gray-700 print:bg-gray-200 print:text-black">
+                                            <th className="px-8 py-5">Fecha Caducidad</th>
+                                            <th className="px-8 py-5">Articulo</th>
+                                            <th className="px-8 py-5 text-center">Lote</th>
+                                            <th className="px-8 py-5 text-center">Cant. Restante</th>
+                                            <th className="px-8 py-5 text-center">Alerta Mensual</th>
+                                            <th className="px-8 py-5 text-center print:hidden">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y dark:divide-gray-700 print:divide-gray-300">
+                                        {expiringLots.length > 0 ? expiringLots.map(lot => {
+                                            const alertData = getExpirationAlertParams(lot.expiration_date);
+                                            const formattedDate = format(new Date(lot.expiration_date), 'dd/MM/yyyy');
+                                            return (
+                                                <tr key={lot.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors">
+                                                    <td className="px-8 py-4 font-black text-gray-900 dark:text-gray-100 print:text-black whitespace-nowrap">
+                                                        {formattedDate}
+                                                    </td>
+                                                    <td className="px-8 py-4">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-black text-gray-900 dark:text-gray-100 print:text-black">
+                                                                {lot.product?.name}
+                                                            </span>
+                                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                                                                {lot.product?.category?.name} {lot.product?.sku ? `| SKU: ${lot.product.sku}` : ''}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-4 text-center font-bold text-gray-500">
+                                                        {lot.lot_number || '-'}
+                                                    </td>
+                                                    <td className="px-8 py-4 text-center">
+                                                        <span className="text-base font-black text-gray-900 dark:text-gray-100 print:text-black">
+                                                            {parseFloat(lot.current_quantity)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-8 py-4 text-center print:text-xs">
+                                                        {alertData && (
+                                                            <span className={`${alertData.color} px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border print:border-none print:text-black print:bg-transparent`}>
+                                                                {alertData.emoji} {alertData.label}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-8 py-4 text-center print:hidden">
+                                                        <Link
+                                                            href={route('inventory.show', lot.product_id)}
+                                                            className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-brand-primary px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-colors"
+                                                        >
+                                                            Kardex →
+                                                        </Link>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        }) : (
+                                            <tr>
+                                                <td colSpan="6" className="px-8 py-12 text-center text-gray-400">
+                                                    <div className="text-3xl mb-2 opacity-50">🎉</div>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest">No hay caducidades en puerta</p>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
 

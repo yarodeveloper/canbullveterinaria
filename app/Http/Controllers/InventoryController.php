@@ -75,9 +75,19 @@ class InventoryController extends Controller
             return $isLowStock || $hasExpiringLot;
         })->values();
 
+        $expiringLots = Lot::with('product.category')
+            ->where('branch_id', $branchId)
+            ->where('status', 'active')
+            ->whereNotNull('expiration_date')
+            ->where('expiration_date', '<=', $dateThreshold)
+            ->where('current_quantity', '>', 0)
+            ->orderBy('expiration_date', 'asc')
+            ->get();
+
         return Inertia::render('Inventory/Audit', [
             'alerts' => $alerts,
-            'products' => $products // To show the full list for physical count
+            'products' => $products, // To show the full list for physical count
+            'expiringLots' => $expiringLots
         ]);
     }
 
@@ -145,6 +155,8 @@ class InventoryController extends Controller
             'unit' => 'required|string|max:50',
             'min_stock' => 'required|numeric|min:0',
             'price' => 'required|numeric|min:0',
+            'tax_iva' => 'required|numeric|min:0|max:100',
+            'tax_ieps' => 'required|numeric|min:0|max:100',
             'is_controlled' => 'boolean',
         ]);
 
@@ -170,6 +182,8 @@ class InventoryController extends Controller
             'unit' => 'required|string|max:50',
             'min_stock' => 'required|numeric|min:0',
             'price' => 'required|numeric|min:0',
+            'tax_iva' => 'required|numeric|min:0|max:100',
+            'tax_ieps' => 'required|numeric|min:0|max:100',
             'is_controlled' => 'boolean',
             'is_active' => 'boolean',
         ]);
@@ -209,7 +223,8 @@ class InventoryController extends Controller
 
         return Inertia::render('Inventory/Show', [
             'product' => $product,
-            'transactions' => $transactions
+            'transactions' => $transactions,
+            'categories' => \App\Models\ProductCategory::all(),
         ]);
     }
 
@@ -221,6 +236,8 @@ class InventoryController extends Controller
             'lot_number' => 'required|string',
             'expiration_date' => 'nullable|date',
             'quantity' => 'required|numeric|min:0.01',
+            'unit_cost' => 'nullable|numeric|min:0',
+            'provider' => 'nullable|string|max:255',
             'notes' => 'required|string', // Obligatorio para todos (justificación)
         ]);
 
@@ -238,6 +255,8 @@ class InventoryController extends Controller
             'expiration_date' => $validated['expiration_date'],
             'initial_quantity' => $validated['quantity'],
             'current_quantity' => $validated['quantity'],
+            'unit_cost' => $validated['unit_cost'] ?? 0,
+            'provider' => $validated['provider'] ?? null,
             'status' => 'active',
         ]);
 

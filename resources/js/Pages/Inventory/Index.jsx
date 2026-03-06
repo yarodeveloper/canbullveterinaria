@@ -7,6 +7,34 @@ export default function Index({ auth, products, categories, filters }) {
     const [selectedCategory, setSelectedCategory] = useState(filters?.selected_category || 'all');
     const [showCreateModal, setShowCreateModal] = useState(false);
 
+    const getExpirationAlert = (lots) => {
+        if (!lots || lots.length === 0) return null;
+        let minDays = Infinity;
+
+        lots.forEach(lot => {
+            if (lot.expiration_date && parseFloat(lot.current_quantity) > 0) {
+                const expDate = new Date(lot.expiration_date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                expDate.setHours(0, 0, 0, 0);
+                const diffTime = expDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays < minDays) {
+                    minDays = diffDays;
+                }
+            }
+        });
+
+        if (minDays === Infinity || minDays > 90) return null;
+        if (minDays < 0) return { label: 'Vencido', color: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/50 dark:text-red-300' };
+        if (minDays <= 30) return { label: 'Vence < 1 mes', color: 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/50 dark:text-orange-300' };
+        if (minDays <= 60) return { label: 'Vence < 2 meses', color: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/50 dark:text-amber-300' };
+        if (minDays <= 90) return { label: 'Vence < 3 meses', color: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/50 dark:text-yellow-300' };
+
+        return null;
+    };
+
     useEffect(() => {
         const handler = setTimeout(() => {
             if (searchTerm !== (filters?.search_term || '') || selectedCategory !== (filters?.selected_category || 'all')) {
@@ -26,6 +54,8 @@ export default function Index({ auth, products, categories, filters }) {
         unit: 'pieza',
         min_stock: 5,
         price: '',
+        tax_iva: 16,
+        tax_ieps: 0,
         is_controlled: false,
     });
 
@@ -118,6 +148,7 @@ export default function Index({ auth, products, categories, filters }) {
                                 <tbody className="divide-y dark:divide-gray-700">
                                     {products.data.length > 0 ? products.data.map(product => {
                                         const isLowStock = product.current_stock <= product.min_stock;
+                                        const expirationAlert = getExpirationAlert(product.lots);
                                         return (
                                             <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors group">
                                                 <td className="px-6 py-2">
@@ -155,15 +186,22 @@ export default function Index({ auth, products, categories, filters }) {
                                                     ${parseFloat(product.price).toLocaleString()}
                                                 </td>
                                                 <td className="px-6 py-2 text-center">
-                                                    {isLowStock ? (
-                                                        <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-red-200">
-                                                            Poco Stock
-                                                        </span>
-                                                    ) : (
-                                                        <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-emerald-200">
-                                                            OK
-                                                        </span>
-                                                    )}
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        {isLowStock ? (
+                                                            <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-red-200">
+                                                                Poco Stock
+                                                            </span>
+                                                        ) : (
+                                                            <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-emerald-200">
+                                                                Stock OK
+                                                            </span>
+                                                        )}
+                                                        {expirationAlert && (
+                                                            <span className={`${expirationAlert.color} px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border`}>
+                                                                ⏰ {expirationAlert.label}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-2 text-center">
                                                     <Link
@@ -197,7 +235,7 @@ export default function Index({ auth, products, categories, filters }) {
                                             key={index}
                                             href={link.url || '#'}
                                             className={`px-3 py-1.5 text-xs font-black uppercase rounded-lg transition-colors ${!link.url ? 'text-gray-400 cursor-not-allowed opacity-50' :
-                                                    link.active ? 'bg-brand-primary text-white shadow-md' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                link.active ? 'bg-brand-primary text-white shadow-md' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                                                 }`}
                                             dangerouslySetInnerHTML={{ __html: link.label }}
                                         />
@@ -303,6 +341,39 @@ export default function Index({ auth, products, categories, filters }) {
                                         className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold"
                                         required
                                     />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">IVA (%) (Eq. Medicamento = 0%)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={data.tax_iva}
+                                            onChange={e => setData('tax_iva', e.target.value)}
+                                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 pl-6 pr-8 focus:ring-2 focus:ring-brand-primary font-bold text-gray-900 dark:text-gray-100"
+                                            required
+                                        />
+                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 font-bold">%</span>
+                                    </div>
+                                    {errors.tax_iva && <p className="text-red-500 text-xs mt-1 ml-1 font-bold">{errors.tax_iva}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">IEPS (%) (Eq. Dulces/Chocolate)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={data.tax_ieps}
+                                            onChange={e => setData('tax_ieps', e.target.value)}
+                                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 pl-6 pr-8 focus:ring-2 focus:ring-brand-primary font-bold text-gray-900 dark:text-gray-100"
+                                            required
+                                        />
+                                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 font-bold">%</span>
+                                    </div>
+                                    {errors.tax_ieps && <p className="text-red-500 text-xs mt-1 ml-1 font-bold">{errors.tax_ieps}</p>}
                                 </div>
                             </div>
 

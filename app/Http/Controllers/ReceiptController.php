@@ -85,6 +85,8 @@ class ReceiptController extends Controller
             'items.*.concept' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.tax_iva' => 'nullable|numeric|min:0',
+            'items.*.tax_ieps' => 'nullable|numeric|min:0',
             'items.*.type' => 'required|in:product,service',
             'payment_method' => 'required|string',
             'mixed_cash_amount' => 'nullable|numeric|min:0',
@@ -116,11 +118,15 @@ class ReceiptController extends Controller
             
             foreach ($validated['items'] as $item) {
                 $lineSubtotal = $item['quantity'] * $item['unit_price'];
+                $ivaPercent = $item['tax_iva'] ?? ($item['type'] === 'service' ? 0 : 16);
+                $iepsPercent = $item['tax_ieps'] ?? 0;
+
+                $lineTaxIva = $lineSubtotal * ($ivaPercent / 100);
+                $lineTaxIeps = $lineSubtotal * ($iepsPercent / 100);
+                $lineTax = $lineTaxIva + $lineTaxIeps;
+
                 $subtotal += $lineSubtotal;
-                // Basic tax logic: services 0%, products 16% (can be customized)
-                if ($item['type'] === 'product') {
-                    $tax += $lineSubtotal * 0.16;
-                }
+                $tax += $lineTax;
             }
 
             $total = $subtotal + $tax;
@@ -141,7 +147,12 @@ class ReceiptController extends Controller
 
             foreach ($validated['items'] as $item) {
                 $lineSubtotal = $item['quantity'] * $item['unit_price'];
-                $lineTax = ($item['type'] === 'product') ? $lineSubtotal * 0.16 : 0;
+                $ivaPercent = $item['tax_iva'] ?? ($item['type'] === 'service' ? 0 : 16);
+                $iepsPercent = $item['tax_ieps'] ?? 0;
+
+                $lineTaxIva = $lineSubtotal * ($ivaPercent / 100);
+                $lineTaxIeps = $lineSubtotal * ($iepsPercent / 100);
+                $lineTax = $lineTaxIva + $lineTaxIeps;
 
                 ReceiptItem::create([
                     'receipt_id' => $receipt->id,
