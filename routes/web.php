@@ -85,6 +85,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/inventory/{product}/lots', [\App\Http\Controllers\InventoryController::class, 'storeLot'])->name('inventory.lots.store');
     Route::post('/inventory/{product}/adjust', [\App\Http\Controllers\InventoryController::class, 'adjustStock'])->name('inventory.adjust');
 
+    // Categorias de productos y servicios
+    Route::resource('product-categories', \App\Http\Controllers\ProductCategoryController::class)->except(['create', 'show', 'edit']);
+
+
     // Finanzas (Cortes de Caja, Recibos y Movimientos)
     Route::get('/cash-register', [\App\Http\Controllers\CashRegisterController::class, 'index'])->name('cash-register.index');
     Route::post('/cash-register/open', [\App\Http\Controllers\CashRegisterController::class, 'open'])->name('cash-register.open');

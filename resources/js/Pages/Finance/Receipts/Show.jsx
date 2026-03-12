@@ -98,7 +98,10 @@ export default function Show({ auth, receipt }) {
                                         <tr key={idx}>
                                             <td className="py-6 px-4">
                                                 <p className="font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">{item.concept}</p>
-                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{item.type === 'service' ? 'Servicio Clínico' : 'Insumo/Farmacia'}</p>
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                                    {item.type === 'service' ? 'Servicio Clínico' : 'Insumo/Farmacia'}
+                                                    {item.assigned_user && ` • Atendió: ${item.assigned_user.name}`}
+                                                </p>
                                             </td>
                                             <td className="py-6 px-4 text-center font-bold text-gray-600 dark:text-gray-400">{parseFloat(item.quantity)}</td>
                                             <td className="py-6 px-4 text-right font-bold text-gray-600 dark:text-gray-400">${parseFloat(item.unit_price).toLocaleString()}</td>

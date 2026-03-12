@@ -10,17 +10,28 @@ use Illuminate\Support\Facades\Auth;
 
 class PetController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $branchId = Auth::user()->branch_id;
+        $search = $request->input('search');
         
         $pets = Pet::where('branch_id', $branchId)
+            ->when($search, function($query, $search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhereHas('owner', function($q2) use ($search) {
+                          $q2->where('name', 'like', "%{$search}%");
+                      });
+                });
+            })
             ->with('owner')
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('Pets/Index', [
-            'pets' => $pets
+            'pets' => $pets,
+            'filters' => request()->only(['search'])
         ]);
     }
 

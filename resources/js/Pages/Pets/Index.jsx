@@ -1,9 +1,25 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { IconEye, IconEdit, IconPlus } from '@/Components/Icons';
 import PetAvatar from '@/Components/PetAvatar';
+import { useState, useEffect } from 'react';
 
-export default function Index({ auth, pets }) {
+export default function Index({ auth, pets, filters }) {
+    const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+
+    useEffect(() => {
+        const delayBounceFn = setTimeout(() => {
+            if (searchTerm !== (filters?.search || '')) {
+                router.get(
+                    route('pets.index'),
+                    { search: searchTerm },
+                    { preserveState: true, replace: true }
+                );
+            }
+        }, 300);
+
+        return () => clearTimeout(delayBounceFn);
+    }, [searchTerm]);
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -15,14 +31,30 @@ export default function Index({ auth, pets }) {
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900 dark:text-gray-100">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-lg font-medium">Listado de Pacientes</h3>
-                                <Link
-                                    href={route('pets.create')}
-                                    className="inline-flex items-center px-6 py-2 bg-brand-primary border border-transparent rounded-xl font-black text-xs text-white uppercase tracking-widest hover:bg-brand-primary/90 focus:bg-brand-primary/90 active:bg-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 transition ease-in-out duration-150 shadow-lg shadow-brand-primary/20"
-                                >
-                                    + Registrar Mascota
-                                </Link>
+                            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                                <h3 className="text-lg font-medium hidden sm:block">Listado de Pacientes</h3>
+                                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-center">
+                                    <div className="relative w-full sm:w-64">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Buscar mascota o dueño..."
+                                            className="block w-full pl-10 pr-3 py-2.5 border-none rounded-full shadow-inner bg-gray-50/50 dark:bg-gray-900/50 focus:bg-white dark:focus:bg-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary sm:text-sm font-bold transition-all text-gray-900 dark:text-gray-100"
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                        />
+                                    </div>
+                                    <Link
+                                        href={route('pets.create')}
+                                        className="inline-flex items-center justify-center px-6 py-2 bg-brand-primary border border-transparent rounded-xl font-black text-xs text-white uppercase tracking-widest hover:bg-brand-primary/90 focus:bg-brand-primary/90 active:bg-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 transition ease-in-out duration-150 shadow-lg shadow-brand-primary/20 w-full sm:w-auto"
+                                    >
+                                        + Registrar Mascota
+                                    </Link>
+                                </div>
                             </div>
 
                             <div className="overflow-x-auto">

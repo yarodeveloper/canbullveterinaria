@@ -40,12 +40,22 @@ class CashRegisterController extends Controller
                 ->where('type', 'out')
                 ->sum('amount');
                 
+            $productSales = \App\Models\ReceiptItem::whereHas('receipt', function($q) use ($activeRegister) {
+                $q->where('cash_register_id', $activeRegister->id)->where('status', 'paid');
+            })->where('type', 'product')->sum('total');
+
+            $serviceSales = \App\Models\ReceiptItem::whereHas('receipt', function($q) use ($activeRegister) {
+                $q->where('cash_register_id', $activeRegister->id)->where('status', 'paid');
+            })->where('type', 'service')->sum('total');
+
             $expected = $activeRegister->opening_amount + $receiptsTotal + $incomes - $expenses;
             
             $currentStats = [
                 'receipts_total' => $receiptsTotal,
                 'incomes' => $incomes,
                 'expenses' => $expenses,
+                'product_sales' => $productSales,
+                'service_sales' => $serviceSales,
                 'expected_amount' => $expected,
             ];
         }
@@ -139,7 +149,7 @@ class CashRegisterController extends Controller
         $cashRegister->load(['openedBy', 'closedBy', 'branch']);
 
         // Fetch stats for the print view
-        $receipts = Receipt::where('cash_register_id', $cashRegister->id)->with('client')->get();
+        $receipts = Receipt::where('cash_register_id', $cashRegister->id)->where('status', 'paid')->with(['client', 'items'])->get();
         $movements = CashMovement::where('cash_register_id', $cashRegister->id)->whereIn('type', ['in', 'out'])->with('user')->get();
 
         return Inertia::render('Finance/CashRegister/Print', [

@@ -17,8 +17,11 @@ class MedicalRecordController extends Controller
             abort(403);
         }
 
+        $products = \App\Models\Product::where('is_active', true)->get();
+
         return Inertia::render('MedicalRecords/Create', [
-            'pet' => $pet->load('owner')
+            'pet' => $pet->load('owner'),
+            'products' => $products
         ]);
     }
 
@@ -47,6 +50,10 @@ class MedicalRecordController extends Controller
             'anamnesis' => 'nullable|array',
             'physical_state' => 'nullable|string',
             'attachments.*' => 'nullable|file|max:10240', // 10MB limit
+            'pending_charges' => 'nullable|array',
+            'pending_charges.*.product_id' => 'required|exists:products,id',
+            'pending_charges.*.quantity' => 'required|numeric|min:1',
+            'pending_charges.*.notes' => 'nullable|string',
         ]);
 
         $medicalRecord = new MedicalRecord($validated);
@@ -71,6 +78,25 @@ class MedicalRecordController extends Controller
         // Update pet weight if provided
         if (isset($validated['vital_signs']['weight'])) {
             $pet->update(['weight' => $validated['vital_signs']['weight']]);
+        }
+
+        // Handle Pending Charges (Send to Cash Register)
+        if (!empty($validated['pending_charges'])) {
+            $ownerId = $pet->owner ? $pet->owner->id : null;
+            if (!$ownerId && $pet->user_id) $ownerId = $pet->user_id;
+
+            foreach ($validated['pending_charges'] as $charge) {
+                \App\Models\PendingCharge::create([
+                    'branch_id' => Auth::user()->branch_id,
+                    'client_id' => $ownerId,
+                    'pet_id' => $pet->id,
+                    'product_id' => $charge['product_id'],
+                    'quantity' => $charge['quantity'],
+                    'assigned_user_id' => Auth::id(),
+                    'status' => 'pending',
+                    'notes' => $charge['notes'] ?? null,
+                ]);
+            }
         }
 
         return redirect()->route('pets.show', $pet->id)

@@ -66,13 +66,24 @@ class ReceiptController extends Controller
             ]
         );
 
+        $staff = User::whereIn('role', ['admin', 'veterinarian', 'groomer', 'staff'])
+                     ->select('id', 'name', 'role')
+                     ->get();
+
+        $pendingCharges = \App\Models\PendingCharge::with(['pet', 'product', 'assignedUser'])
+            ->where('branch_id', $branchId)
+            ->where('status', 'pending')
+            ->get();
+
         return Inertia::render('Finance/Receipts/Create', [
             'clients' => $clients,
             'products' => $products,
             'pets' => $pets,
             'selectedClientId' => $request->client_id,
+            'pendingCharges' => $pendingCharges,
             'activeRegister' => $activeRegister,
-            'generalPublicClient' => $generalPublicClient
+            'generalPublicClient' => $generalPublicClient,
+            'staff' => $staff,
         ]);
     }
 
@@ -88,9 +99,12 @@ class ReceiptController extends Controller
             'items.*.tax_iva' => 'nullable|numeric|min:0',
             'items.*.tax_ieps' => 'nullable|numeric|min:0',
             'items.*.type' => 'required|in:product,service',
+            'items.*.assigned_user_id' => 'nullable|exists:users,id',
             'payment_method' => 'required|string',
             'mixed_cash_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
+            'pending_charge_ids' => 'nullable|array',
+            'pending_charge_ids.*' => 'exists:pending_charges,id',
         ]);
 
         $branchId = Auth::user()->branch_id;
@@ -145,6 +159,12 @@ class ReceiptController extends Controller
                 'notes' => $validated['notes'],
             ]);
 
+            if (!empty($validated['pending_charge_ids'])) {
+                $status = clone $receipt->status; // or just hardcode if needed
+                \App\Models\PendingCharge::whereIn('id', $validated['pending_charge_ids'])
+                    ->update(['status' => 'invoiced']);
+            }
+
             foreach ($validated['items'] as $item) {
                 $lineSubtotal = $item['quantity'] * $item['unit_price'];
                 $ivaPercent = $item['tax_iva'] ?? ($item['type'] === 'service' ? 0 : 16);
@@ -163,6 +183,7 @@ class ReceiptController extends Controller
                     'tax' => $lineTax,
                     'total' => $lineSubtotal + $lineTax,
                     'type' => $item['type'],
+                    'assigned_user_id' => $item['assigned_user_id'] ?? null,
                 ]);
                 
                 // Inventory Stock Deduction (FIFO)
@@ -254,7 +275,7 @@ class ReceiptController extends Controller
 
     public function show(Receipt $receipt)
     {
-        $receipt->load(['client', 'items', 'branch']);
+        $receipt->load(['client', 'items.assignedUser', 'branch']);
         return Inertia::render('Finance/Receipts/Show', [
             'receipt' => $receipt
         ]);

@@ -127,9 +127,17 @@ export default function CashRegisterIndex({ auth, activeRegister, currentStats, 
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-4 text-xs font-bold text-gray-500 mb-6">
-                                        <span>Entradas: <span className="text-emerald-500">+${currentStats ? parseFloat(currentStats.incomes + currentStats.receipts_total).toLocaleString() : '0'}</span></span>
-                                        <span>Salidas y Retiros: <span className="text-red-500">-${currentStats ? parseFloat(currentStats.expenses).toLocaleString() : '0'}</span></span>
+                                    <div className="flex flex-col md:flex-row gap-4 text-xs font-bold text-gray-500 mb-6">
+                                        <div className="bg-white/50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700 flex-1">
+                                            <p className="text-[9px] uppercase tracking-widest mb-1 text-gray-400">Total Entradas <span className="text-emerald-500">+${currentStats ? parseFloat(currentStats.incomes + currentStats.receipts_total).toLocaleString() : '0'}</span></p>
+                                            <p>📦 Prods: <span className="text-emerald-600">${currentStats?.product_sales ? parseFloat(currentStats.product_sales).toLocaleString() : '0'}</span></p>
+                                            <p>✨ Servs: <span className="text-emerald-600">${currentStats?.service_sales ? parseFloat(currentStats.service_sales).toLocaleString() : '0'}</span></p>
+                                            {currentStats?.incomes > 0 && <p>💵 Extras: <span className="text-emerald-600">${parseFloat(currentStats.incomes).toLocaleString()}</span></p>}
+                                        </div>
+                                        <div className="bg-white/50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700 flex-1">
+                                            <p className="text-[9px] uppercase tracking-widest mb-1 text-gray-400">Total Salidas / Retiros</p>
+                                            <p className="text-lg text-red-500">-${currentStats ? parseFloat(currentStats.expenses).toLocaleString() : '0'}</p>
+                                        </div>
                                     </div>
 
                                     <button

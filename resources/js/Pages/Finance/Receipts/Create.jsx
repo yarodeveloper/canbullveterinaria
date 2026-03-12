@@ -1,13 +1,14 @@
 import { Head, useForm, Link, usePage, router } from '@inertiajs/react';
 import React, { useState, useMemo, useEffect } from 'react';
 
-export default function Create({ auth, clients, products, pets, selectedClientId, activeRegister, currentStats, generalPublicClient }) {
+export default function Create({ auth, clients, products, pets, selectedClientId, activeRegister, currentStats, generalPublicClient, staff, pendingCharges }) {
     const { data, setData, post, processing } = useForm({
         user_id: selectedClientId || generalPublicClient?.id || '',
         items: [],
         payment_method: 'cash',
         mixed_cash_amount: '',
         notes: '',
+        pending_charge_ids: [],
     });
 
     const { flash } = usePage().props;
@@ -117,13 +118,36 @@ export default function Create({ auth, clients, products, pets, selectedClientId
             ...data.items,
             {
                 product_id: product.id, concept: product.name, unit_price: product.price, quantity: 1,
-                tax_iva: product.tax_iva !== undefined ? parseFloat(product.tax_iva) : (product.type === 'service' ? 0 : 16),
+                tax_iva: product.tax_iva !== undefined ? parseFloat(product.tax_iva) : (product.is_service ? 0 : 16),
                 tax_ieps: product.tax_ieps !== undefined ? parseFloat(product.tax_ieps) : 0,
-                type: product.type === 'service' ? 'service' : 'product',
+                type: product.is_service ? 'service' : 'product',
+                assigned_user_id: '',
             }
         ]);
         setProductSearch('');
         setIsProductSearchOpen(false);
+    };
+
+    const importPendingCharge = (charge) => {
+        if (data.pending_charge_ids.includes(charge.id)) return; // Already imported
+
+        setData(prev => ({
+            ...prev,
+            items: [
+                ...prev.items,
+                {
+                    product_id: charge.product_id, 
+                    concept: charge.product?.name || 'Servicio Médico', 
+                    unit_price: charge.product?.price || 0, 
+                    quantity: charge.quantity,
+                    tax_iva: charge.product?.tax_iva !== undefined ? parseFloat(charge.product.tax_iva) : (charge.product?.is_service ? 0 : 16),
+                    tax_ieps: charge.product?.tax_ieps !== undefined ? parseFloat(charge.product.tax_ieps) : 0,
+                    type: charge.product?.is_service ? 'service' : 'product',
+                    assigned_user_id: charge.assigned_user_id,
+                }
+            ],
+            pending_charge_ids: [...prev.pending_charge_ids, charge.id]
+        }));
     };
 
     const handleProductKeyDown = (e) => {
@@ -143,6 +167,12 @@ export default function Create({ auth, clients, products, pets, selectedClientId
         }
     };
 
+    const updateAssignedUser = (index, userId) => {
+        const newItems = [...data.items];
+        newItems[index].assigned_user_id = userId;
+        setData('items', newItems);
+    };
+
     const removeItem = (index) => setData('items', data.items.filter((_, i) => i !== index));
     const emptyCart = () => setData('items', []);
 
@@ -151,6 +181,11 @@ export default function Create({ auth, clients, products, pets, selectedClientId
     const taxIepsAmount = data.items.reduce((acc, item) => acc + (item.quantity * item.unit_price * (item.tax_ieps / 100)), 0);
     const tax = taxIvaAmount + taxIepsAmount;
     const total = subtotal + tax;
+
+    const clientPendingCharges = useMemo(() => {
+        if (!selectedClient || !pendingCharges) return [];
+        return pendingCharges.filter(pc => pc.client_id === selectedClient.id && !data.pending_charge_ids.includes(pc.id));
+    }, [selectedClient, pendingCharges, data.pending_charge_ids]);
 
     const submit = (e) => {
         e.preventDefault();
@@ -272,7 +307,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                                 <div key={p.id} onClick={() => handleProductSelect(p)} className="px-4 py-3 hover:bg-[#2A3347] rounded-xl cursor-pointer flex justify-between items-center group transition">
                                                     <div>
                                                         <p className="font-bold text-gray-200 group-hover:text-purple-400 transition-colors uppercase leading-tight">{p.name}</p>
-                                                        <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">SKU: {p.sku || p.barcode || 'S/C'} • {p.type === 'product' ? 'Pro.' : 'Serv.'}</p>
+                                                        <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">SKU: {p.sku || p.barcode || 'S/C'} • {!p.is_service ? 'Pro.' : 'Serv.'}</p>
                                                     </div>
                                                     <p className="font-black text-white px-3 py-1 bg-[#111623] rounded-lg border border-[#2A3347] group-hover:border-purple-500/30 group-hover:text-purple-400">${parseFloat(p.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
                                                 </div>
@@ -301,10 +336,26 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                 ) : (
                                     <div className="space-y-1">
                                         {data.items.map((item, idx) => (
-                                            <div key={idx} className="flex items-center px-4 py-4 hover:bg-[#2A3347]/30 border border-transparent hover:border-[#2A3347] rounded-2xl transition-all group">
+                                            <div key={idx} className={`flex items-center px-4 py-4 border rounded-2xl transition-all group ${item.type === 'service' ? 'bg-[#2D235C]/20 border-purple-500/30 hover:border-purple-500/60' : 'hover:bg-[#2A3347]/30 border-transparent hover:border-[#2A3347]'}`}>
                                                 <div className="flex-[3] pr-4">
-                                                    <p className="font-bold text-white text-sm uppercase leading-tight">{item.concept}</p>
-                                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1 px-2 py-0.5 bg-[#111623] rounded max-w-max border border-[#2A3347]">{item.type === 'service' ? 'Servicio' : 'Producto'}</p>
+                                                    <p className={`font-bold text-sm uppercase leading-tight ${item.type === 'service' ? 'text-purple-300' : 'text-white'}`}>{item.concept}</p>
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded max-w-max border ${item.type === 'service' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : 'bg-[#111623] text-gray-500 border-[#2A3347]'}`}>
+                                                            {item.type === 'service' ? '✨ Servicio' : '📦 Producto'}
+                                                        </span>
+                                                        {item.type === 'service' && (
+                                                            <select
+                                                                className="bg-[#111623] text-white border border-[#2A3347] focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded p-1 text-[10px] uppercase font-bold tracking-widest"
+                                                                value={item.assigned_user_id}
+                                                                onChange={(e) => updateAssignedUser(idx, e.target.value)}
+                                                            >
+                                                                <option value="">👤 Asignar Atendió...</option>
+                                                                {staff?.map(user => (
+                                                                    <option key={user.id} value={user.id}>{user.name}</option>
+                                                                ))}
+                                                            </select>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="w-32 flex items-center justify-center gap-1">
                                                     <button type="button" onClick={() => updateQuantity(idx, -1)} className="w-8 h-8 rounded-lg bg-[#111623] border border-[#2A3347] hover:bg-[#2A3347] hover:text-white text-gray-400 flex items-center justify-center font-bold transition">-</button>
@@ -325,6 +376,28 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                     </div>
                                 )}
                             </div>
+
+                            {/* Pending Charges Alert */}
+                            {clientPendingCharges.length > 0 && (
+                                <div className="px-6 pb-4 shrink-0">
+                                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex items-center justify-between shadow-lg">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center font-black animate-pulse">!</div>
+                                            <div>
+                                                <h4 className="text-emerald-400 font-bold text-sm">Cargos Médicos Pendientes</h4>
+                                                <p className="text-emerald-500/70 text-xs font-semibold">Este cliente tiene {clientPendingCharges.length} cargos enviados desde consultorio.</p>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => clientPendingCharges.forEach(importPendingCharge)}
+                                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-lg text-[10px] uppercase tracking-widest transition shadow-lg shadow-emerald-500/20"
+                                        >
+                                            Cargar Todos al POS
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Client Active Info Bar (Bottom) */}
                             <div className="flex items-center justify-between p-5 bg-[#111623] border-t border-[#2A3347] shrink-0">
@@ -563,6 +636,9 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                             <tr key={idx}>
                                 <td className="py-1">
                                     <p className="font-bold text-gray-900 uppercase leading-tight">{item.concept}</p>
+                                    {item.assigned_user_id && staff && (
+                                        <p className="text-[8px] font-bold text-gray-500 uppercase">Atendió: {staff.find(s => s.id == item.assigned_user_id)?.name}</p>
+                                    )}
                                 </td>
                                 <td className="py-1 text-center font-bold text-gray-700">{item.quantity}</td>
                                 <td className="py-1 text-right font-bold text-gray-700">${parseFloat(item.unit_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>

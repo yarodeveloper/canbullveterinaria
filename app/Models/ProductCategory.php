@@ -10,7 +10,11 @@ class ProductCategory extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'slug', 'description', 'icon'];
+    protected $fillable = ['name', 'slug', 'description', 'icon', 'is_service'];
+
+    protected $casts = [
+        'is_service' => 'boolean',
+    ];
 
     public function products()
     {

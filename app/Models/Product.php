@@ -24,6 +24,7 @@ class Product extends Model
         'tax_ieps',
         'is_controlled',
         'is_active',
+        'is_service',
     ];
 
     public function category()

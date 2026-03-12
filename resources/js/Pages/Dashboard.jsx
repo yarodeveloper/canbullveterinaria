@@ -7,10 +7,10 @@ export default function Dashboard({ auth, stats, revenueData, appointmentDistrib
     const can = (permission) => permissions.includes(permission) || auth.user.role === 'admin';
 
     const cards = [
-        { name: 'Mascotas', value: stats.total_pets, icon: '🐾', color: 'bg-blue-500', link: route('pets.index') },
-        { name: 'Citas Hoy', value: stats.appointments_today, icon: '📅', color: 'bg-purple-500', link: route('appointments.index') },
-        { name: 'Clientes', value: stats.total_clients, icon: '👥', color: 'bg-amber-500', link: route('clients.index') },
-        { name: 'Stock Bajo', value: stats.low_stock_count, icon: '📦', color: 'bg-red-500', link: route('inventory.index') },
+        { name: 'Mascotas', value: stats.total_pets, icon: <img src="/icons/pet-dog-svgrepo-com.svg" className="w-6 h-6 brightness-0 invert" alt="..." />, color: 'bg-blue-500', link: route('pets.index') },
+        { name: 'Citas Hoy', value: stats.appointments_today, icon: <img src="/icons/calendar-svgrepo-com.svg" className="w-6 h-6 brightness-0 invert" alt="..." />, color: 'bg-purple-500', link: route('appointments.index') },
+        { name: 'Clientes', value: stats.total_clients, icon: <img src="/icons/address-svgrepo-com.svg" className="w-6 h-6 brightness-0 invert" alt="..." />, color: 'bg-amber-500', link: route('clients.index') },
+        { name: 'Stock Bajo', value: stats.low_stock_count, icon: <img src="/icons/box-svgrepo-com.svg" className="w-6 h-6 brightness-0 invert" alt="..." />, color: 'bg-red-500', link: route('inventory.index') },
     ];
 
     const COLORS = ['#6366f1', '#a855f7', '#ec4899', '#f43f5e', '#ef4444'];
@@ -37,7 +37,7 @@ export default function Dashboard({ auth, stats, revenueData, appointmentDistrib
                     <div className="mb-10 bg-gradient-to-r from-brand-primary to-brand-primary/80 p-8 rounded-[2rem] shadow-xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
                         <div className="relative z-10">
-                            <h1 className="text-3xl font-black text-white mb-2">¡Hola, {auth.user.name.split(' ')[0]}! 👋</h1>
+                            <h1 className="text-3xl font-black text-white mb-2 flex items-center gap-2">¡Hola, {auth.user.name.split(' ')[0]}! <img src="/icons/the-internet-svgrepo-com.svg" className="w-8 h-8 brightness-0 invert opacity-80" alt="" /></h1>
                             <p className="text-white/80 font-medium">Tienes {stats.appointments_today} citas programadas para el día de hoy. ¡Que sea un excelente turno!</p>
                         </div>
                     </div>
@@ -185,7 +185,7 @@ export default function Dashboard({ auth, stats, revenueData, appointmentDistrib
                             {stats.low_stock_count > 0 && (
                                 <div className="bg-red-50 border border-red-100 rounded-[2rem] p-8">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <span className="text-2xl">⚠️</span>
+                                        <img src="/icons/bell-svgrepo-com.svg" className="w-8 h-8 text-red-600 font-bold" style={{ filter: 'invert(16%) sepia(87%) saturate(5412%) hue-rotate(352deg) brightness(94%) contrast(97%)' }} alt="Alerta" />
                                         <h3 className="text-red-900 font-black text-lg leading-tight">Alerta de Inventario</h3>
                                     </div>
                                     <p className="text-red-700 text-xs font-bold leading-relaxed mb-6">
@@ -202,7 +202,9 @@ export default function Dashboard({ auth, stats, revenueData, appointmentDistrib
 
                             {/* Quote of the day (Premium detail) */}
                             <div className="bg-brand-secondary p-8 rounded-[2rem] shadow-lg shadow-secondary-100">
-                                <h3 className="font-black text-brand-primary text-xl mb-4 text-center">💡 Tip CanBull</h3>
+                                <h3 className="font-black text-brand-primary text-xl mb-4 text-center flex items-center justify-center gap-2">
+                                    <img src="/icons/rocket-svgrepo-com.svg" className="w-6 h-6" style={{ filter: 'invert(37%) sepia(50%) saturate(2462%) hue-rotate(338deg) brightness(97%) contrast(99%)' }} alt="" /> Tip CanBull
+                                </h3>
                                 <p className="text-brand-primary/80 font-bold text-xs leading-relaxed text-center italic">
                                     "Un carnet digital completo aumenta la confianza de tus clientes y mejora el seguimiento clínico."
                                 </p>

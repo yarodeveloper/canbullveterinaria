@@ -10,19 +10,29 @@ use Illuminate\Support\Facades\Hash;
 
 class ClientController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $branchId = Auth::user()->branch_id;
+        $search = $request->input('search');
         
         $clients = User::where('branch_id', $branchId)
             ->where('role', 'client')
             ->where('email', '!=', 'publico@general.com')
+            ->when($search, function($query, $search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%");
+                });
+            })
             ->withCount('pets')
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('Clients/Index', [
-            'clients' => $clients
+            'clients' => $clients,
+            'filters' => request()->only(['search'])
         ]);
     }
 

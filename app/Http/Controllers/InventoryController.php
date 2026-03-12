@@ -21,9 +21,12 @@ class InventoryController extends Controller
         $searchTerm = $request->input('search_term', '');
         $selectedCategory = $request->input('selected_category', 'all');
 
+        $selectedType = $request->input('selected_type', 'product');
+
         $query = Product::with(['category', 'lots' => function($query) use ($branchId) {
             $query->where('branch_id', $branchId)->where('status', 'active');
-        }])->where('is_active', true);
+        }])->where('is_active', true)
+          ->where('is_service', $selectedType === 'service');
 
         if ($selectedCategory !== 'all') {
             $query->where('product_category_id', $selectedCategory);
@@ -48,7 +51,8 @@ class InventoryController extends Controller
             'categories' => $categories,
             'filters' => [
                 'search_term' => $searchTerm,
-                'selected_category' => $selectedCategory
+                'selected_category' => $selectedCategory,
+                'selected_type' => $selectedType
             ]
         ]);
     }
@@ -58,7 +62,7 @@ class InventoryController extends Controller
         Gate::authorize('manage inventory');
         $branchId = Auth::user()->branch_id;
         
-        $products = Product::where('is_active', true)->with(['category', 'lots' => function($query) use ($branchId) {
+        $products = Product::where('is_active', true)->where('is_service', false)->with(['category', 'lots' => function($query) use ($branchId) {
             $query->where('branch_id', $branchId)->where('status', 'active');
         }])->get()->map(function($product) {
             $product->current_stock = $product->lots->sum('current_quantity');
@@ -158,6 +162,7 @@ class InventoryController extends Controller
             'tax_iva' => 'required|numeric|min:0|max:100',
             'tax_ieps' => 'required|numeric|min:0|max:100',
             'is_controlled' => 'boolean',
+            'is_service' => 'boolean',
         ]);
 
         $validated['is_active'] = true;
@@ -185,6 +190,7 @@ class InventoryController extends Controller
             'tax_iva' => 'required|numeric|min:0|max:100',
             'tax_ieps' => 'required|numeric|min:0|max:100',
             'is_controlled' => 'boolean',
+            'is_service' => 'boolean',
             'is_active' => 'boolean',
         ]);
 

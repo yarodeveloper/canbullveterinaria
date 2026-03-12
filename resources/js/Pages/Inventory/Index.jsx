@@ -5,7 +5,9 @@ import React, { useState, useEffect } from 'react';
 export default function Index({ auth, products, categories, filters }) {
     const [searchTerm, setSearchTerm] = useState(filters?.search_term || '');
     const [selectedCategory, setSelectedCategory] = useState(filters?.selected_category || 'all');
+    const [selectedType, setSelectedType] = useState(filters?.selected_type || 'product');
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [editingProduct, setEditingProduct] = useState(null);
 
     const getExpirationAlert = (lots) => {
         if (!lots || lots.length === 0) return null;
@@ -37,36 +39,73 @@ export default function Index({ auth, products, categories, filters }) {
 
     useEffect(() => {
         const handler = setTimeout(() => {
-            if (searchTerm !== (filters?.search_term || '') || selectedCategory !== (filters?.selected_category || 'all')) {
+            if (searchTerm !== (filters?.search_term || '') || selectedCategory !== (filters?.selected_category || 'all') || selectedType !== (filters?.selected_type || 'product')) {
                 router.get(route('inventory.index'), {
                     search_term: searchTerm,
                     selected_category: selectedCategory,
+                    selected_type: selectedType,
                 }, { preserveState: true, replace: true, preserveScroll: true });
             }
         }, 500);
         return () => clearTimeout(handler);
-    }, [searchTerm, selectedCategory]);
+    }, [searchTerm, selectedCategory, selectedType]);
 
     const { data, setData, post, processing, reset, errors } = useForm({
         product_category_id: '',
         name: '',
         sku: '',
+        description: '',
         unit: 'pieza',
         min_stock: 5,
         price: '',
         tax_iva: 16,
         tax_ieps: 0,
         is_controlled: false,
+        is_service: false, // by default
     });
 
     const submitProduct = (e) => {
         e.preventDefault();
-        post(route('inventory.store'), {
-            onSuccess: () => {
-                setShowCreateModal(false);
-                reset();
-            }
+        if (editingProduct) {
+            router.put(route('inventory.update', editingProduct.id), data, {
+                onSuccess: () => {
+                    setShowCreateModal(false);
+                    setEditingProduct(null);
+                    reset();
+                }
+            });
+        } else {
+            post(route('inventory.store'), {
+                onSuccess: () => {
+                    setShowCreateModal(false);
+                    reset();
+                }
+            });
+        }
+    };
+
+    const openCreateModal = () => {
+        setEditingProduct(null);
+        reset();
+        setShowCreateModal(true);
+    };
+
+    const openEditModal = (product) => {
+        setEditingProduct(product);
+        setData({
+            product_category_id: product.product_category_id,
+            name: product.name,
+            sku: product.sku || '',
+            description: product.description || '',
+            unit: product.unit || 'pieza',
+            min_stock: product.min_stock || 0,
+            price: product.price || '',
+            tax_iva: product.tax_iva || 0,
+            tax_ieps: product.tax_ieps || 0,
+            is_controlled: !!product.is_controlled,
+            is_service: !!product.is_service,
         });
+        setShowCreateModal(true);
     };
 
     return (
@@ -78,7 +117,7 @@ export default function Index({ auth, products, categories, filters }) {
                     <div className="flex gap-3">
                         {auth.user?.role === 'admin' && (
                             <button
-                                onClick={() => setShowCreateModal(true)}
+                                onClick={openCreateModal}
                                 className="bg-emerald-500 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                             >
                                 + Nuevo Artículo
@@ -104,6 +143,23 @@ export default function Index({ auth, products, categories, filters }) {
 
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+
+                    {/* Tabs Productos vs Servicios */}
+                    <div className="flex gap-4">
+                        <button
+                            onClick={() => setSelectedType('product')}
+                            className={`px-8 py-4 rounded-[2rem] font-black uppercase tracking-widest text-sm transition-all ${selectedType === 'product' ? 'bg-brand-primary text-white shadow-lg' : 'bg-white dark:bg-gray-800 text-gray-400 hover:bg-gray-50'}`}
+                        >
+                            📦 Inventario Físico
+                        </button>
+                        <button
+                            onClick={() => setSelectedType('service')}
+                            className={`px-8 py-4 rounded-[2rem] font-black uppercase tracking-widest text-sm transition-all ${selectedType === 'service' ? 'bg-brand-primary text-white shadow-lg' : 'bg-white dark:bg-gray-800 text-gray-400 hover:bg-gray-50'}`}
+                        >
+                            ✂️ Catálogo de Servicios
+                        </button>
+                    </div>
+
                     {/* Filtros y Buscador */}
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border dark:border-gray-700 flex flex-col md:flex-row gap-6">
                         <div className="flex-1 relative">
@@ -139,9 +195,9 @@ export default function Index({ auth, products, categories, filters }) {
                                         <th className="px-6 py-3">Articulo</th>
                                         <th className="px-6 py-3 text-center">SKU</th>
                                         <th className="px-6 py-3 text-center">Categoria</th>
-                                        <th className="px-6 py-3 text-center">Disponible</th>
+                                        {selectedType === 'product' && <th className="px-6 py-3 text-center">Disponible</th>}
                                         <th className="px-6 py-3 text-center">P. Público</th>
-                                        <th className="px-6 py-3 text-center">Status</th>
+                                        {selectedType === 'product' && <th className="px-6 py-3 text-center">Status</th>}
                                         <th className="px-6 py-3 text-center">Acciones</th>
                                     </tr>
                                 </thead>
@@ -174,43 +230,55 @@ export default function Index({ auth, products, categories, filters }) {
                                                         {product.category.name}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-2 text-center">
-                                                    <div className="flex flex-col items-center">
-                                                        <span className={`text-lg leading-none font-black ${isLowStock ? 'text-red-500' : 'text-brand-primary'}`}>
-                                                            {parseFloat(product.current_stock).toLocaleString()}
-                                                        </span>
-                                                        <span className="text-[8px] font-bold text-gray-400 uppercase mt-0.5">{product.unit}</span>
-                                                    </div>
-                                                </td>
+                                                {selectedType === 'product' && (
+                                                    <td className="px-6 py-2 text-center">
+                                                        <div className="flex flex-col items-center">
+                                                            <span className={`text-lg leading-none font-black ${isLowStock ? 'text-red-500' : 'text-brand-primary'}`}>
+                                                                {parseFloat(product.current_stock).toLocaleString()}
+                                                            </span>
+                                                            <span className="text-[8px] font-bold text-gray-400 uppercase mt-0.5">{product.unit}</span>
+                                                        </div>
+                                                    </td>
+                                                )}
                                                 <td className="px-6 py-2 text-center text-sm font-black text-gray-900 dark:text-gray-100">
                                                     ${parseFloat(product.price).toLocaleString()}
                                                 </td>
+                                                {selectedType === 'product' && (
+                                                    <td className="px-6 py-2 text-center">
+                                                        <div className="flex flex-col items-center gap-1">
+                                                            {isLowStock ? (
+                                                                <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-red-200">
+                                                                    Poco Stock
+                                                                </span>
+                                                            ) : (
+                                                                <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-emerald-200">
+                                                                    Stock OK
+                                                                </span>
+                                                            )}
+                                                            {expirationAlert && (
+                                                                <span className={`${expirationAlert.color} px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border`}>
+                                                                    ⏰ {expirationAlert.label}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                )}
                                                 <td className="px-6 py-2 text-center">
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        {isLowStock ? (
-                                                            <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-red-200">
-                                                                Poco Stock
-                                                            </span>
-                                                        ) : (
-                                                            <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-emerald-200">
-                                                                Stock OK
-                                                            </span>
-                                                        )}
-                                                        {expirationAlert && (
-                                                            <span className={`${expirationAlert.color} px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border`}>
-                                                                ⏰ {expirationAlert.label}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-2 text-center">
-                                                    <Link
-                                                        href={route('inventory.show', product.id)}
-                                                        className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-brand-primary px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-colors"
-
-                                                    >
-                                                        Kardex →
-                                                    </Link>
+                                                    {selectedType === 'product' ? (
+                                                        <Link
+                                                            href={route('inventory.show', product.id)}
+                                                            className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-brand-primary px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-colors"
+                                                        >
+                                                            Kardex →
+                                                        </Link>
+                                                    ) : (
+                                                        <button
+                                                            className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-brand-primary px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-colors"
+                                                            onClick={() => openEditModal(product)}
+                                                        >
+                                                            Editar
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );
@@ -250,12 +318,38 @@ export default function Index({ auth, products, categories, filters }) {
             {/* Modal de Creación de Producto */}
             {showCreateModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden border dark:border-gray-700">
+                    <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden border dark:border-gray-700">
                         <div className="p-8 border-b dark:border-gray-700 flex justify-between items-center">
-                            <h3 className="text-xl font-black uppercase tracking-tighter">Nuevo Artículo al Catálogo</h3>
-                            <button onClick={() => setShowCreateModal(false)} className="text-2xl opacity-30 hover:opacity-100">×</button>
+                            <h3 className="text-xl font-black uppercase tracking-tighter">
+                                {editingProduct ? (data.is_service ? 'Editar Servicio' : 'Editar Artículo') : (data.is_service ? 'Nuevo Servicio Médico / Grooming' : 'Nuevo Artículo al Catálogo')}
+                            </h3>
+                            <button onClick={() => { setShowCreateModal(false); setEditingProduct(null); }} className="text-2xl opacity-30 hover:opacity-100">×</button>
                         </div>
                         <form onSubmit={submitProduct} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+
+                            {!editingProduct && (
+                                <div className="flex gap-4 mb-4 border-b pb-4 dark:border-gray-700">
+                                    <label className="flex items-center gap-2 cursor-pointer font-black uppercase tracking-widest text-xs">
+                                        <input type="radio" checked={!data.is_service} onChange={() => setData({ ...data, is_service: false, unit: 'pieza', min_stock: 5 })} className="text-brand-primary focus:ring-brand-primary" />
+                                        📦 Es un Producto Físico
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer font-black uppercase tracking-widest text-xs">
+                                        <input type="radio" checked={data.is_service} onChange={() => setData({ ...data, is_service: true, unit: 'servicio', min_stock: 0, is_controlled: false })} className="text-brand-primary focus:ring-brand-primary" />
+                                        ✂️ Es un Servicio (Consulta, Estética)
+                                    </label>
+                                </div>
+                            )}
+
+                            {data.is_service && (
+                                <div className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 p-4 rounded-2xl mb-4">
+                                    <h4 className="font-black text-indigo-800 dark:text-indigo-300 text-sm mb-1">💡 Nota sobre Servicios</h4>
+                                    <p className="text-xs text-indigo-700 dark:text-indigo-400">
+                                        Los servicios no requieren llevar un control de inventario (Stock) ni caducidades.
+                                        Selecciona la categoría correcta (Consultas, Cirugías, etc.) para mantener separados tus reportes de ingresos.
+                                        Puedes agregar detalles extra en las notas de la descripción.
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nombre del Artículo</label>
@@ -280,31 +374,33 @@ export default function Index({ auth, products, categories, filters }) {
                                         required
                                     >
                                         <option value="">Seleccione Categoría</option>
-                                        {categories.map(cat => (
+                                        {categories.filter(cat => !!cat.is_service === !!data.is_service).map(cat => (
                                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                                         ))}
                                     </select>
                                     {errors.product_category_id && <p className="text-red-500 text-xs mt-1 ml-1 font-bold">{errors.product_category_id}</p>}
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Unidad de Medida</label>
-                                    <select
-                                        value={data.unit}
-                                        onChange={e => setData('unit', e.target.value)}
-                                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold"
-                                        required
-                                    >
-                                        <option value="pieza">Pieza (PZA)</option>
-                                        <option value="frasco">Frasco</option>
-                                        <option value="caja">Caja</option>
-                                        <option value="bulto">Bulto / Saco</option>
-                                        <option value="ml">Mililitros (ML)</option>
-                                        <option value="gramo">Gramos (G)</option>
-                                    </select>
-                                </div>
+                                {!data.is_service && (
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Unidad de Medida</label>
+                                        <select
+                                            value={data.unit}
+                                            onChange={e => setData('unit', e.target.value)}
+                                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold"
+                                            required={!data.is_service}
+                                        >
+                                            <option value="pieza">Pieza (PZA)</option>
+                                            <option value="frasco">Frasco</option>
+                                            <option value="caja">Caja</option>
+                                            <option value="bulto">Bulto / Saco</option>
+                                            <option value="ml">Mililitros (ML)</option>
+                                            <option value="gramo">Gramos (G)</option>
+                                        </select>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="grid grid-cols-3 gap-6">
+                            <div className={`grid ${data.is_service ? 'grid-cols-2' : 'grid-cols-3'} gap-6`}>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">SKU / Clave</label>
                                     <input
@@ -332,16 +428,29 @@ export default function Index({ auth, products, categories, filters }) {
                                     </div>
                                     {errors.price && <p className="text-red-500 text-xs mt-1 ml-1 font-bold">{errors.price}</p>}
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Stock Mínimo</label>
-                                    <input
-                                        type="number"
-                                        value={data.min_stock}
-                                        onChange={e => setData('min_stock', e.target.value)}
-                                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold"
-                                        required
-                                    />
-                                </div>
+                                {!data.is_service && (
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Stock Mínimo</label>
+                                        <input
+                                            type="number"
+                                            value={data.min_stock}
+                                            onChange={e => setData('min_stock', e.target.value)}
+                                            className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold"
+                                            required={!data.is_service}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Descripción / Notas Adicionales</label>
+                                <textarea
+                                    value={data.description}
+                                    onChange={e => setData('description', e.target.value)}
+                                    className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-primary font-bold min-h-[100px]"
+                                    placeholder={data.is_service ? "Ej. Incluye corte de uñas, baño garrapaticida y limpieza de oídos..." : "Notas sobre características del producto..."}
+                                ></textarea>
+                                {errors.description && <p className="text-red-500 text-xs mt-1 ml-1 font-bold">{errors.description}</p>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-6">
@@ -377,20 +486,22 @@ export default function Index({ auth, products, categories, filters }) {
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t dark:border-gray-700">
-                                <label className="flex items-center gap-4 cursor-pointer p-4 bg-red-50 hover:bg-red-100 border border-red-200 rounded-2xl transition">
-                                    <input
-                                        type="checkbox"
-                                        checked={data.is_controlled}
-                                        onChange={e => setData('is_controlled', e.target.checked)}
-                                        className="w-6 h-6 text-red-600 rounded bg-white border-red-300 focus:ring-red-600 focus:ring-2"
-                                    />
-                                    <div>
-                                        <span className="block text-sm font-black text-red-800 uppercase tracking-tight">Es Medicamento Controlado</span>
-                                        <span className="block text-xs font-bold text-red-600/70 mt-0.5">La Ley requiere bitácora con registro de receta médica o médico autorizante para cada movimiento.</span>
-                                    </div>
-                                </label>
-                            </div>
+                            {!data.is_service && (
+                                <div className="pt-4 border-t dark:border-gray-700">
+                                    <label className="flex items-center gap-4 cursor-pointer p-4 bg-red-50 hover:bg-red-100 border border-red-200 rounded-2xl transition">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.is_controlled}
+                                            onChange={e => setData('is_controlled', e.target.checked)}
+                                            className="w-6 h-6 text-red-600 rounded bg-white border-red-300 focus:ring-red-600 focus:ring-2"
+                                        />
+                                        <div>
+                                            <span className="block text-sm font-black text-red-800 uppercase tracking-tight">Es Medicamento Controlado</span>
+                                            <span className="block text-xs font-bold text-red-600/70 mt-0.5">La Ley requiere bitácora con registro de receta médica o médico autorizante para cada movimiento.</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            )}
 
                             <div className="pt-6">
                                 <button
@@ -398,7 +509,7 @@ export default function Index({ auth, products, categories, filters }) {
                                     disabled={processing}
                                     className="w-full bg-brand-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary-50 transition-all active:scale-95 disabled:opacity-50"
                                 >
-                                    {processing ? 'Guardando Artículo...' : 'Registrar en Catálogo'}
+                                    {processing ? 'Guardando...' : (editingProduct ? 'Actualizar ' : 'Registrar ') + (data.is_service ? 'Servicio' : 'Artículo')}
                                 </button>
                             </div>
                         </form>

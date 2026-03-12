@@ -10,6 +10,13 @@ export default function Print({ auth, cashRegister, receipts, movements }) {
 
     const diff = parseFloat(cashRegister.closing_amount) - parseFloat(cashRegister.expected_amount);
 
+    const totalProductSales = receipts.reduce((sum, r) => 
+        sum + r.items.filter(i => i.type !== 'service').reduce((s, i) => s + parseFloat(i.total), 0), 0
+    );
+    const totalServiceSales = receipts.reduce((sum, r) => 
+        sum + r.items.filter(i => i.type === 'service').reduce((s, i) => s + parseFloat(i.total), 0), 0
+    );
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -79,9 +86,13 @@ export default function Print({ auth, cashRegister, receipts, movements }) {
                             <div className="border border-gray-100 dark:border-gray-700 rounded-2xl p-4">
                                 <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 text-center">Desglose de Operaciones</h4>
 
-                                <div className="flex justify-between items-center mb-2 text-sm">
-                                    <span className="font-bold text-gray-600 dark:text-gray-300">Ventas (Recibos)</span>
-                                    <span className="font-black text-emerald-600">+${receipts.reduce((sum, r) => sum + parseFloat(r.total), 0).toFixed(2)}</span>
+                                <div className="flex justify-between items-center mb-1 text-sm bg-gray-50 dark:bg-gray-800 p-1 rounded">
+                                    <span className="font-bold text-gray-600 dark:text-gray-300 ml-2">↳ Productos (Farmacia)</span>
+                                    <span className="font-black text-emerald-600">+${totalProductSales.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between items-center mb-2 text-sm bg-gray-50 dark:bg-gray-800 p-1 rounded">
+                                    <span className="font-bold text-gray-600 dark:text-gray-300 ml-2">↳ Servicios Clínicos</span>
+                                    <span className="font-black text-emerald-600">+${totalServiceSales.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between items-center mb-2 text-sm">
                                     <span className="font-bold text-gray-600 dark:text-gray-300">Entradas Extra(Ingresos)</span>

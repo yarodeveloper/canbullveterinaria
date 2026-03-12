@@ -45,8 +45,11 @@ export default function Web({ auth, settings }) {
         business_profile: 'Perfil del Negocio y Colores',
         system: 'Configuración del Sistema',
         hero: 'Sección Hero (Principal)',
-        contact: 'Información de Contacto',
+        about: 'Sección: Sobre Nosotros',
+        vaccines: 'Sección: Protocolo de Vacunas',
         services: 'Textos de Servicios',
+        contact: 'Información de Contacto',
+        social: 'Redes Sociales',
         promos: 'Ofertas y Promociones',
     };
 

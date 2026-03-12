@@ -44,42 +44,49 @@ export default function AuthenticatedLayout({ header, children }) {
                                         href={route('dashboard')}
                                         active={route().current('dashboard')}
                                     >
+                                        <img src="/icons/imac-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
                                         Dashboard
                                     </NavLink>
                                     <NavLink
                                         href={route('pets.index')}
                                         active={route().current('pets.*')}
                                     >
+                                        <img src="/icons/pets-hotel-symbol-with-a-dog-and-a-cat-in-a-circle-with-one-star-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
                                         Mascotas
                                     </NavLink>
                                     <NavLink
                                         href={route('clients.index')}
                                         active={route().current('clients.*')}
                                     >
+                                        <img src="/icons/dog-walker-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
                                         Clientes
                                     </NavLink>
                                     <NavLink
                                         href={route('appointments.index')}
                                         active={route().current('appointments.*')}
                                     >
+                                        <img src="/icons/calendar-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
                                         Agenda
                                     </NavLink>
                                     <NavLink
                                         href={route('hospitalizations.index')}
                                         active={route().current('hospitalizations.*')}
                                     >
+                                        <img src="/icons/med-kit-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
                                         Hospitalización
                                     </NavLink>
                                     <NavLink
                                         href={route('surgeries.index')}
                                         active={route().current('surgeries.*')}
                                     >
+                                        <img src="/icons/band-aid-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
                                         Cirugías
                                     </NavLink>
                                     <NavLink
                                         href={route('inventory.index')}
                                         active={route().current('inventory.*')}
                                     >
+                                        <img src="/icons/box-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
                                         Inventario
                                     </NavLink>
                                     {can('manage finances') && (
@@ -88,18 +95,21 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 href={route('cash-register.index')}
                                                 active={route().current('cash-register.*')}
                                             >
+                                                <img src="/icons/bank-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
                                                 Turno Caja
                                             </NavLink>
                                             <NavLink
                                                 href={route('receipts.create')}
                                                 active={route().current('receipts.*')}
                                             >
+                                                <img src="/icons/shop-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
                                                 PDV
                                             </NavLink>
                                             <NavLink
                                                 href={route('cash.index')}
                                                 active={route().current('cash.*')}
                                             >
+                                                <img src="/icons/price-tag-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
                                                 Egresos Extras
                                             </NavLink>
                                         </>
@@ -115,9 +125,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                                                 type="button"
                                                                 className={`inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none dark:bg-gray-800 dark:text-gray-400 dark:hover:text-gray-300 ${route().current('breeds.*') ? 'text-brand-primary dark:text-brand-primary' : ''}`}
                                                             >
-                                                                Configuración
+                                                                <img src="/icons/set-up-svgrepo-com.svg" className="w-5 h-5 opacity-70" alt="Configuración" />
                                                                 <svg
-                                                                    className="-me-0.5 ms-2 h-4 w-4"
+                                                                    className="-me-0.5 ms-1 h-4 w-4"
                                                                     xmlns="http://www.w3.org/2000/svg"
                                                                     viewBox="0 0 20 20"
                                                                     fill="currentColor"
@@ -139,6 +149,11 @@ export default function AuthenticatedLayout({ header, children }) {
                                                         <Dropdown.Link href={route('breeds.index')}>
                                                             Razas y Especies
                                                         </Dropdown.Link>
+                                                        {user.role === 'admin' && (
+                                                            <Dropdown.Link href={route('product-categories.index')}>
+                                                                Cat. Prod/Serv
+                                                            </Dropdown.Link>
+                                                        )}
                                                         <div className="border-t border-gray-100 dark:border-gray-700"></div>
                                                         <div className="block px-4 py-2 text-xs text-gray-400 uppercase tracking-widest">
                                                             Sistema
@@ -178,13 +193,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                                     type="button"
                                                     className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none dark:bg-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
                                                 >
-                                                    <div className="flex flex-col items-end mr-2">
-                                                        <span className="font-black text-gray-900 dark:text-gray-100">{user.name}</span>
-                                                        {user.branch && (
-                                                            <span className="text-[9px] font-black uppercase text-brand-primary tracking-widest leading-none mt-1">
-                                                                📍 {user.branch.name}
-                                                            </span>
-                                                        )}
+                                                    <div className="flex flex-col items-end mr-1">
+                                                        <div className="w-9 h-9 rounded-full bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center overflow-hidden shadow-sm">
+                                                            <img src="/icons/pet-round-svgrepo-com.svg" className="w-6 h-6 opacity-80" alt="Perfil Admin" style={{ filter: 'invert(24%) sepia(35%) saturate(3015%) hue-rotate(264deg) brightness(85%) contrast(92%)' }} />
+                                                        </div>
                                                     </div>
 
                                                     <svg

@@ -18,10 +18,16 @@ class ReceiptItem extends Model
         'tax',
         'total',
         'type',
+        'assigned_user_id',
     ];
 
     public function receipt()
     {
         return $this->belongsTo(Receipt::class);
+    }
+
+    public function assignedUser()
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
     }
 }
