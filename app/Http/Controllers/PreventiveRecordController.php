@@ -10,6 +10,35 @@ class PreventiveRecordController extends Controller
 {
     public function store(Request $request)
     {
+        // Support for multiple records in one request
+        if ($request->has('records') && is_array($request->input('records'))) {
+            $records = $request->input('records');
+            $createdCount = 0;
+            
+            foreach ($records as $recordData) {
+                // Basic validation for each item (In production, use a custom Request validator)
+                if (!isset($recordData['name']) || !isset($recordData['type'])) continue;
+
+                PreventiveRecord::create([
+                    'pet_id' => $recordData['pet_id'],
+                    'type' => $recordData['type'],
+                    'name' => $recordData['name'],
+                    'application_date' => $recordData['application_date'],
+                    'next_due_date' => $recordData['next_due_date'] ?? null,
+                    'lot_number' => $recordData['lot_number'] ?? null,
+                    'brand' => $recordData['brand'] ?? null,
+                    'weight_at_time' => $recordData['weight_at_time'] ?? null,
+                    'notes' => $recordData['notes'] ?? null,
+                    'veterinarian_id' => $recordData['veterinarian_id'] ?? Auth::id(),
+                    'branch_id' => Auth::user()->branch_id,
+                ]);
+                $createdCount++;
+            }
+            
+            return back()->with('message', $createdCount . ' aplicaciones registradas con éxito.');
+        }
+
+        // Single record support (backward compatibility)
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
             'type' => 'required|in:vaccine,internal_deworming,external_deworming,other',

@@ -29,8 +29,8 @@ const getAgeGroup = (dobString) => {
 
 const checkRange = (species, dobString, type, value) => {
     if (!value || isNaN(parseFloat(value)) || value === '') return null;
-    let sp = 'Felino';
-    if (species?.toLowerCase() === 'canino' || species?.toLowerCase() === 'perro') sp = 'Canino';
+    const lowerSpecies = species?.toLowerCase();
+    const sp = (lowerSpecies === 'canino' || lowerSpecies === 'perro') ? 'Canino' : 'Felino';
 
     const ageGroup = getAgeGroup(dobString);
     const range = VITAL_RANGES[sp]?.[ageGroup]?.[type];
@@ -50,6 +50,7 @@ const WarningIcon = ({ status, range }) => {
 
 export default function Show({ auth, surgery, templates, veterinarians, branches }) {
     const [vitalSigns, setVitalSigns] = useState(surgery.vital_signs || { weight: '', hr: '', rr: '', temp: '', crt: '', bcs: '' });
+    const [postVitalSigns, setPostVitalSigns] = useState(surgery.post_vital_signs || { weight: '', hr: '', rr: '', temp: '', crt: '', bcs: '' });
     const [activeTab, setActiveTab] = useState('pre_op');
     const [checklist, setChecklist] = useState(surgery.checklist || { pre_op: [], intra_op: [], post_op: [] });
     const [notes, setNotes] = useState({
@@ -120,6 +121,10 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
 
     const saveVitals = () => {
         updateSurgery({ vital_signs: vitalSigns, intra_op_notes: notes.intra });
+    };
+
+    const savePostVitals = () => {
+        updateSurgery({ post_vital_signs: postVitalSigns, post_op_notes: notes.post });
     };
 
     const goToHospitalization = () => {
@@ -416,58 +421,62 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                                         </button>
                                                     )}
                                                 </div>
-                                                <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
-                                                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-brand-primary focus-within:border-transparent">
-                                                        <label className="text-[9px] font-black text-gray-400 uppercase block mb-1">Peso Actual</label>
-                                                        <div className="flex items-center text-xl font-black text-gray-900 dark:text-white mt-1">
-                                                            <input type="text" value={vitalSigns.weight || ''} onChange={e => setVitalSigns({ ...vitalSigns, weight: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300" placeholder="0" />
-                                                            <span className="text-gray-400 ml-1 text-sm font-bold">kg</span>
+                                                <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
+                                                    {/* Weight */}
+                                                    <div className="bg-gray-50 dark:bg-gray-900/50 px-3 py-2 rounded-xl border dark:border-gray-700 focus-within:ring-2 focus-within:ring-brand-primary">
+                                                        <label className="text-[8px] font-black text-gray-400 uppercase block">Peso</label>
+                                                        <div className="flex items-baseline">
+                                                            <input type="text" value={vitalSigns.weight || ''} onChange={e => setVitalSigns({ ...vitalSigns, weight: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-base font-black text-gray-900 dark:text-white placeholder-gray-300" placeholder="0" />
+                                                            <span className="text-gray-400 text-[9px] font-bold ml-0.5">kg</span>
                                                         </div>
                                                     </div>
-                                                    <div className={`p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-amber-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'temp', vitalSigns.temp) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-500' : checkRange(surgery.pet.species, surgery.pet.dob, 'temp', vitalSigns.temp) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-500' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
-                                                        <div className="flex flex-wrap gap-1 items-center w-full mb-1">
-                                                            <label className="text-[9px] font-black text-gray-400 uppercase mr-auto">Temperatura</label>
-                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'temp', vitalSigns.temp)} range={VITAL_RANGES[surgery.pet.species?.toLowerCase() === 'canino' ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['temp']} />
+                                                    {/* Temp */}
+                                                    <div className={`px-3 py-2 rounded-xl border dark:border-gray-700 focus-within:ring-2 focus-within:ring-amber-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'temp', vitalSigns.temp) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-400' : checkRange(surgery.pet.species, surgery.pet.dob, 'temp', vitalSigns.temp) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-400' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
+                                                        <div className="flex items-center gap-1">
+                                                            <label className="text-[8px] font-black text-gray-400 uppercase">Temp</label>
+                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'temp', vitalSigns.temp)} range={VITAL_RANGES[(surgery.pet.species?.toLowerCase() === 'canino' || surgery.pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['temp']} />
                                                         </div>
-                                                        <div className="flex items-center text-xl font-black text-gray-900 dark:text-white mt-1">
-                                                            <input type="text" value={vitalSigns.temp || ''} onChange={e => setVitalSigns({ ...vitalSigns, temp: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300" placeholder="0.0" />
-                                                            <span className="text-gray-400 ml-1 text-sm font-bold">°C</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className={`p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-rose-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'hr', vitalSigns.hr) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-500' : checkRange(surgery.pet.species, surgery.pet.dob, 'hr', vitalSigns.hr) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-500' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
-                                                        <div className="flex flex-wrap gap-1 items-center w-full mb-1">
-                                                            <label className="text-[9px] font-black text-gray-400 uppercase mr-auto">Frec. Cardíaca</label>
-                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'hr', vitalSigns.hr)} range={VITAL_RANGES[surgery.pet.species?.toLowerCase() === 'canino' ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['hr']} />
-                                                        </div>
-                                                        <div className="flex items-center text-xl font-black text-gray-900 dark:text-white mt-1">
-                                                            <input type="text" value={vitalSigns.hr || ''} onChange={e => setVitalSigns({ ...vitalSigns, hr: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300 text-rose-500" placeholder="0" />
-                                                            <span className="text-gray-400 ml-1 text-sm font-bold">bpm</span>
+                                                        <div className="flex items-baseline">
+                                                            <input type="text" value={vitalSigns.temp || ''} onChange={e => setVitalSigns({ ...vitalSigns, temp: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-base font-black text-gray-900 dark:text-white placeholder-gray-300" placeholder="0.0" />
+                                                            <span className="text-gray-400 text-[9px] font-bold ml-0.5">°C</span>
                                                         </div>
                                                     </div>
-                                                    <div className={`p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-blue-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'rr', vitalSigns.rr) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-500' : checkRange(surgery.pet.species, surgery.pet.dob, 'rr', vitalSigns.rr) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-500' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
-                                                        <div className="flex flex-wrap gap-1 items-center w-full mb-1">
-                                                            <label className="text-[9px] font-black text-gray-400 uppercase mr-auto">Frec. Respiratoria</label>
-                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'rr', vitalSigns.rr)} range={VITAL_RANGES[surgery.pet.species?.toLowerCase() === 'canino' ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['rr']} />
+                                                    {/* HR */}
+                                                    <div className={`px-3 py-2 rounded-xl border dark:border-gray-700 focus-within:ring-2 focus-within:ring-rose-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'hr', vitalSigns.hr) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-400' : checkRange(surgery.pet.species, surgery.pet.dob, 'hr', vitalSigns.hr) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-400' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
+                                                        <div className="flex items-center gap-1">
+                                                            <label className="text-[8px] font-black text-gray-400 uppercase">F.C.</label>
+                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'hr', vitalSigns.hr)} range={VITAL_RANGES[(surgery.pet.species?.toLowerCase() === 'canino' || surgery.pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['hr']} />
                                                         </div>
-                                                        <div className="flex items-center text-xl font-black text-gray-900 dark:text-white mt-1">
-                                                            <input type="text" value={vitalSigns.rr || ''} onChange={e => setVitalSigns({ ...vitalSigns, rr: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300" placeholder="0" />
-                                                            <span className="text-gray-400 ml-1 text-[10px] font-bold">rpm</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent">
-                                                        <label className="text-[9px] font-black text-gray-400 uppercase block mb-1">CC (Cond.)</label>
-                                                        <div className="flex items-center text-xl font-black text-gray-900 dark:text-white mt-1">
-                                                            <input type="text" value={vitalSigns.bcs || ''} onChange={e => setVitalSigns({ ...vitalSigns, bcs: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300" placeholder="Ej: 5" />
+                                                        <div className="flex items-baseline">
+                                                            <input type="text" value={vitalSigns.hr || ''} onChange={e => setVitalSigns({ ...vitalSigns, hr: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-base font-black text-rose-500 placeholder-gray-300" placeholder="0" />
+                                                            <span className="text-gray-400 text-[9px] font-bold ml-0.5">bpm</span>
                                                         </div>
                                                     </div>
-                                                    <div className={`p-4 rounded-2xl border dark:border-gray-700 relative group focus-within:ring-2 focus-within:ring-indigo-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'crt', vitalSigns.crt) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-500' : checkRange(surgery.pet.species, surgery.pet.dob, 'crt', vitalSigns.crt) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-500' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
-                                                        <div className="flex flex-wrap gap-1 items-center w-full mb-1">
-                                                            <label className="text-[9px] font-black text-gray-400 uppercase mr-auto">TLLC (seg)</label>
-                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'crt', vitalSigns.crt)} range={VITAL_RANGES[surgery.pet.species?.toLowerCase() === 'canino' ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['crt']} />
+                                                    {/* RR */}
+                                                    <div className={`px-3 py-2 rounded-xl border dark:border-gray-700 focus-within:ring-2 focus-within:ring-blue-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'rr', vitalSigns.rr) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-400' : checkRange(surgery.pet.species, surgery.pet.dob, 'rr', vitalSigns.rr) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-400' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
+                                                        <div className="flex items-center gap-1">
+                                                            <label className="text-[8px] font-black text-gray-400 uppercase">F.R.</label>
+                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'rr', vitalSigns.rr)} range={VITAL_RANGES[(surgery.pet.species?.toLowerCase() === 'canino' || surgery.pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['rr']} />
                                                         </div>
-                                                        <div className="flex items-center text-xl font-black text-gray-900 dark:text-white mt-1">
-                                                            <input type="text" value={vitalSigns.crt || ''} onChange={e => setVitalSigns({ ...vitalSigns, crt: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-xl font-black placeholder-gray-300" placeholder="0" />
-                                                            <span className="text-gray-400 ml-1 text-[10px] font-bold">s</span>
+                                                        <div className="flex items-baseline">
+                                                            <input type="text" value={vitalSigns.rr || ''} onChange={e => setVitalSigns({ ...vitalSigns, rr: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-base font-black text-gray-900 dark:text-white placeholder-gray-300" placeholder="0" />
+                                                            <span className="text-gray-400 text-[9px] font-bold ml-0.5">rpm</span>
+                                                        </div>
+                                                    </div>
+                                                    {/* BCS */}
+                                                    <div className="bg-gray-50 dark:bg-gray-900/50 px-3 py-2 rounded-xl border dark:border-gray-700 focus-within:ring-2 focus-within:ring-emerald-500">
+                                                        <label className="text-[8px] font-black text-gray-400 uppercase block">CC</label>
+                                                        <input type="text" value={vitalSigns.bcs || ''} onChange={e => setVitalSigns({ ...vitalSigns, bcs: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-base font-black text-gray-900 dark:text-white placeholder-gray-300" placeholder="Ej: 5" />
+                                                    </div>
+                                                    {/* CRT */}
+                                                    <div className={`px-3 py-2 rounded-xl border dark:border-gray-700 focus-within:ring-2 focus-within:ring-indigo-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'crt', vitalSigns.crt) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-400' : checkRange(surgery.pet.species, surgery.pet.dob, 'crt', vitalSigns.crt) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-400' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
+                                                        <div className="flex items-center gap-1">
+                                                            <label className="text-[8px] font-black text-gray-400 uppercase">TLLC</label>
+                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'crt', vitalSigns.crt)} range={VITAL_RANGES[(surgery.pet.species?.toLowerCase() === 'canino' || surgery.pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['crt']} />
+                                                        </div>
+                                                        <div className="flex items-baseline">
+                                                            <input type="text" value={vitalSigns.crt || ''} onChange={e => setVitalSigns({ ...vitalSigns, crt: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-base font-black text-gray-900 dark:text-white placeholder-gray-300" placeholder="0" />
+                                                            <span className="text-gray-400 text-[9px] font-bold ml-0.5">s</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -493,15 +502,92 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                     )}
 
                                     {activeTab === 'post_op' && (
-                                        <div className="space-y-4">
-                                            <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Cuidado Post-Hospitalización</h4>
-                                            <textarea
-                                                value={notes.post || ''}
-                                                onChange={e => setNotes({ ...notes, post: e.target.value })}
-                                                placeholder="Instrucciones de recuperación, medicación post-op, retiro de puntos..."
-                                                className="w-full bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700 rounded-3xl py-6 px-8 focus:ring-brand-primary focus:border-brand-primary font-medium min-h-[300px]"
-                                            ></textarea>
-                                            <div className="mt-6 flex justify-end">
+                                        <div className="space-y-6">
+                                            {/* Post-op Vitals */}
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-center">
+                                                    <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                                                        Constantes Post-Operatorias
+                                                    </h4>
+                                                    {surgery.status !== 'completed' && (
+                                                        <button onClick={savePostVitals} className="text-[9px] bg-gray-100 dark:bg-gray-700 font-bold px-3 py-1 rounded-lg hover:bg-gray-200 transition">
+                                                            GUARDAR CONSTANTES
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
+                                                    <div className="bg-gray-50 dark:bg-gray-900/50 px-3 py-2 rounded-xl border dark:border-gray-700 focus-within:ring-2 focus-within:ring-brand-primary">
+                                                        <label className="text-[8px] font-black text-gray-400 uppercase block">Peso</label>
+                                                        <div className="flex items-baseline">
+                                                            <input type="text" value={postVitalSigns.weight || ''} onChange={e => setPostVitalSigns({ ...postVitalSigns, weight: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-base font-black text-gray-900 dark:text-white placeholder-gray-300" placeholder="0" />
+                                                            <span className="text-gray-400 text-[9px] font-bold ml-0.5">kg</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`px-3 py-2 rounded-xl border dark:border-gray-700 focus-within:ring-2 focus-within:ring-amber-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'temp', postVitalSigns.temp) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-400' : checkRange(surgery.pet.species, surgery.pet.dob, 'temp', postVitalSigns.temp) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-400' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
+                                                        <div className="flex items-center gap-1">
+                                                            <label className="text-[8px] font-black text-gray-400 uppercase">Temp</label>
+                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'temp', postVitalSigns.temp)} range={VITAL_RANGES[(surgery.pet.species?.toLowerCase() === 'canino' || surgery.pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['temp']} />
+                                                        </div>
+                                                        <div className="flex items-baseline">
+                                                            <input type="text" value={postVitalSigns.temp || ''} onChange={e => setPostVitalSigns({ ...postVitalSigns, temp: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-base font-black text-gray-900 dark:text-white placeholder-gray-300" placeholder="0.0" />
+                                                            <span className="text-gray-400 text-[9px] font-bold ml-0.5">°C</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`px-3 py-2 rounded-xl border dark:border-gray-700 focus-within:ring-2 focus-within:ring-rose-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'hr', postVitalSigns.hr) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-400' : checkRange(surgery.pet.species, surgery.pet.dob, 'hr', postVitalSigns.hr) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-400' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
+                                                        <div className="flex items-center gap-1">
+                                                            <label className="text-[8px] font-black text-gray-400 uppercase">F.C.</label>
+                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'hr', postVitalSigns.hr)} range={VITAL_RANGES[(surgery.pet.species?.toLowerCase() === 'canino' || surgery.pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['hr']} />
+                                                        </div>
+                                                        <div className="flex items-baseline">
+                                                            <input type="text" value={postVitalSigns.hr || ''} onChange={e => setPostVitalSigns({ ...postVitalSigns, hr: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-base font-black text-rose-500 placeholder-gray-300" placeholder="0" />
+                                                            <span className="text-gray-400 text-[9px] font-bold ml-0.5">bpm</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`px-3 py-2 rounded-xl border dark:border-gray-700 focus-within:ring-2 focus-within:ring-blue-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'rr', postVitalSigns.rr) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-400' : checkRange(surgery.pet.species, surgery.pet.dob, 'rr', postVitalSigns.rr) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-400' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
+                                                        <div className="flex items-center gap-1">
+                                                            <label className="text-[8px] font-black text-gray-400 uppercase">F.R.</label>
+                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'rr', postVitalSigns.rr)} range={VITAL_RANGES[(surgery.pet.species?.toLowerCase() === 'canino' || surgery.pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['rr']} />
+                                                        </div>
+                                                        <div className="flex items-baseline">
+                                                            <input type="text" value={postVitalSigns.rr || ''} onChange={e => setPostVitalSigns({ ...postVitalSigns, rr: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-base font-black text-gray-900 dark:text-white placeholder-gray-300" placeholder="0" />
+                                                            <span className="text-gray-400 text-[9px] font-bold ml-0.5">rpm</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-gray-50 dark:bg-gray-900/50 px-3 py-2 rounded-xl border dark:border-gray-700 focus-within:ring-2 focus-within:ring-emerald-500">
+                                                        <label className="text-[8px] font-black text-gray-400 uppercase block">CC</label>
+                                                        <input type="text" value={postVitalSigns.bcs || ''} onChange={e => setPostVitalSigns({ ...postVitalSigns, bcs: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-base font-black text-gray-900 dark:text-white placeholder-gray-300" placeholder="Ej: 5" />
+                                                    </div>
+                                                    <div className={`px-3 py-2 rounded-xl border dark:border-gray-700 focus-within:ring-2 focus-within:ring-indigo-500 ${checkRange(surgery.pet.species, surgery.pet.dob, 'crt', postVitalSigns.crt) === 'high' ? 'bg-red-50 dark:bg-red-900/10 border-red-400' : checkRange(surgery.pet.species, surgery.pet.dob, 'crt', postVitalSigns.crt) === 'low' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-400' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
+                                                        <div className="flex items-center gap-1">
+                                                            <label className="text-[8px] font-black text-gray-400 uppercase">TLLC</label>
+                                                            <WarningIcon status={checkRange(surgery.pet.species, surgery.pet.dob, 'crt', postVitalSigns.crt)} range={VITAL_RANGES[(surgery.pet.species?.toLowerCase() === 'canino' || surgery.pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(surgery.pet.dob)]?.['crt']} />
+                                                        </div>
+                                                        <div className="flex items-baseline">
+                                                            <input type="text" value={postVitalSigns.crt || ''} onChange={e => setPostVitalSigns({ ...postVitalSigns, crt: e.target.value })} className="bg-transparent border-0 p-0 w-full focus:ring-0 text-base font-black text-gray-900 dark:text-white placeholder-gray-300" placeholder="0" />
+                                                            <span className="text-gray-400 text-[9px] font-bold ml-0.5">s</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Post-op Notes */}
+                                            <div className="space-y-2">
+                                                <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Cuidado Post-Hospitalización</h4>
+                                                <textarea
+                                                    value={notes.post || ''}
+                                                    onChange={e => setNotes({ ...notes, post: e.target.value })}
+                                                    placeholder="Instrucciones de recuperación, medicación post-op, retiro de puntos..."
+                                                    className="w-full bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700 rounded-3xl py-6 px-8 focus:ring-brand-primary focus:border-brand-primary font-medium min-h-[200px]"
+                                                ></textarea>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <button
+                                                    onClick={savePostVitals}
+                                                    className="text-[10px] bg-brand-primary text-white font-black px-5 py-2.5 rounded-xl shadow-md shadow-primary-100 hover:opacity-90 transition flex items-center gap-2"
+                                                >
+                                                    💾 Guardar Post-op
+                                                </button>
                                                 <button
                                                     onClick={goToHospitalization}
                                                     className="bg-indigo-600 text-white px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition"

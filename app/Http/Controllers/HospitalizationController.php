@@ -42,11 +42,17 @@ class HospitalizationController extends Controller
     {
         $pet = null;
         if ($request->has('pet_id')) {
-            $pet = Pet::findOrFail($request->pet_id);
+            $pet = Pet::with('owner')->findOrFail($request->pet_id);
         }
 
+        $branchId = Auth::user()->branch_id;
+        $clients = \App\Models\User::where('branch_id', $branchId)
+            ->where('role', 'client')
+            ->get(['id', 'name']);
+
         return Inertia::render('Hospitalizations/Create', [
-            'pet' => $pet
+            'pet' => $pet,
+            'clients' => $clients,
         ]);
     }
 
@@ -58,6 +64,8 @@ class HospitalizationController extends Controller
             'initial_weight' => 'nullable|numeric',
             'admission_date' => 'required|date',
         ]);
+
+        $pet = Pet::findOrFail($validated['pet_id']);
 
         $hospitalization = new Hospitalization($validated);
         $hospitalization->user_id = Auth::id();
@@ -149,6 +157,24 @@ class HospitalizationController extends Controller
         }
 
         $hospitalization->update($validated);
+
+        // Sync with Pet status
+        if (in_array($validated['status'], ['expired', 'euthanized'])) {
+            $hospitalization->pet->update([
+                'status' => 'deceased',
+                'death_date' => $validated['discharge_date'],
+                'death_reason' => ($validated['status'] === 'euthanized' ? 'Eutanasia: ' : 'Defunción: ') . ($validated['discharge_notes'] ?? '')
+            ]);
+        } elseif ($validated['status'] === 'active') {
+            // Revert if it was accidentally marked as deceased
+            if ($hospitalization->pet->status === 'deceased') {
+                $hospitalization->pet->update([
+                    'status' => 'active',
+                    'death_date' => null,
+                    'death_reason' => null
+                ]);
+            }
+        }
 
         return back()->with('message', 'Estado de hospitalización actualizado.');
     }

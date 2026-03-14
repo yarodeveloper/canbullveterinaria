@@ -24,7 +24,7 @@ export default function Create({ auth, pet, type, defaultContent }) {
     const save = () => {
         if (sigPad.current.isEmpty()) return;
 
-        const sigData = sigPad.current.getTrimmedCanvas().toDataURL('image/png');
+        const sigData = sigPad.current.getCanvas().toDataURL('image/png');
         setData('digital_signature', sigData);
         setIsSigned(true);
     };
@@ -38,7 +38,7 @@ export default function Create({ auth, pet, type, defaultContent }) {
         }
 
         // Auto-save signature if not explicitly saved
-        const sigData = sigPad.current.getTrimmedCanvas().toDataURL('image/png');
+        const sigData = sigPad.current.getCanvas().toDataURL('image/png');
         data.digital_signature = sigData;
 
         post(route('consents.store', pet.id));

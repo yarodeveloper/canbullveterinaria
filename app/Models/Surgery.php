@@ -28,6 +28,7 @@ class Surgery extends Model
         'post_op_notes',
         'checklist',
         'vital_signs',
+        'post_vital_signs',
     ];
 
     protected $casts = [
@@ -36,6 +37,7 @@ class Surgery extends Model
         'end_time' => 'datetime',
         'checklist' => 'array',
         'vital_signs' => 'array',
+        'post_vital_signs' => 'array',
     ];
 
     public function pet()

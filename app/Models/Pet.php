@@ -38,10 +38,14 @@ class Pet extends Model
         'is_aggressive',
         'allergies',
         'chronic_conditions',
+        'status',
+        'death_date',
+        'death_reason',
     ];
 
     protected $casts = [
         'dob' => 'date',
+        'death_date' => 'date',
         'weight' => 'decimal:2',
     ];
 

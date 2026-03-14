@@ -17,7 +17,7 @@ class MedicalRecordController extends Controller
             abort(403);
         }
 
-        $products = \App\Models\Product::where('is_active', true)->get();
+        $products = \App\Models\Product::where('is_active', true)->get()->values();
 
         return Inertia::render('MedicalRecords/Create', [
             'pet' => $pet->load('owner'),

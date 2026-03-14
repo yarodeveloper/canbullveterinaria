@@ -34,8 +34,8 @@ const getAgeGroup = (dobString) => {
 
 const checkRange = (species, dobString, type, value) => {
     if (!value || isNaN(parseFloat(value)) || value === '') return null;
-    let sp = 'Felino';
-    if (species?.toLowerCase() === 'canino' || species?.toLowerCase() === 'perro') sp = 'Canino';
+    const lowerSpecies = species?.toLowerCase();
+    const sp = (lowerSpecies === 'canino' || lowerSpecies === 'perro') ? 'Canino' : 'Felino';
 
     const ageGroup = getAgeGroup(dobString);
     const range = VITAL_RANGES[sp]?.[ageGroup]?.[type];
@@ -190,10 +190,12 @@ export default function Create({ auth, pet, products }) {
         setData('pending_charges', newCharges);
     };
 
-    const safeProducts = Array.isArray(products) ? products : [];
-    const safeQuery = (searchQuery || '').toLowerCase().trim();
+    const normalize = (str) => (str || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+    const safeProducts = Array.isArray(products) ? products : Object.values(products || {});
+    const safeQuery = normalize(searchQuery);
     const filteredProducts = safeQuery
-        ? safeProducts.filter(p => (p.name || '').toLowerCase().includes(safeQuery)).slice(0, 5)
+        ? safeProducts.filter(p => normalize(p.name).includes(safeQuery)).slice(0, 5)
         : [];
 
     // Common styling abstractions based on mockup
@@ -209,6 +211,22 @@ export default function Create({ auth, pet, products }) {
 
             <div className="min-h-screen bg-slate-50 dark:bg-[#111822] text-slate-700 dark:text-slate-300 py-8 font-sans transition-colors duration-200">
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+                    {pet.status === 'deceased' && (
+                        <div className="mb-8 bg-black border-l-4 border-red-600 text-white px-8 py-4 rounded-2xl flex items-center justify-between shadow-2xl overflow-hidden relative group">
+                            <div className="absolute inset-0 bg-red-600/10 animate-pulse"></div>
+                            <div className="flex items-center gap-5 relative z-10">
+                                <span className="text-3xl">✞</span>
+                                <div>
+                                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-red-500">Alerta de Seguridad Clínica</p>
+                                    <h4 className="text-lg font-black uppercase leading-tight">Paciente Fallecido: Modo Post-mortem Activo</h4>
+                                    <p className="text-[10px] font-bold text-gray-400 mt-0.5 uppercase tracking-widest leading-none">Cualquier registro guardado se integrará como información histórica o legal de {pet.name}.</p>
+                                </div>
+                            </div>
+                            <div className="hidden md:block relative z-10">
+                                <span className="px-4 py-2 bg-red-600 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-600/30">Registro Limitado</span>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Header Inline replacement */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -219,7 +237,7 @@ export default function Create({ auth, pet, products }) {
 
                             <div>
                                 <h2 className="font-extrabold text-2xl text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                                    <img src="/icons/vet-with-cat-svgrepo-com.svg" className="w-8 h-8 opacity-80" alt="" />
+                                    <img src="/icons/vet-with-cat-svgrepo-com.svg" className="w-8 h-8 icon-adaptive" alt="" />
                                     Consulta Clínica Avanzada
                                 </h2>
                                 <p className="text-[10px] text-fuchsia-400 font-bold uppercase tracking-widest mt-1">Formato SOAP Digital • {pet.name}</p>
@@ -326,7 +344,7 @@ export default function Create({ auth, pet, products }) {
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-center w-full">
                                             <label className="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Temp (°C)</label>
-                                            <WarningIcon status={checkRange(pet.species, pet.dob, 'temp', data.vital_signs.temp)} range={VITAL_RANGES[pet.species?.toLowerCase() === 'canino' ? 'Canino' : 'Felino'][getAgeGroup(pet.dob)]?.['temp']} />
+                                            <WarningIcon status={checkRange(pet.species, pet.dob, 'temp', data.vital_signs.temp)} range={VITAL_RANGES[(pet.species?.toLowerCase() === 'canino' || pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(pet.dob)]?.['temp']} />
                                         </div>
                                         <input type="number" step="0.1" value={data.vital_signs.temp} onChange={e => updateVitalSign('temp', e.target.value)}
                                             className={`w-full bg-slate-100 dark:bg-slate-900/50 border text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all font-semibold ${checkRange(pet.species, pet.dob, 'temp', data.vital_signs.temp) === 'high' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20' : checkRange(pet.species, pet.dob, 'temp', data.vital_signs.temp) === 'low' ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-300 dark:border-slate-700'}`} placeholder="38.5" />
@@ -334,7 +352,7 @@ export default function Create({ auth, pet, products }) {
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-center w-full">
                                             <label className="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">F.C. (BPM)</label>
-                                            <WarningIcon status={checkRange(pet.species, pet.dob, 'hr', data.vital_signs.hr)} range={VITAL_RANGES[pet.species?.toLowerCase() === 'canino' ? 'Canino' : 'Felino'][getAgeGroup(pet.dob)]?.['hr']} />
+                                            <WarningIcon status={checkRange(pet.species, pet.dob, 'hr', data.vital_signs.hr)} range={VITAL_RANGES[(pet.species?.toLowerCase() === 'canino' || pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(pet.dob)]?.['hr']} />
                                         </div>
                                         <input type="number" value={data.vital_signs.hr} onChange={e => updateVitalSign('hr', e.target.value)}
                                             className={`w-full bg-slate-100 dark:bg-slate-900/50 border text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all font-semibold ${checkRange(pet.species, pet.dob, 'hr', data.vital_signs.hr) === 'high' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20' : checkRange(pet.species, pet.dob, 'hr', data.vital_signs.hr) === 'low' ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-300 dark:border-slate-700'}`} placeholder="80" />
@@ -342,7 +360,7 @@ export default function Create({ auth, pet, products }) {
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-center w-full">
                                             <label className="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">F.R. (RPM)</label>
-                                            <WarningIcon status={checkRange(pet.species, pet.dob, 'rr', data.vital_signs.rr)} range={VITAL_RANGES[pet.species?.toLowerCase() === 'canino' ? 'Canino' : 'Felino'][getAgeGroup(pet.dob)]?.['rr']} />
+                                            <WarningIcon status={checkRange(pet.species, pet.dob, 'rr', data.vital_signs.rr)} range={VITAL_RANGES[(pet.species?.toLowerCase() === 'canino' || pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(pet.dob)]?.['rr']} />
                                         </div>
                                         <input type="number" value={data.vital_signs.rr} onChange={e => updateVitalSign('rr', e.target.value)}
                                             className={`w-full bg-slate-100 dark:bg-slate-900/50 border text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all font-semibold ${checkRange(pet.species, pet.dob, 'rr', data.vital_signs.rr) === 'high' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20' : checkRange(pet.species, pet.dob, 'rr', data.vital_signs.rr) === 'low' ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-300 dark:border-slate-700'}`} placeholder="24" />
@@ -369,7 +387,7 @@ export default function Create({ auth, pet, products }) {
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-center w-full">
                                             <label className="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">TLLC (seg)</label>
-                                            <WarningIcon status={checkRange(pet.species, pet.dob, 'crt', data.vital_signs.tllc)} range={VITAL_RANGES[pet.species?.toLowerCase() === 'canino' ? 'Canino' : 'Felino'][getAgeGroup(pet.dob)]?.['crt']} />
+                                            <WarningIcon status={checkRange(pet.species, pet.dob, 'crt', data.vital_signs.tllc)} range={VITAL_RANGES[(pet.species?.toLowerCase() === 'canino' || pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(pet.dob)]?.['crt']} />
                                         </div>
                                         <input type="number" value={data.vital_signs.tllc} onChange={e => updateVitalSign('tllc', e.target.value)}
                                             className={`w-full bg-slate-100 dark:bg-slate-900/50 border text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all font-semibold ${checkRange(pet.species, pet.dob, 'crt', data.vital_signs.tllc) === 'high' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20' : checkRange(pet.species, pet.dob, 'crt', data.vital_signs.tllc) === 'low' ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-300 dark:border-slate-700'}`} placeholder="2" />
@@ -427,7 +445,7 @@ export default function Create({ auth, pet, products }) {
                                     value={data.anamnesis.reason}
                                     onChange={e => updateAnamnesis('reason', e.target.value)}
                                     rows="1"
-                                    className="w-full bg-slate-50 dark:bg-[#111822] border border-slate-300 dark:border-slate-700 text-white rounded-xl text-lg px-4 py-3 placeholder-slate-600 focus:ring-fuchsia-500 focus:border-fuchsia-500 shadow-inner resize-y transition-all min-h-[50px] font-medium"
+                                    className="w-full bg-slate-50 dark:bg-[#111822] border border-slate-300 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl text-lg px-4 py-3 placeholder-slate-600 focus:ring-fuchsia-500 focus:border-fuchsia-500 shadow-inner resize-y transition-all min-h-[50px] font-medium"
                                     placeholder="Ej: Inapetencia desde hace 5 días y decaimiento..."
                                     required
                                 ></textarea>

@@ -66,6 +66,9 @@ class PetController extends Controller
             'is_aggressive' => 'nullable|boolean',
             'allergies' => 'nullable|string|max:255',
             'chronic_conditions' => 'nullable|string|max:255',
+            'status' => 'nullable|string|in:active,deceased,inactive',
+            'death_date' => 'nullable|date',
+            'death_reason' => 'nullable|string',
         ]);
 
         if ($request->hasFile('photo')) {
@@ -79,6 +82,13 @@ class PetController extends Controller
         
         // Link owner to pivot table
         $pet->owners()->attach($validated['user_id'], ['relation_type' => 'Owner', 'is_primary' => true]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'pet' => $pet->load('owner'),
+                'message' => 'Mascota registrada con éxito.'
+            ]);
+        }
 
         return redirect()->route('pets.index')->with('message', 'Mascota registrada con éxito.');
     }
@@ -142,6 +152,9 @@ class PetController extends Controller
             'is_aggressive' => 'nullable|boolean',
             'allergies' => 'nullable|string|max:255',
             'chronic_conditions' => 'nullable|string|max:255',
+            'status' => 'nullable|string|in:active,deceased,inactive',
+            'death_date' => 'nullable|date',
+            'death_reason' => 'nullable|string',
         ]);
 
         if ($request->hasFile('photo')) {
@@ -171,12 +184,18 @@ class PetController extends Controller
         $query = $request->get('q');
         $branchId = Auth::user()->branch_id;
 
-        // Search pets by name OR owners by phone/email
+        // Search pets by name OR owners by phone/email. Include deceased but with a label.
         $results = Pet::where('branch_id', $branchId)
             ->where('name', 'like', "%{$query}%")
             ->with('owner')
-            ->limit(5)
-            ->get();
+            ->limit(10)
+            ->get()
+            ->map(function($pet) {
+                if ($pet->status === 'deceased') {
+                    $pet->name = $pet->name . ' (Fallecido)';
+                }
+                return $pet;
+            });
 
         return response()->json($results);
     }

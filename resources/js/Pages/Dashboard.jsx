@@ -7,10 +7,10 @@ export default function Dashboard({ auth, stats, revenueData, appointmentDistrib
     const can = (permission) => permissions.includes(permission) || auth.user.role === 'admin';
 
     const cards = [
-        { name: 'Mascotas', value: stats.total_pets, icon: <img src="/icons/pet-dog-svgrepo-com.svg" className="w-6 h-6 brightness-0 invert" alt="..." />, color: 'bg-blue-500', link: route('pets.index') },
-        { name: 'Citas Hoy', value: stats.appointments_today, icon: <img src="/icons/calendar-svgrepo-com.svg" className="w-6 h-6 brightness-0 invert" alt="..." />, color: 'bg-purple-500', link: route('appointments.index') },
-        { name: 'Clientes', value: stats.total_clients, icon: <img src="/icons/address-svgrepo-com.svg" className="w-6 h-6 brightness-0 invert" alt="..." />, color: 'bg-amber-500', link: route('clients.index') },
-        { name: 'Stock Bajo', value: stats.low_stock_count, icon: <img src="/icons/box-svgrepo-com.svg" className="w-6 h-6 brightness-0 invert" alt="..." />, color: 'bg-red-500', link: route('inventory.index') },
+        { name: 'Mascotas', value: stats.total_pets, icon: <img src="/icons/pet-dog-svgrepo-com.svg" className="w-6 h-6 icon-adaptive" alt="..." />, color: 'bg-blue-500', link: route('pets.index') },
+        { name: 'Citas Hoy', value: stats.appointments_today, icon: <img src="/icons/calendar-svgrepo-com.svg" className="w-6 h-6 icon-adaptive" alt="..." />, color: 'bg-purple-500', link: route('appointments.index') },
+        { name: 'Clientes', value: stats.total_clients, icon: <img src="/icons/address-svgrepo-com.svg" className="w-6 h-6 icon-adaptive" alt="..." />, color: 'bg-amber-500', link: route('clients.index') },
+        { name: 'Stock Bajo', value: stats.low_stock_count, icon: <img src="/icons/box-svgrepo-com.svg" className="w-6 h-6 icon-adaptive" alt="..." />, color: 'bg-red-500', link: route('inventory.index') },
     ];
 
     const COLORS = ['#6366f1', '#a855f7', '#ec4899', '#f43f5e', '#ef4444'];
@@ -37,7 +37,7 @@ export default function Dashboard({ auth, stats, revenueData, appointmentDistrib
                     <div className="mb-10 bg-gradient-to-r from-brand-primary to-brand-primary/80 p-8 rounded-[2rem] shadow-xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
                         <div className="relative z-10">
-                            <h1 className="text-3xl font-black text-white mb-2 flex items-center gap-2">¡Hola, {auth.user.name.split(' ')[0]}! <img src="/icons/the-internet-svgrepo-com.svg" className="w-8 h-8 brightness-0 invert opacity-80" alt="" /></h1>
+                            <h1 className="text-3xl font-black text-white mb-2 flex items-center gap-2">¡Hola, {auth.user.name.split(' ')[0]}! <img src="/icons/the-internet-svgrepo-com.svg" className="w-8 h-8 white-icon opacity-80" alt="" /></h1>
                             <p className="text-white/80 font-medium">Tienes {stats.appointments_today} citas programadas para el día de hoy. ¡Que sea un excelente turno!</p>
                         </div>
                     </div>

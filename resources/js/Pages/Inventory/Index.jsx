@@ -108,32 +108,41 @@ export default function Index({ auth, products, categories, filters }) {
         setShowCreateModal(true);
     };
 
+    const deleteProduct = (id) => {
+        if (confirm('¿Estás seguro de eliminar este artículo del catálogo? Esto lo ocultará de las búsquedas pero mantendrá el historial de ventas pasadas.')) {
+            router.delete(route('inventory.destroy', id));
+        }
+    };
+
     return (
         <AuthenticatedLayout
             user={auth.user}
             header={
-                <div className="flex justify-between items-center">
-                    <h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Inventario y Farmacia</h2>
-                    <div className="flex gap-3">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 className="font-black text-xl text-slate-800 dark:text-white uppercase tracking-tighter">Inventario y Farmacia</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Gestión de Catálogo y Movimientos</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                         {auth.user?.role === 'admin' && (
                             <button
                                 onClick={openCreateModal}
-                                className="bg-emerald-500 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                                className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-emerald-500/20 flex items-center gap-2"
                             >
-                                + Nuevo Artículo
+                                <span className="text-sm">+</span> Nuevo Artículo
                             </button>
                         )}
                         <Link
                             href={route('inventory.audit')}
-                            className="bg-brand-primary text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                            className="bg-brand-primary hover:bg-brand-primary/90 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-brand-primary/20 flex items-center gap-2"
                         >
-                            Auditoría de Inventario
+                            📊 Auditoría
                         </Link>
                         <Link
                             href={route('inventory.movements')}
-                            className="bg-white dark:bg-gray-800 border dark:border-gray-700 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition shadow-sm hover:bg-gray-50 flex items-center justify-center gap-2"
+                            className="bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 text-slate-600 dark:text-slate-300 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center gap-2"
                         >
-                            📊 Entradas y Salidas
+                            📦 Movimientos
                         </Link>
                     </div>
                 </div>
@@ -144,19 +153,19 @@ export default function Index({ auth, products, categories, filters }) {
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
 
-                    {/* Tabs Productos vs Servicios */}
-                    <div className="flex gap-4">
+                    {/* Compact Type Selector */}
+                    <div className="flex bg-slate-100 dark:bg-gray-900/50 p-1 rounded-xl w-fit border dark:border-gray-800 shadow-sm">
                         <button
                             onClick={() => setSelectedType('product')}
-                            className={`px-8 py-4 rounded-[2rem] font-black uppercase tracking-widest text-sm transition-all ${selectedType === 'product' ? 'bg-brand-primary text-white shadow-lg' : 'bg-white dark:bg-gray-800 text-gray-400 hover:bg-gray-50'}`}
+                            className={`px-5 py-1.5 rounded-lg font-black uppercase tracking-wider text-[9px] transition-all flex items-center gap-2 ${selectedType === 'product' ? 'bg-white dark:bg-gray-800 text-brand-primary shadow-sm ring-1 ring-slate-200 dark:ring-gray-700' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                         >
-                            📦 Inventario Físico
+                            <span className="text-xs">📦</span> Inventario
                         </button>
                         <button
                             onClick={() => setSelectedType('service')}
-                            className={`px-8 py-4 rounded-[2rem] font-black uppercase tracking-widest text-sm transition-all ${selectedType === 'service' ? 'bg-brand-primary text-white shadow-lg' : 'bg-white dark:bg-gray-800 text-gray-400 hover:bg-gray-50'}`}
+                            className={`px-5 py-1.5 rounded-lg font-black uppercase tracking-wider text-[9px] transition-all flex items-center gap-2 ${selectedType === 'service' ? 'bg-white dark:bg-gray-800 text-brand-primary shadow-sm ring-1 ring-slate-200 dark:ring-gray-700' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                         >
-                            ✂️ Catálogo de Servicios
+                            <span className="text-xs">✂️</span> Servicios
                         </button>
                     </div>
 
@@ -191,7 +200,7 @@ export default function Index({ auth, products, categories, filters }) {
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead>
-                                    <tr className="bg-gray-50 dark:bg-gray-900/40 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b dark:border-gray-700">
+                                    <tr className="bg-slate-50 dark:bg-gray-900/40 text-[10px] font-black text-slate-500 tracking-widest border-b dark:border-gray-700">
                                         <th className="px-6 py-3">Articulo</th>
                                         <th className="px-6 py-3 text-center">SKU</th>
                                         <th className="px-6 py-3 text-center">Categoria</th>
@@ -206,57 +215,57 @@ export default function Index({ auth, products, categories, filters }) {
                                         const isLowStock = product.current_stock <= product.min_stock;
                                         const expirationAlert = getExpirationAlert(product.lots);
                                         return (
-                                            <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors group">
+                                            <tr key={product.id} className="hover:bg-brand-primary transition-colors group">
                                                 <td className="px-6 py-2">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 bg-brand-primary/10 rounded-lg flex items-center justify-center text-lg shrink-0">
+                                                        <div className="w-8 h-8 bg-brand-primary/10 group-hover:bg-white/20 rounded-lg flex items-center justify-center text-lg shrink-0">
                                                             {product.category.icon || '📦'}
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <p className="font-black text-gray-900 dark:text-gray-100 text-sm uppercase tracking-tight group-hover:text-brand-primary transition-colors truncate" title={product.name}>
+                                                             <p className="font-black text-gray-900 dark:text-gray-100 text-sm uppercase tracking-tight group-hover:text-white transition-colors truncate" title={product.name}>
                                                                 {product.name}
                                                             </p>
                                                             {!!product.is_controlled && (
-                                                                <span className="text-[8px] font-black text-red-500 uppercase tracking-widest block mt-0.5">⚠️ Controlado</span>
+                                                                 <span className="text-[8px] font-black text-red-500 group-hover:text-white uppercase tracking-widest block mt-0.5">⚠️ Controlado</span>
                                                             )}
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-2 text-center text-xs font-bold text-gray-500">
+                                                 <td className="px-6 py-2 text-center text-xs font-bold text-slate-600 group-hover:text-white/70">
                                                     {product.sku || '-'}
                                                 </td>
                                                 <td className="px-6 py-2 text-center">
-                                                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">
+                                                     <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest group-hover:bg-white group-hover:text-brand-primary">
                                                         {product.category.name}
                                                     </span>
                                                 </td>
                                                 {selectedType === 'product' && (
                                                     <td className="px-6 py-2 text-center">
                                                         <div className="flex flex-col items-center">
-                                                            <span className={`text-lg leading-none font-black ${isLowStock ? 'text-red-500' : 'text-brand-primary'}`}>
+                                                             <span className={`text-lg leading-none font-black ${isLowStock ? 'text-red-500 group-hover:text-white' : 'text-brand-primary group-hover:text-white'}`}>
                                                                 {parseFloat(product.current_stock).toLocaleString()}
                                                             </span>
-                                                            <span className="text-[8px] font-bold text-gray-400 uppercase mt-0.5">{product.unit}</span>
+                                                            <span className="text-[8px] font-bold text-gray-400 group-hover:text-white/70 uppercase mt-0.5">{product.unit}</span>
                                                         </div>
                                                     </td>
                                                 )}
-                                                <td className="px-6 py-2 text-center text-sm font-black text-gray-900 dark:text-gray-100">
+                                                 <td className="px-6 py-2 text-center text-sm font-black text-slate-900 dark:text-gray-100 group-hover:text-white">
                                                     ${parseFloat(product.price).toLocaleString()}
                                                 </td>
                                                 {selectedType === 'product' && (
                                                     <td className="px-6 py-2 text-center">
-                                                        <div className="flex flex-col items-center gap-1">
+                                                         <div className="flex flex-col items-center gap-1">
                                                             {isLowStock ? (
-                                                                <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-red-200">
+                                                                <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-red-200 group-hover:bg-white group-hover:text-red-600 group-hover:border-white">
                                                                     Poco Stock
                                                                 </span>
                                                             ) : (
-                                                                <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-emerald-200">
+                                                                <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-emerald-200 group-hover:bg-white group-hover:text-emerald-600 group-hover:border-white">
                                                                     Stock OK
                                                                 </span>
                                                             )}
                                                             {expirationAlert && (
-                                                                <span className={`${expirationAlert.color} px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border`}>
+                                                                <span className={`${expirationAlert.color} px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border group-hover:bg-white group-hover:text-brand-primary group-hover:border-white`}>
                                                                     ⏰ {expirationAlert.label}
                                                                 </span>
                                                             )}
@@ -264,21 +273,33 @@ export default function Index({ auth, products, categories, filters }) {
                                                     </td>
                                                 )}
                                                 <td className="px-6 py-2 text-center">
-                                                    {selectedType === 'product' ? (
-                                                        <Link
-                                                            href={route('inventory.show', product.id)}
-                                                            className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-brand-primary px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-colors"
-                                                        >
-                                                            Kardex →
-                                                        </Link>
-                                                    ) : (
-                                                        <button
-                                                            className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-brand-primary px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-colors"
-                                                            onClick={() => openEditModal(product)}
-                                                        >
-                                                            Editar
-                                                        </button>
-                                                    )}
+                                                         <div className="flex items-center justify-center gap-2">
+                                                            {selectedType === 'product' ? (
+                                                                <Link
+                                                                    href={route('inventory.show', product.id)}
+                                                                    className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-brand-primary px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white group-hover:bg-white group-hover:text-brand-primary transition-colors"
+                                                                >
+                                                                    👁️ Ver
+                                                                </Link>
+                                                            ) : (
+                                                                <button
+                                                                    className="inline-flex items-center gap-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white group-hover:bg-white group-hover:text-indigo-600 transition-colors"
+                                                                    onClick={() => openEditModal(product)}
+                                                                >
+                                                                    ✏️ Editar
+                                                                </button>
+                                                            )}
+                                                            
+                                                            {auth.user?.role === 'admin' && (
+                                                                <button
+                                                                    onClick={() => deleteProduct(product.id)}
+                                                                    className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 group-hover:text-white rounded-lg transition-all"
+                                                                    title="Eliminar del catálogo"
+                                                                >
+                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                 </td>
                                             </tr>
                                         );

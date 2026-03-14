@@ -59,6 +59,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings/web', [\App\Http\Controllers\SiteSettingController::class, 'index'])->name('settings.web.index');
     Route::post('/settings/web', [\App\Http\Controllers\SiteSettingController::class, 'update'])->name('settings.web.update');
 
+    // Mantenimiento de Protocolos de Salud (Vacunas, etc)
+    Route::resource('health-protocols', \App\Http\Controllers\HealthProtocolController::class);
+
     // Plantillas de Documentos (Configuración)
     Route::get('/settings/documents', [\App\Http\Controllers\DocumentTemplateController::class, 'index'])->name('document-templates.index');
     Route::post('/settings/documents', [\App\Http\Controllers\DocumentTemplateController::class, 'store'])->name('document-templates.store');
@@ -73,6 +76,11 @@ Route::middleware('auth')->group(function () {
     // Cirugías
     Route::resource('surgeries', \App\Http\Controllers\SurgeryController::class);
     Route::get('/surgeries/{surgery}/consent/{template}', [\App\Http\Controllers\SurgeryController::class, 'printConsent'])->name('surgeries.consent.print');
+
+    // Eutanasia
+    Route::resource('euthanasias', \App\Http\Controllers\EuthanasiaController::class);
+    Route::get('/euthanasias/{euthanasia}/report', [\App\Http\Controllers\EuthanasiaController::class, 'printReport'])->name('euthanasias.report');
+
 
     // Inventario y Farmacia
     Route::get('/inventory', [\App\Http\Controllers\InventoryController::class, 'index'])->name('inventory.index');

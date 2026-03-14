@@ -449,14 +449,15 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                             </div>
 
                             {/* Payment Configuration container */}
-                            <div className="bg-[#1A2131] border border-[#2A3347] rounded-[2rem] p-7 flex-1 flex flex-col shadow-xl">
-                                <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Método de Pago</h3>
-                                <div className="grid grid-cols-2 gap-3 mb-6 shrink-0">
+                            <div className="bg-[#1A2131] border border-[#2A3347] rounded-[2rem] p-6 flex-1 flex flex-col shadow-xl">
+                                <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Método de Pago</h3>
+                                <div className="grid grid-cols-5 gap-2 mb-6 shrink-0">
                                     {[
                                         { id: 'cash', label: 'Efectivo', icon: '💵' },
                                         { id: 'card', label: 'Tarjeta', icon: '💳' },
                                         { id: 'transfer', label: 'Transf.', icon: '🏦' },
                                         { id: 'mixed', label: 'Mixto', icon: '📝' },
+                                        { id: 'credit', label: 'Fiado', icon: '⏳' },
                                     ].map(method => (
                                         <button
                                             key={method.id}
@@ -465,27 +466,21 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                                 setData('payment_method', method.id);
                                                 if (method.id !== 'cash' && method.id !== 'mixed') { setReceivedAmount(''); setData('mixed_cash_amount', ''); }
                                             }}
-                                            className={`py-4 rounded-2xl flex flex-col items-center justify-center gap-2 border transition-all ${data.payment_method === method.id ? 'border-purple-500 bg-purple-500/10 text-purple-400 font-bold shadow-inner' : 'border-[#2A3347] bg-[#111623] hover:bg-[#252E43] text-gray-500'}`}
+                                            disabled={method.id === 'credit' && (selectedClient?.id === generalPublicClient?.id)}
+                                            className={`py-3 rounded-xl flex flex-col items-center justify-center gap-1.5 border transition-all ${data.payment_method === method.id 
+                                                ? (method.id === 'credit' ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-purple-500 bg-purple-500/10 text-purple-400') 
+                                                : 'border-[#2A3347] bg-[#111623] hover:bg-[#252E43] text-gray-500'} 
+                                                ${(method.id === 'credit' && selectedClient?.id === generalPublicClient?.id) ? 'opacity-20 cursor-not-allowed' : ''}`}
                                         >
-                                            <span className="text-2xl">{method.icon}</span>
-                                            <span className="text-[10px] uppercase tracking-widest">{method.label}</span>
+                                            <span className="text-xl">{method.icon}</span>
+                                            <span className="text-[9px] font-black uppercase tracking-tighter">{method.label}</span>
                                         </button>
                                     ))}
-                                    <button
-                                        onClick={() => {
-                                            setData('payment_method', 'credit');
-                                            setReceivedAmount(''); setData('mixed_cash_amount', '');
-                                        }}
-                                        disabled={selectedClient?.id === generalPublicClient?.id}
-                                        className={`col-span-2 py-3 rounded-2xl flex items-center justify-center gap-2 border transition-all ${data.payment_method === 'credit' ? 'border-amber-500 bg-amber-500/10 text-amber-500 font-bold' : 'border-[#2A3347] bg-[#111623] hover:bg-[#252E43] text-gray-500'} ${selectedClient?.id === generalPublicClient?.id ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                    >
-                                        <span>⏳</span><span className="text-[10px] uppercase tracking-widest">Fiado / Crédito Pospago</span>
-                                    </button>
                                 </div>
 
                                 {/* Dynamic Fields */}
                                 {data.payment_method === 'cash' && (
-                                    <div className="mb-6 shrink-0 space-y-2 relative">
+                                    <div className="mb-4 shrink-0 space-y-2 relative">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Importe Recibido ($)</label>
                                         <input type="number" step="0.01" value={receivedAmount} onChange={e => setReceivedAmount(e.target.value)} className="w-full bg-[#0B0F19] text-white border border-[#2A3347] rounded-xl py-4 px-4 font-black transition text-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-left" placeholder="0.00" />
                                         {receivedAmount && Number(receivedAmount) >= total && (
@@ -498,7 +493,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                 )}
 
                                 {data.payment_method === 'mixed' && (
-                                    <div className="mb-6 shrink-0 space-y-2">
+                                    <div className="mb-4 shrink-0 space-y-2">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Efectivo Ingresado ($)</label>
                                         <input type="number" step="0.01" value={data.mixed_cash_amount} onChange={e => setData('mixed_cash_amount', e.target.value)} className="w-full bg-[#0B0F19] text-white border border-[#2A3347] rounded-xl py-4 px-4 font-black transition text-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-left" placeholder="0.00" />
                                         {data.mixed_cash_amount && (

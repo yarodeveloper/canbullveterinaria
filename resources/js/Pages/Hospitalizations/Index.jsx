@@ -93,27 +93,27 @@ export default function Index({ auth, hospitalizations, filters }) {
                             {hospitalizations.length > 0 ? (
                                 <ul className="divide-y divide-gray-100 dark:divide-gray-700">
                                     {hospitalizations.map((hospitalization) => (
-                                        <li key={hospitalization.id} className="group hover:bg-gray-50/80 dark:hover:bg-gray-700/30 transition-colors">
+                                        <li key={hospitalization.id} className="group hover:bg-brand-primary transition-colors">
                                             <Link href={route('hospitalizations.show', hospitalization.id)} className="block px-6 py-5">
                                                 <div className="flex items-center justify-between">
 
                                                     {/* Info Paciente y Motivo */}
                                                     <div className="flex items-center min-w-0 gap-5 flex-1">
-                                                        <div className="flex-shrink-0 w-12 h-12 bg-brand-primary/10 rounded-2xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                                                        <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
                                                             {hospitalization.pet.species === 'Canino' ? '🐕' : '🐈'}
                                                         </div>
                                                         <div className="min-w-0 flex-1">
                                                             <div className="flex items-center gap-3">
-                                                                <p className="text-base font-black text-slate-900 dark:text-white truncate">
+                                                                 <p className="text-base font-black text-slate-900 dark:text-white group-hover:text-white truncate">
                                                                     {hospitalization.pet.name}
                                                                 </p>
-                                                                <span className={`px-2.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-widest ${getStatusStyle(hospitalization.status)}`}>
+                                                                 <span className={`px-2.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-widest group-hover:bg-white group-hover:text-brand-primary group-hover:border-white ${getStatusStyle(hospitalization.status)}`}>
                                                                     {getStatusLabel(hospitalization.status)}
                                                                 </span>
                                                             </div>
-                                                            <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 font-bold uppercase tracking-wide">
+                                                             <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 group-hover:text-white/80 font-bold uppercase tracking-wide">
                                                                 <span>{hospitalization.reason}</span>
-                                                                <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 rounded-full"></span>
+                                                                <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 group-hover:bg-white/30 rounded-full"></span>
                                                                 <span className="hidden sm:inline-flex items-center gap-1">
                                                                     👨‍⚕️ {hospitalization.veterinarian?.name || 'No asignado'}
                                                                 </span>
@@ -124,13 +124,13 @@ export default function Index({ auth, hospitalizations, filters }) {
                                                     {/* Info Fecha y Acciones */}
                                                     <div className="flex items-center gap-6 ml-4">
                                                         <div className="text-right hidden sm:block">
-                                                            <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">Ingresado</p>
-                                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                                             <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5">Ingresado</p>
+                                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-white">
                                                                 {format(new Date(hospitalization.admission_date), "d MMM, HH:mm", { locale: es })}
                                                             </p>
                                                         </div>
                                                         <div className="hidden md:flex flex-shrink-0">
-                                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-[#1B2132] border-2 border-slate-200 dark:border-slate-700/50 group-hover:border-brand-primary group-hover:text-brand-primary text-gray-300 transition-colors">
+                                                             <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-[#1B2132] border-2 border-slate-200 dark:border-slate-700/50 group-hover:border-white group-hover:bg-white/20 group-hover:text-white text-gray-300 transition-colors">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                                                                     <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                                                                 </svg>

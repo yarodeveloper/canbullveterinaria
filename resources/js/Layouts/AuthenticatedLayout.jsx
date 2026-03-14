@@ -28,7 +28,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 )}
             </Head>
             <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-                <nav className="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800">
+                <nav className="border-b border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                     <div className="h-1 bg-brand-primary"></div>
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="flex h-16 justify-between">
@@ -44,49 +44,56 @@ export default function AuthenticatedLayout({ header, children }) {
                                         href={route('dashboard')}
                                         active={route().current('dashboard')}
                                     >
-                                        <img src="/icons/imac-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
+                                        <img src="/icons/imac-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
                                         Dashboard
                                     </NavLink>
                                     <NavLink
                                         href={route('pets.index')}
                                         active={route().current('pets.*')}
                                     >
-                                        <img src="/icons/pets-hotel-symbol-with-a-dog-and-a-cat-in-a-circle-with-one-star-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
+                                        <img src="/icons/pet-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
                                         Mascotas
                                     </NavLink>
                                     <NavLink
                                         href={route('clients.index')}
                                         active={route().current('clients.*')}
                                     >
-                                        <img src="/icons/dog-walker-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
+                                        <img src="/icons/woman-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
                                         Clientes
                                     </NavLink>
                                     <NavLink
                                         href={route('appointments.index')}
                                         active={route().current('appointments.*')}
                                     >
-                                        <img src="/icons/calendar-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
+                                        <img src="/icons/calendar-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
                                         Agenda
                                     </NavLink>
                                     <NavLink
                                         href={route('hospitalizations.index')}
                                         active={route().current('hospitalizations.*')}
                                     >
-                                        <img src="/icons/med-kit-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
+                                        <img src="/icons/med-kit-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
                                         Hospitalización
                                     </NavLink>
                                     <NavLink
                                         href={route('surgeries.index')}
                                         active={route().current('surgeries.*')}
                                     >
-                                        <img src="/icons/band-aid-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
+                                        <img src="/icons/band-aid-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
                                         Cirugías
+                                    </NavLink>
+                                    <NavLink
+                                        href={route('euthanasias.index')}
+                                        active={route().current('euthanasias.*')}
+                                    >
+                                        <img src="/icons/leaf-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
+                                        Eutanasia
                                     </NavLink>
                                     <NavLink
                                         href={route('inventory.index')}
                                         active={route().current('inventory.*')}
                                     >
-                                        <img src="/icons/box-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
+                                        <img src="/icons/box-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
                                         Inventario
                                     </NavLink>
                                     {can('manage finances') && (
@@ -95,21 +102,21 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 href={route('cash-register.index')}
                                                 active={route().current('cash-register.*')}
                                             >
-                                                <img src="/icons/bank-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
+                                                <img src="/icons/bank-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
                                                 Turno Caja
                                             </NavLink>
                                             <NavLink
                                                 href={route('receipts.create')}
                                                 active={route().current('receipts.*')}
                                             >
-                                                <img src="/icons/shop-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
+                                                <img src="/icons/shop-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
                                                 PDV
                                             </NavLink>
                                             <NavLink
                                                 href={route('cash.index')}
                                                 active={route().current('cash.*')}
                                             >
-                                                <img src="/icons/price-tag-svgrepo-com.svg" className="w-5 h-5 mr-2 opacity-70" alt="" />
+                                                <img src="/icons/price-tag-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
                                                 Egresos Extras
                                             </NavLink>
                                         </>
@@ -123,9 +130,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                                         <span className="inline-flex rounded-md">
                                                             <button
                                                                 type="button"
-                                                                className={`inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none dark:bg-gray-800 dark:text-gray-400 dark:hover:text-gray-300 ${route().current('breeds.*') ? 'text-brand-primary dark:text-brand-primary' : ''}`}
+                                                                className={`inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-slate-600 transition duration-150 ease-in-out hover:text-slate-900 focus:outline-none dark:bg-gray-800 dark:text-gray-400 dark:hover:text-gray-300 ${route().current('breeds.*') ? 'text-brand-primary dark:text-brand-primary' : ''}`}
                                                             >
-                                                                <img src="/icons/set-up-svgrepo-com.svg" className="w-5 h-5 opacity-70" alt="Configuración" />
+                                                                <img src="/icons/set-up-svgrepo-com.svg" className="w-5 h-5 icon-adaptive" alt="Configuración" />
                                                                 <svg
                                                                     className="-me-0.5 ms-1 h-4 w-4"
                                                                     xmlns="http://www.w3.org/2000/svg"
@@ -143,11 +150,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                                     </Dropdown.Trigger>
 
                                                     <Dropdown.Content width="48" contentClasses="py-1 bg-white dark:bg-gray-800">
-                                                        <div className="block px-4 py-2 text-xs text-gray-400 uppercase tracking-widest">
+                                                        <div className="block px-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                                             Catálogos
                                                         </div>
                                                         <Dropdown.Link href={route('breeds.index')}>
                                                             Razas y Especies
+                                                        </Dropdown.Link>
+                                                        <Dropdown.Link href={route('health-protocols.index')}>
+                                                            Vacunas y Tratamientos
                                                         </Dropdown.Link>
                                                         {user.role === 'admin' && (
                                                             <Dropdown.Link href={route('product-categories.index')}>
@@ -191,11 +201,11 @@ export default function AuthenticatedLayout({ header, children }) {
                                             <span className="inline-flex rounded-md">
                                                 <button
                                                     type="button"
-                                                    className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none dark:bg-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
+                                                    className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-slate-600 transition duration-150 ease-in-out hover:text-slate-900 focus:outline-none dark:bg-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
                                                 >
                                                     <div className="flex flex-col items-end mr-1">
                                                         <div className="w-9 h-9 rounded-full bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center overflow-hidden shadow-sm">
-                                                            <img src="/icons/pet-round-svgrepo-com.svg" className="w-6 h-6 opacity-80" alt="Perfil Admin" style={{ filter: 'invert(24%) sepia(35%) saturate(3015%) hue-rotate(264deg) brightness(85%) contrast(92%)' }} />
+                                                                <img src="/icons/pet-round-svgrepo-com.svg" className="w-6 h-6 icon-adaptive" alt="Perfil Admin" />
                                                         </div>
                                                     </div>
 
@@ -219,14 +229,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                             <Dropdown.Link
                                                 href={route('profile.edit')}
                                             >
-                                                Profile
+                                                Mi Perfil
                                             </Dropdown.Link>
                                             <Dropdown.Link
                                                 href={route('logout')}
                                                 method="post"
                                                 as="button"
                                             >
-                                                Log Out
+                                                Cerrar Sesión
                                             </Dropdown.Link>
                                         </Dropdown.Content>
                                     </Dropdown>
@@ -235,14 +245,14 @@ export default function AuthenticatedLayout({ header, children }) {
 
                             <div className="-me-2 flex items-center sm:hidden space-x-2">
                                 <DarkModeToggle />
-                                <button
-                                    onClick={() =>
-                                        setShowingNavigationDropdown(
-                                            (previousState) => !previousState,
-                                        )
-                                    }
-                                    className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none dark:text-gray-500 dark:hover:bg-gray-900 dark:hover:text-gray-400 dark:focus:bg-gray-900 dark:focus:text-gray-400"
-                                >
+                                    <button
+                                        onClick={() =>
+                                            setShowingNavigationDropdown(
+                                                (previousState) => !previousState,
+                                            )
+                                        }
+                                        className="inline-flex items-center justify-center rounded-md p-2 text-slate-500 transition duration-150 ease-in-out hover:bg-slate-50 hover:text-slate-700 focus:bg-slate-50 focus:text-slate-700 focus:outline-none dark:text-gray-500 dark:hover:bg-gray-900 dark:hover:text-gray-400 dark:focus:bg-gray-900 dark:focus:text-gray-400"
+                                    >
                                     <svg
                                         className="h-6 w-6"
                                         stroke="currentColor"
@@ -321,6 +331,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                 Cirugías
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
+                                href={route('euthanasias.index')}
+                                active={route().current('euthanasias.*')}
+                            >
+                                Eutanasia
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink
                                 href={route('inventory.index')}
                                 active={route().current('inventory.*')}
                             >
@@ -378,14 +394,14 @@ export default function AuthenticatedLayout({ header, children }) {
 
                             <div className="mt-3 space-y-1">
                                 <ResponsiveNavLink href={route('profile.edit')}>
-                                    Profile
+                                    Mi Perfil
                                 </ResponsiveNavLink>
                                 <ResponsiveNavLink
                                     method="post"
                                     href={route('logout')}
                                     as="button"
                                 >
-                                    Log Out
+                                    Cerrar Sesión
                                 </ResponsiveNavLink>
                             </div>
                         </div>

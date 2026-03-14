@@ -21,10 +21,16 @@ export default {
                     primary: 'var(--color-primary)',
                     secondary: 'var(--color-secondary)',
                     accent: 'var(--color-accent)',
-                    purple: '#84329B', // Keeping for backwards compat if needed
+                    purple: '#84329B',
                     yellow: '#C4D600',
                 }
-            }
+            },
+            borderColor: {
+                // Color por defecto cuando usas 'border' sin especificar color
+                // Antes: gray-200 (#e5e7eb) — casi invisible en light mode
+                // Ahora: slate-300 (#cbd5e1) — claramente visible pero elegante
+                DEFAULT: '#cbd5e1',
+            },
         },
     },
 

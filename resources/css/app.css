@@ -8,8 +8,9 @@
         --color-secondary: #C4D600;
         --color-accent: #63666A;
         
-        --background-light: #ffffff;
-        --text-light: #1f2937;
+        --background-light: #f8fafc;
+        --text-light: #0f172a;
+        --border-light: #94a3b8;
         
         --background-dark: #111827;
         --text-dark: #f3f4f6;
@@ -29,6 +30,72 @@
         background-color: var(--background-dark);
         color: var(--text-dark);
     }
+
+    /* ═══════════════════════════════════════════════════════
+       CORRECCIÓN GLOBAL DE CONTRASTE EN LIGHT MODE
+       
+       El patrón más usado para etiquetas en el sistema es:
+       text-gray-400 / text-slate-400 / text-gray-500
+       Estos son perfectos en dark mode pero demasiado claros
+       en light mode (gris claro sobre fondo blanco).
+       
+       Solución: en light mode, forzamos valores más oscuros
+       sin tocar el dark mode (protegido por .dark prefix).
+    ═══════════════════════════════════════════════════════ */
+
+    /* gray-400 (#9ca3af) → en light = gray-600 (#4b5563) */
+    :not(.dark) .text-gray-400 {
+        color: #4b5563 !important;
+    }
+
+    /* slate-400 (#94a3b8) → en light = slate-600 (#475569) */
+    :not(.dark) .text-slate-400 {
+        color: #475569 !important;
+    }
+
+    /* gray-500 (#6b7280) → en light = gray-600 (#4b5563) */
+    :not(.dark) .text-gray-500 {
+        color: #4b5563 !important;
+    }
+
+    /* slate-500 (#64748b) → en light = slate-700 (#334155) */
+    :not(.dark) .text-slate-500 {
+        color: #334155 !important;
+    }
+
+    /* white/60, white/70 que se usan en fondos primarios — no modificar */
+    /* (están sobre fondos de color, así que se excluyen automáticamente) */
+
+    /* ─── Inputs & Selects: Bordes visibles en light mode ─── */
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([class*="border-0"]),
+    select:not([class*="border-0"]),
+    textarea:not([class*="border-0"]) {
+        border-color: #94a3b8;
+        color: #1e293b;
+    }
+
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+    select:focus,
+    textarea:focus {
+        border-color: var(--color-primary);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(132, 50, 155, 0.15);
+    }
+
+    .dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    .dark select,
+    .dark textarea {
+        border-color: #475569;
+        color: #f1f5f9;
+    }
+
+    /* ─── Separadores ─── */
+    hr {
+        border-color: #cbd5e1;
+    }
+    .dark hr {
+        border-color: #334155;
+    }
 }
 
 @layer components {
@@ -43,5 +110,22 @@
     
     .bg-brand-primary {
         background-color: var(--color-primary);
+    }
+
+    .bg-brand-secondary {
+        background-color: var(--color-secondary);
+    }
+
+    .icon-adaptive {
+        @apply transition-all duration-300;
+        filter: brightness(0) opacity(0.7);
+    }
+
+    .dark .icon-adaptive {
+        filter: brightness(0) invert(1) opacity(0.8);
+    }
+
+    .white-icon {
+        filter: brightness(0) invert(1);
     }
 }

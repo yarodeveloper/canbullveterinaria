@@ -41,15 +41,24 @@ class SurgeryController extends Controller
 
     public function create(Request $request)
     {
+        $pet = null;
+        if ($request->has('pet_id')) {
+            $pet = Pet::with('owner')->find($request->pet_id);
+        }
+
         $branchId = Auth::user()->branch_id;
-        $pets = Pet::where('branch_id', $branchId)->get();
         $veterinarians = User::where('branch_id', $branchId)
             ->whereIn('role', ['admin', 'veterinarian'])
             ->get();
+        
+        $clients = User::where('branch_id', $branchId)
+            ->where('role', 'client')
+            ->get(['id', 'name']);
 
         return Inertia::render('Surgeries/Create', [
-            'pets' => $pets,
+            'pet' => $pet,
             'veterinarians' => $veterinarians,
+            'clients' => $clients,
             'selectedPetId' => $request->pet_id
         ]);
     }
@@ -65,6 +74,8 @@ class SurgeryController extends Controller
             'asa_classification' => 'nullable|string',
             'pre_op_notes' => 'nullable|string',
         ]);
+
+        $pet = Pet::findOrFail($validated['pet_id']);
 
         $validated['branch_id'] = Auth::user()->branch_id;
         $validated['status'] = 'scheduled';
@@ -132,6 +143,7 @@ class SurgeryController extends Controller
             'post_op_notes' => 'nullable|string',
             'checklist' => 'nullable|array',
             'vital_signs' => 'nullable|array',
+            'post_vital_signs' => 'nullable|array',
             'veterinarian_id' => 'nullable|exists:users,id',
             'anesthesiologist_id' => 'nullable|exists:users,id',
             'asa_classification' => 'nullable|string',
