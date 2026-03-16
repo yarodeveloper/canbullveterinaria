@@ -72,10 +72,16 @@ class ClientController extends Controller
     {
         $this->authorizeBranch($client);
 
+        $branchId = Auth::user()->branch_id;
+        $documentTemplates = \App\Models\DocumentTemplate::where(function($q) use($branchId) {
+                $q->where('branch_id', $branchId)->orWhereNull('branch_id');
+            })->where('is_active', true)->get();
+
         return Inertia::render('Clients/Show', [
             'client' => $client->load(['pets' => function($q) {
                 $q->withCount(['medicalRecords', 'appointments']);
-            }])
+            }]),
+            'documentTemplates' => $documentTemplates
         ]);
     }
 

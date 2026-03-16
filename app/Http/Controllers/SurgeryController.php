@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 
 class SurgeryController extends Controller
 {
+    use \App\Traits\ParsesDocumentTemplates;
+
     public function index(Request $request)
     {
         $branchId = Auth::user()->branch_id;
@@ -113,10 +115,10 @@ class SurgeryController extends Controller
             $q->where('status', 'active');
         }, 'leadSurgeon', 'anesthesiologist', 'branch']);
         
-        $templates = \App\Models\DocumentTemplate::whereIn('type', ['surgery', 'general'])
+        $templates = \App\Models\DocumentTemplate::where('is_active', true)
             ->where(function($q) use($surgery) {
                 $q->where('branch_id', $surgery->branch_id)->orWhereNull('branch_id');
-            })->where('is_active', true)->get();
+            })->get();
 
         $branchId = Auth::user()->branch_id;
         $veterinarians = User::where('branch_id', $branchId)
@@ -159,18 +161,14 @@ class SurgeryController extends Controller
     {
         $surgery->load('pet.owner', 'leadSurgeon');
 
-        $content = $template->content;
-        
-        $replacements = [
-            '{pet_name}' => $surgery->pet->name,
-            '{client_name}' => $surgery->pet->owner->name ?? '_________________',
-            '{date}' => \Carbon\Carbon::now()->format('d/m/Y'),
-            '{veterinarian_name}' => $surgery->leadSurgeon ? $surgery->leadSurgeon->name : '_________________',
-        ];
-
-        foreach($replacements as $key => $val) {
-            $content = str_replace($key, $val, $content);
-        }
+        $content = $this->parseTemplate($template->content, [
+            'pet' => $surgery->pet,
+            'veterinarian' => $surgery->leadSurgeon,
+            'branch' => $surgery->branch,
+            'extra' => [
+                'reason' => $surgery->surgery_type,
+            ]
+        ]);
 
         return view('print.consent', [
             'content' => $content,

@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useState } from 'react';
 import GlasgowScaleModal from '@/Components/GlasgowScaleModal';
+import PrintDocumentModal from '@/Components/PrintDocumentModal';
 
 const VITAL_RANGES = {
     Canino: {
@@ -67,6 +68,7 @@ const calculateAge = (dobString) => {
 export default function Show({ auth, hospitalization, templates }) {
     const [showMonitoringForm, setShowMonitoringForm] = useState(false);
     const [showGlasgowModal, setShowGlasgowModal] = useState(false);
+    const [showPrintModal, setShowPrintModal] = useState(false);
     const { data, setData, post, processing, reset, errors } = useForm({
         temperature: '',
         heart_rate: '',
@@ -180,15 +182,23 @@ export default function Show({ auth, hospitalization, templates }) {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Monitoring List */}
                         <div className="lg:col-span-2 space-y-6">
-                            <div className="flex justify-between items-center bg-slate-50 dark:bg-[#111822]/50 p-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
-                                <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-wider text-sm">Kardex de Monitoreo</h3>
-                                <button
-                                    onClick={() => setShowMonitoringForm(!showMonitoringForm)}
-                                    className="px-4 py-2 bg-brand-primary text-white rounded-xl text-xs font-black uppercase hover:opacity-90 transition shadow-lg shadow-primary-100"
-                                >
-                                    {showMonitoringForm ? 'Cancelar' : '+ Registrar Signos'}
-                                </button>
-                            </div>
+                                    <div className="flex justify-between items-center bg-slate-50 dark:bg-[#111822]/50 p-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                                        <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-wider text-sm">Kardex de Monitoreo</h3>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => setShowPrintModal(true)}
+                                                className="px-4 py-2 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 text-brand-primary rounded-xl text-xs font-black uppercase hover:bg-brand-primary hover:text-white transition shadow-sm"
+                                            >
+                                                🖨️ Imprimir
+                                            </button>
+                                            <button
+                                                onClick={() => setShowMonitoringForm(!showMonitoringForm)}
+                                                className="px-4 py-2 bg-brand-primary text-white rounded-xl text-xs font-black uppercase hover:opacity-90 transition shadow-lg shadow-primary-100"
+                                            >
+                                                {showMonitoringForm ? 'Cancelar' : '+ Registrar Signos'}
+                                            </button>
+                                        </div>
+                                    </div>
 
                             {showMonitoringForm && (
                                 <form onSubmit={submitMonitoring} className="bg-white dark:bg-[#1B2132] p-8 rounded-3xl shadow-xl border-2 border-brand-primary/20 animate-in fade-in slide-in-from-top-4">
@@ -420,29 +430,14 @@ export default function Show({ auth, hospitalization, templates }) {
                             </div>
 
                             <div className="bg-white dark:bg-[#1B2132] p-8 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700/50">
-                                <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-6">Documentos Legales</h4>
-                                <div className="space-y-4">
-                                    {templates && templates.map(template => (
-                                        <a
-                                            key={template.id}
-                                            href={route('hospitalizations.consent.print', { hospitalization: hospitalization.id, template: template.id })}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-[#111822] border-2 border-transparent hover:border-brand-primary rounded-2xl group transition-all"
-                                        >
-                                            <div className="w-8 h-8 bg-brand-primary/10 rounded-xl flex items-center justify-center text-brand-primary">📄</div>
-                                            <div>
-                                                <p className="font-bold text-gray-900 dark:text-gray-100 text-xs">{template.title}</p>
-                                                <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase">Imprimir / Generar PDF</p>
-                                            </div>
-                                        </a>
-                                    ))}
-                                    {(!templates || templates.length === 0) && (
-                                        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-2xl text-[10px] font-bold border border-amber-200 dark:border-amber-800">
-                                            No hay plantillas de hospitalización configuradas. <Link href={route('document-templates.index')} className="underline">Configurar</Link>.
-                                        </div>
-                                    )}
-                                </div>
+                                <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4">Documentos Legales</h4>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-6">Genera responsivas, contratos o actas para este ingreso.</p>
+                                <button
+                                    onClick={() => setShowPrintModal(true)}
+                                    className="w-full py-4 bg-brand-primary text-white rounded-2xl text-xs font-black uppercase hover:opacity-90 transition shadow-lg shadow-brand-primary/20"
+                                >
+                                    📄 Centro de Impresión
+                                </button>
                             </div>
 
                             <div className="bg-brand-primary p-8 rounded-3xl text-white shadow-xl shadow-primary-100">
@@ -484,6 +479,14 @@ export default function Show({ auth, hospitalization, templates }) {
                     </div>
                 </div>
             </div>
+
+            <PrintDocumentModal 
+                isOpen={showPrintModal}
+                onClose={() => setShowPrintModal(false)}
+                pet={hospitalization.pet}
+                documentTemplates={templates}
+                customPrintRoute={(template) => route('hospitalizations.consent.print', { hospitalization: hospitalization.id, template: template.id })}
+            />
         </AuthenticatedLayout>
     );
 }

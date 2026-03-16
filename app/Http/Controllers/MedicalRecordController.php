@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 
 class MedicalRecordController extends Controller
 {
+    use \App\Traits\ParsesDocumentTemplates;
+
     public function create(Pet $pet)
     {
         // Authorize branch
@@ -109,8 +111,34 @@ class MedicalRecordController extends Controller
             abort(403);
         }
 
+        $templates = \App\Models\DocumentTemplate::whereIn('type', ['consultation', 'general'])
+            ->where(function($q) {
+                $q->where('branch_id', Auth::user()->branch_id)->orWhereNull('branch_id');
+            })->where('is_active', true)->get();
+
         return Inertia::render('MedicalRecords/Show', [
-            'record' => $medicalRecord->load(['pet.owner', 'veterinarian', 'attachments'])
+            'record'    => $medicalRecord->load(['pet.owner', 'veterinarian', 'attachments']),
+            'templates' => $templates
+        ]);
+    }
+
+    public function printConsent(MedicalRecord $medicalRecord, \App\Models\DocumentTemplate $template)
+    {
+        $medicalRecord->load(['pet.owner', 'veterinarian', 'branch']);
+
+        $content = $this->parseTemplate($template->content, [
+            'pet' => $medicalRecord->pet,
+            'veterinarian' => $medicalRecord->veterinarian,
+            'branch' => $medicalRecord->branch,
+            'extra' => [
+                'type' => $medicalRecord->type,
+            ]
+        ]);
+
+        return view('print.consent', [
+            'content' => $content,
+            'title' => $template->title,
+            'pet' => $medicalRecord->pet
         ]);
     }
 }

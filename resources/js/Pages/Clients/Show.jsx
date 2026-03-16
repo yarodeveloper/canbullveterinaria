@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import BehaviorSelector, { BehaviorBadge } from '@/Components/BehaviorSelector';
+import PrintDocumentModal from '@/Components/PrintDocumentModal';
 
-export default function Show({ auth, client }) {
+export default function Show({ auth, client, documentTemplates = [] }) {
     const [editingState, setEditingState] = useState(null); // 'contact', 'emergency', 'crm', null
+    const [selectedPet, setSelectedPet] = useState(null);
+    const [showPrintModal, setShowPrintModal] = useState(false);
 
     const { data, setData, patch, processing, errors, reset, clearErrors } = useForm({
         name: client.name || '',
@@ -310,15 +313,30 @@ export default function Show({ auth, client }) {
                                                 </div>
                                             </div>
 
-                                            <div className="mt-4 sm:mt-0 flex space-x-4 pl-16 sm:pl-0 text-[10px] uppercase font-bold text-gray-400">
-                                                <div className="flex items-center gap-1">
-                                                    <span className="text-gray-300">📄</span>
-                                                    <span className="text-gray-500">{pet.medical_records_count} Consultas</span>
+                                            <div className="mt-4 sm:mt-0 flex items-center gap-6">
+                                                <div className="flex space-x-4 text-[10px] uppercase font-bold text-gray-400">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-gray-300">📄</span>
+                                                        <span className="text-gray-500">{pet.medical_records_count} Consultas</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-gray-300">📅</span>
+                                                        <span className="text-gray-500">{pet.appointments_count} Citas</span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <span className="text-gray-300">📅</span>
-                                                    <span className="text-gray-500">{pet.appointments_count} Citas</span>
-                                                </div>
+                                                
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setSelectedPet(pet);
+                                                        setShowPrintModal(true);
+                                                    }}
+                                                    className="p-2 h-9 w-9 flex items-center justify-center bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-full transition-all border dark:border-gray-600"
+                                                    title="Centro de Impresión"
+                                                >
+                                                    🖨️
+                                                </button>
                                             </div>
                                         </Link>
                                     ))}
@@ -356,6 +374,15 @@ export default function Show({ auth, client }) {
                     </div>
                 </div>
             </div>
+            <PrintDocumentModal 
+                isOpen={showPrintModal}
+                onClose={() => {
+                    setShowPrintModal(false);
+                    setSelectedPet(null);
+                }}
+                pet={selectedPet}
+                documentTemplates={documentTemplates}
+            />
         </AuthenticatedLayout>
     );
 }

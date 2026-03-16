@@ -53,13 +53,32 @@
         }
         .content {
             font-size: 14px;
-            white-space: pre-wrap;
             margin-bottom: 60px;
+            line-height: 1.4;
         }
+        .content p {
+            margin: 0;
+            padding: 0;
+            margin-bottom: 4px; /* Pequeño espacio entre párrafos */
+        }
+        .content h1, .content h2, .content h3 {
+            margin: 10px 0 5px 0;
+        }
+        .content ul, .content ol {
+            margin: 5px 0;
+            padding-left: 25px;
+        }
+        /* Quill Alignment Styles */
+        .ql-align-center { text-align: center; }
+        .ql-align-right { text-align: right; }
+        .ql-align-justify { text-align: justify; }
+        .ql-indent-1 { padding-left: 3em; }
+        .ql-indent-2 { padding-left: 6em; }
+        /* Reset margins for signatures */
         .signatures {
             display: flex;
             justify-content: space-around;
-            margin-top: 60px;
+            margin-top: 40px;
             text-align: center;
         }
         .signature-line {
@@ -93,28 +112,40 @@
 <body>
     <button onclick="window.print()" class="print-btn no-print">🖨️ IMPRIMIR DOCUMENTO</button>
 
-    <div class="header">
-        <h1>{{ $title }}</h1>
-        <p style="margin:0;color:#6b7280;font-size:12px;text-transform:uppercase;">Documento Legal y Consentimiento Informado</p>
-    </div>
+@php
+    $settings = \App\Models\SiteSetting::all()->pluck('value', 'key');
+    $logoUrl = $settings['site_logo'] ?? null;
+@endphp
 
-    <div class="patient-info">
-        <div>
-            <span>Paciente</span>
-            <p>{{ $pet->name }}</p>
+<div class="header">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+        <div style="flex: 0 0 auto;">
+            @if($logoUrl)
+                <img src="{{ Str::startsWith($logoUrl, 'http') ? $logoUrl : asset($logoUrl) }}" style="max-height: 70px; width: auto;" alt="Logo">
+            @else
+                <div style="font-size: 28px; font-weight: 900; color: #4F46E5; letter-spacing: -1px;">CanBull</div>
+            @endif
         </div>
-        <div>
-            <span>Propietario</span>
-            <p>{{ $pet->owner->name ?? '_________________' }}</p>
-        </div>
-        <div>
-            <span>Fecha</span>
-            <p>{{ \Carbon\Carbon::now()->format('d/m/Y') }}</p>
+        
+        <div style="text-align: right;">
+            <h1 style="font-size: 22px; margin: 0; line-height: 1.1; color: #111827;">{{ $title }}</h1>
+            <p style="margin: 8px 0 0 0; font-size: 9px; color: #6b7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">
+                @if(isset($settings['contact_address']))
+                    {{ $settings['contact_address'] }} <br>
+                @endif
+                @if(isset($settings['contact_phone']))
+                    TEL: {{ $settings['contact_phone'] }} | 
+                @endif
+                {{ \Carbon\Carbon::now()->translatedFormat('d F, Y') }}
+            </p>
         </div>
     </div>
+    <div style="height: 3px; background: linear-gradient(to right, #4F46E5, #EC4899); border-radius: 2px; margin-top: 20px;"></div>
+</div>
+
 
     <div class="content">
-{{ $content }}
+        {!! $content !!}
     </div>
 
     <div class="signatures">

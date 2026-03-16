@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import PrintDocumentModal from '@/Components/PrintDocumentModal';
 
 /* ─── Constantes ─────────────────────────────────────────── */
 const DISPOSITION_LABELS = {
@@ -76,9 +77,10 @@ function EditSectionBtn({ onClick, active }) {
 }
 
 /* ─── Componente principal ───────────────────────────────── */
-export default function Show({ auth, euthanasia: initialEuthanasia, products = [] }) {
+export default function Show({ auth, euthanasia: initialEuthanasia, products = [], documentTemplates = [] }) {
     const [euthanasia, setEuthanasia] = useState(initialEuthanasia);
     const [confirmComplete, setConfirmComplete] = useState(false);
+    const [showPrintModal, setShowPrintModal] = useState(false);
 
     // Sincronizar estado local con props de Inertia
     React.useEffect(() => {
@@ -226,13 +228,13 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                         <span className={`px-3 py-1 rounded-xl border text-[10px] font-black uppercase ${STATUS[euthanasia.status]?.cls}`}>
                             {STATUS[euthanasia.status]?.label}
                         </span>
-                        <a
-                            href={route('euthanasias.report', euthanasia.id)}
-                            target="_blank"
-                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition"
+                        
+                        <button 
+                            onClick={() => setShowPrintModal(true)}
+                            className="flex items-center gap-2 bg-white text-purple-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition hover:bg-purple-100 shadow-lg"
                         >
-                            📄 Imprimir Reporte
-                        </a>
+                            🖨️ Imprimir Documentos
+                        </button>
                     </div>
                 </div>
 
@@ -626,6 +628,28 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                     </div>
                 </div>
             </div>
+            <PrintDocumentModal 
+                isOpen={showPrintModal}
+                onClose={() => setShowPrintModal(false)}
+                pet={euthanasia.pet}
+                documentTemplates={documentTemplates}
+                customPrintRoute={(template) => route('euthanasias.consent.print', { euthanasia: euthanasia.id, template: template.id })}
+            >
+                <div className="mt-4 pt-4 border-t dark:border-gray-700">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Reportes Especiales</p>
+                    <a
+                        href={route('euthanasias.report', euthanasia.id)}
+                        target="_blank"
+                        className="flex items-center gap-3 p-4 bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-2xl hover:bg-purple-100 dark:hover:bg-purple-900/20 transition-all group"
+                    >
+                        <span className="text-xl">📋</span>
+                        <div className="flex-1 overflow-hidden">
+                            <p className="font-bold text-sm text-purple-700 dark:text-purple-300 truncate">Reporte Técnico de Eutanasia</p>
+                            <p className="text-[9px] font-black text-purple-400 uppercase tracking-tighter">Documento clínico completo</p>
+                        </div>
+                    </a>
+                </div>
+            </PrintDocumentModal>
         </AuthenticatedLayout>
     );
 }

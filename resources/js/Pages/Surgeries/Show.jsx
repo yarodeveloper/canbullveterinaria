@@ -3,6 +3,7 @@ import { Head, usePage, router, Link } from '@inertiajs/react';
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import PrintDocumentModal from '@/Components/PrintDocumentModal';
 
 const VITAL_RANGES = {
     Canino: {
@@ -52,6 +53,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
     const [vitalSigns, setVitalSigns] = useState(surgery.vital_signs || { weight: '', hr: '', rr: '', temp: '', crt: '', bcs: '' });
     const [postVitalSigns, setPostVitalSigns] = useState(surgery.post_vital_signs || { weight: '', hr: '', rr: '', temp: '', crt: '', bcs: '' });
     const [activeTab, setActiveTab] = useState('pre_op');
+    const [showPrintModal, setShowPrintModal] = useState(false);
     const [checklist, setChecklist] = useState(surgery.checklist || { pre_op: [], intra_op: [], post_op: [] });
     const [notes, setNotes] = useState({
         pre: surgery.pre_op_notes || '',
@@ -152,6 +154,12 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                         </h2>
                     </div>
                     <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setShowPrintModal(true)}
+                            className="px-4 py-1.5 bg-white dark:bg-gray-800 border border-brand-primary text-brand-primary rounded-full text-[10px] font-black uppercase hover:bg-brand-primary hover:text-white transition shadow-sm"
+                        >
+                            🖨️ Imprimir
+                        </button>
                         <span className={`px-4 py-1.5 rounded-full text-[10px] font-black text-white shadow-lg ${statusMap[surgery.status]?.color}`}>
                             {statusMap[surgery.status]?.label}
                         </span>
@@ -340,28 +348,14 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                     {activeTab === 'pre_op' && (
                                         <div className="space-y-6">
                                             <div className="space-y-4">
-                                                <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Documentos Legales (Consentimientos Quirúrgicos)</h4>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                    {templates && templates.map(template => (
-                                                        <a
-                                                            key={template.id}
-                                                            href={route('surgeries.consent.print', { surgery: surgery.id, template: template.id })}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 border-2 border-brand-primary/20 hover:border-brand-primary rounded-2xl group transition-all"
-                                                        >
-                                                            <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center text-brand-primary text-xl">📄</div>
-                                                            <div>
-                                                                <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">{template.title}</p>
-                                                                <p className="text-[9px] text-gray-400 font-bold uppercase">Imprimir / Generar PDF</p>
-                                                            </div>
-                                                        </a>
-                                                    ))}
-                                                    {(!templates || templates.length === 0) && (
-                                                        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-2xl text-xs font-bold border border-amber-200 dark:border-amber-800 col-span-2">
-                                                            No hay plantillas de cirugía configuradas. <Link href={route('document-templates.index')} className="underline">Configurar ahora</Link>.
-                                                        </div>
-                                                    )}
+                                                <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Documentos Legales (Consentimientos y Actas)</h4>
+                                                <div className="flex flex-col sm:flex-row gap-4">
+                                                    <button
+                                                        onClick={() => setShowPrintModal(true)}
+                                                        className="flex-1 flex items-center justify-center gap-4 py-5 bg-brand-primary text-white rounded-[2rem] text-xs font-black uppercase tracking-widest shadow-xl shadow-brand-primary/20 hover:opacity-90 transition active:scale-95"
+                                                    >
+                                                        📄 Centro de Impresión Quirúrgico
+                                                    </button>
                                                 </div>
                                             </div>
 
@@ -607,6 +601,13 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                     </div>
                 </div>
             </div>
+            <PrintDocumentModal 
+                isOpen={showPrintModal}
+                onClose={() => setShowPrintModal(false)}
+                pet={surgery.pet}
+                documentTemplates={templates}
+                customPrintRoute={(template) => route('surgeries.consent.print', { surgery: surgery.id, template: template.id })}
+            />
         </AuthenticatedLayout>
     );
 }

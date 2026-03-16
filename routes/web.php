@@ -37,6 +37,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/pets/{pet}/medical-records/create', [\App\Http\Controllers\MedicalRecordController::class, 'create'])->name('medical-records.create');
     Route::post('/pets/{pet}/medical-records', [\App\Http\Controllers\MedicalRecordController::class, 'store'])->name('medical-records.store');
     Route::get('/medical-records/{medicalRecord}', [\App\Http\Controllers\MedicalRecordController::class, 'show'])->name('medical-records.show');
+    Route::get('/medical-records/{medicalRecord}/print/{template}', [\App\Http\Controllers\MedicalRecordController::class, 'printConsent'])->name('medical-records.consent.print');
 
     Route::get('/consents', [\App\Http\Controllers\ConsentController::class, 'index'])->name('consents.index');
     Route::get('/pets/{pet}/consents/create', [\App\Http\Controllers\ConsentController::class, 'create'])->name('consents.create');
@@ -63,10 +64,13 @@ Route::middleware('auth')->group(function () {
     Route::resource('health-protocols', \App\Http\Controllers\HealthProtocolController::class);
 
     // Plantillas de Documentos (Configuración)
-    Route::get('/settings/documents', [\App\Http\Controllers\DocumentTemplateController::class, 'index'])->name('document-templates.index');
-    Route::post('/settings/documents', [\App\Http\Controllers\DocumentTemplateController::class, 'store'])->name('document-templates.store');
+    Route::get('/document-templates', [\App\Http\Controllers\DocumentTemplateController::class, 'index'])->name('document-templates.index');
+    Route::get('/document-templates/guide', [\App\Http\Controllers\DocumentTemplateController::class, 'quickGuide'])->name('document-templates.guide');
+    Route::get('/document-templates/{template}/preview', [\App\Http\Controllers\DocumentTemplateController::class, 'preview'])->name('document-templates.preview');
+    Route::post('/document-templates', [\App\Http\Controllers\DocumentTemplateController::class, 'store'])->name('document-templates.store');
     Route::put('/settings/documents/{template}', [\App\Http\Controllers\DocumentTemplateController::class, 'update'])->name('document-templates.update');
     Route::delete('/settings/documents/{template}', [\App\Http\Controllers\DocumentTemplateController::class, 'destroy'])->name('document-templates.destroy');
+    Route::get('/pets/{pet}/print-template/{template}', [\App\Http\Controllers\DocumentTemplateController::class, 'print'])->name('document-templates.print');
 
     // Hospitalización
     Route::resource('hospitalizations', \App\Http\Controllers\HospitalizationController::class);
@@ -80,6 +84,7 @@ Route::middleware('auth')->group(function () {
     // Eutanasia
     Route::resource('euthanasias', \App\Http\Controllers\EuthanasiaController::class);
     Route::get('/euthanasias/{euthanasia}/report', [\App\Http\Controllers\EuthanasiaController::class, 'printReport'])->name('euthanasias.report');
+    Route::get('/euthanasias/{euthanasia}/consent/{template}', [\App\Http\Controllers\EuthanasiaController::class, 'printConsent'])->name('euthanasias.consent.print');
 
 
     // Inventario y Farmacia

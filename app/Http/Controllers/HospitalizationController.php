@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 
 class HospitalizationController extends Controller
 {
+    use \App\Traits\ParsesDocumentTemplates;
+
     public function index(Request $request)
     {
         $query = Hospitalization::with(['pet', 'veterinarian'])
@@ -79,10 +81,10 @@ class HospitalizationController extends Controller
 
     public function show(Hospitalization $hospitalization)
     {
-        $templates = \App\Models\DocumentTemplate::whereIn('type', ['hospitalization', 'general'])
+        $templates = \App\Models\DocumentTemplate::where('is_active', true)
             ->where(function($q) use($hospitalization) {
                 $q->where('branch_id', $hospitalization->branch_id)->orWhereNull('branch_id');
-            })->where('is_active', true)->get();
+            })->get();
 
         return Inertia::render('Hospitalizations/Show', [
             'hospitalization' => $hospitalization->load(['pet.owner', 'pet.surgeries', 'veterinarian', 'monitorings.recorder']),
@@ -94,18 +96,14 @@ class HospitalizationController extends Controller
     {
         $hospitalization->load('pet.owner', 'veterinarian');
 
-        $content = $template->content;
-        
-        $replacements = [
-            '{pet_name}' => $hospitalization->pet->name,
-            '{client_name}' => $hospitalization->pet->owner->name ?? '_________________',
-            '{date}' => \Carbon\Carbon::now()->format('d/m/Y'),
-            '{veterinarian_name}' => $hospitalization->veterinarian ? $hospitalization->veterinarian->name : '_________________',
-        ];
-
-        foreach($replacements as $key => $val) {
-            $content = str_replace($key, $val, $content);
-        }
+        $content = $this->parseTemplate($template->content, [
+            'pet' => $hospitalization->pet,
+            'veterinarian' => $hospitalization->veterinarian,
+            'branch' => $hospitalization->pet->branch,
+            'extra' => [
+                'reason' => $hospitalization->reason,
+            ]
+        ]);
 
         return view('print.consent', [
             'content' => $content,

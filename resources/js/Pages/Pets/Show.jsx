@@ -5,6 +5,7 @@ import { IconEye, IconPlus, IconEdit } from '@/Components/Icons';
 import PreventiveControl from './Partials/PreventiveControl';
 import PetAvatar from '@/Components/PetAvatar';
 import { BehaviorBadge } from '@/Components/BehaviorSelector';
+import PrintDocumentModal from '@/Components/PrintDocumentModal';
 
 const TimelineItem = ({ event }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -123,9 +124,10 @@ const TimelineItem = ({ event }) => {
     );
 };
 
-export default function Show({ auth, pet, protocols, clients }) {
+export default function Show({ auth, pet, protocols, clients, documentTemplates = [] }) {
     const [timelineFilter, setTimelineFilter] = useState('all');
     const [showDocumentModal, setShowDocumentModal] = useState(false);
+    const [showPrintModal, setShowPrintModal] = useState(false);
 
     const { data: docData, setData: setDocData, post: postDoc, processing: docProcessing, reset: resetDoc, errors: docErrors } = useForm({
         pet_id: pet.id,
@@ -659,6 +661,14 @@ export default function Show({ auth, pet, protocols, clients }) {
                                 <div className="p-4 sm:p-5 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50/30 dark:bg-gray-900/10">
                                     <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Documentos y Consentimientos</h3>
                                     <div className="flex space-x-2">
+                                        <button
+                                            onClick={() => setShowPrintModal(true)}
+                                            type="button"
+                                            className="text-[10px] flex items-center justify-center bg-brand-primary text-white px-3 py-1.5 rounded transition font-bold uppercase tracking-widest shadow-lg hover:opacity-90"
+                                            title="Imprimir Documentos Legales"
+                                        >
+                                            🖨️ Imprimir
+                                        </button>
                                         <button onClick={() => setShowDocumentModal(true)} type="button" className="text-[10px] flex items-center justify-center bg-white dark:bg-gray-800 border dark:border-gray-600 text-gray-500 hover:text-indigo-600 hover:border-indigo-400 px-3 py-1.5 rounded transition font-bold uppercase tracking-widest shadow-sm" title="Subir Documento (PDF/Imagen)">
                                             + Subir
                                         </button>
@@ -813,6 +823,12 @@ export default function Show({ auth, pet, protocols, clients }) {
                     </div>
                 </div>
             )}
+            <PrintDocumentModal 
+                isOpen={showPrintModal}
+                onClose={() => setShowPrintModal(false)}
+                pet={pet}
+                documentTemplates={documentTemplates}
+            />
         </AuthenticatedLayout>
     );
 }

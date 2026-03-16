@@ -12,6 +12,8 @@ use Inertia\Inertia;
 
 class EuthanasiaController extends Controller
 {
+    use \App\Traits\ParsesDocumentTemplates;
+
     public function index(Request $request)
     {
         $branchId = Auth::user()->branch_id;
@@ -124,9 +126,35 @@ class EuthanasiaController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'unit', 'is_controlled']);
 
+        $documentTemplates = \App\Models\DocumentTemplate::where(function($q) use($branchId) {
+                $q->where('branch_id', $branchId)->orWhereNull('branch_id');
+            })->where('is_active', true)->get();
+
         return Inertia::render('Euthanasias/Show', [
             'euthanasia' => $euthanasia,
             'products'   => $products,
+            'documentTemplates'  => $documentTemplates
+        ]);
+    }
+
+    public function printConsent(Euthanasia $euthanasia, \App\Models\DocumentTemplate $template)
+    {
+        $euthanasia->load(['pet.owner', 'veterinarian', 'branch']);
+
+        $content = $this->parseTemplate($template->content, [
+            'pet' => $euthanasia->pet,
+            'veterinarian' => $euthanasia->veterinarian,
+            'branch' => $euthanasia->branch,
+            'extra' => [
+                'folio' => $euthanasia->folio,
+                'reason' => $euthanasia->reason,
+            ]
+        ]);
+
+        return view('print.consent', [
+            'content' => $content,
+            'title' => $template->title,
+            'pet' => $euthanasia->pet
         ]);
     }
 

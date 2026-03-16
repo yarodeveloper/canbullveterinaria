@@ -114,7 +114,13 @@ class PetController extends Controller
                 ->get(),
             'clients' => User::where('branch_id', Auth::user()->branch_id)
                 ->where('role', 'client')
-                ->get(['id', 'name'])
+                ->get(['id', 'name']),
+            'documentTemplates' => \App\Models\DocumentTemplate::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('branch_id')
+                          ->orWhere('branch_id', Auth::user()->branch_id);
+                })
+                ->get(['id', 'title', 'type'])
         ]);
     }
 

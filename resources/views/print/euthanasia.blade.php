@@ -164,18 +164,32 @@
 <body>
     <button onclick="window.print()" class="print-btn no-print">🖨️ Imprimir / Guardar PDF</button>
 
-    <!-- Header -->
-    <div class="header-bar">
-        <div>
-            <p class="subtitle">Clínica Veterinaria — Registro Oficial Interno</p>
-            <h1>Protocolo de Eutanasia</h1>
-            <p style="margin-top:8px;font-size:11px;opacity:0.8;">{{ $euthanasia->branch?->name ?? 'Sucursal' }}</p>
+@php
+    $settings = \App\Models\SiteSetting::all()->pluck('value', 'key');
+    $logoUrl = $settings['site_logo'] ?? null;
+@endphp
+
+<!-- Header -->
+<div class="header-section" style="margin-bottom: 25px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+        <div style="flex: 0 0 auto;">
+            @if($logoUrl)
+                <img src="{{ Str::startsWith($logoUrl, 'http') ? $logoUrl : asset($logoUrl) }}" style="max-height: 70px; width: auto;" alt="Logo">
+            @else
+                <div style="font-size: 28px; font-weight: 900; color: #7e22ce; letter-spacing: -1px;">CanBull</div>
+            @endif
         </div>
-        <div class="folio">
-            <span>{{ $euthanasia->folio }}</span>
-            Folio Interno
+        
+        <div style="text-align: right;">
+            <p style="margin: 0; font-size: 8px; font-weight: 900; color: #7e22ce; text-transform: uppercase; letter-spacing: 0.15em;">Protocolo Oficial Interno</p>
+            <h1 style="font-size: 20px; margin: 2px 0; line-height: 1.1; color: #111827;">REPORTE DE EUTANASIA</h1>
+            <p style="margin: 6px 0 0 0; font-size: 9px; color: #6b7280; font-weight: 700; text-transform: uppercase;">
+                {{ $euthanasia->branch?->name }} | Folio: <span style="color: #7e22ce;">{{ $euthanasia->folio }}</span>
+            </p>
         </div>
     </div>
+    <div style="height: 3px; background: linear-gradient(to right, #7e22ce, #a855f7); border-radius: 2px; margin-top: 15px;"></div>
+</div>
 
     <!-- Paciente y procedimiento -->
     <div class="section">

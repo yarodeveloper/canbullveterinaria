@@ -32,7 +32,7 @@ const sexMap = {
     "Unknown": "Desconocido"
 };
 
-export default function Show({ auth, record }) {
+export default function Show({ auth, record, templates = [] }) {
     const { pet, veterinarian, attachments = [] } = record;
     const vitalSigns = record.vital_signs || {};
     const anamnesis = record.anamnesis || {};
@@ -107,6 +107,37 @@ export default function Show({ auth, record }) {
                                         <p className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1">Sexo</p>
                                         <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{sexMap[pet.gender] || pet.gender}</p>
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Documentos Legales */}
+                            <div className={cardBase}>
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/10 rounded-bl-full blur-2xl"></div>
+                                <h3 className={`${headerTitle} text-fuchsia-400`}>
+                                    <span className="text-fuchsia-400">📄</span> Documentos Legales
+                                </h3>
+                                <div className="space-y-3 mt-4 relative z-10">
+                                    {templates.length > 0 ? (
+                                        templates.map((template) => (
+                                            <a
+                                                key={template.id}
+                                                href={route('medical-records.consent.print', { medicalRecord: record.id, template: template.id })}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-3 p-3 bg-slate-100 dark:bg-slate-900/50 hover:bg-fuchsia-500/5 hover:border-fuchsia-500/50 border border-slate-300 dark:border-slate-800 rounded-xl transition group print:hidden"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-fuchsia-500/10 flex items-center justify-center text-fuchsia-400 group-hover:bg-fuchsia-500 group-hover:text-white transition-colors">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">{template.title}</p>
+                                                    <p className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Imprimir Formato</p>
+                                                </div>
+                                            </a>
+                                        ))
+                                    ) : (
+                                        <p className="text-[10px] text-slate-500 italic text-center py-2">No hay plantillas disponibles.</p>
+                                    )}
                                 </div>
                             </div>
 
