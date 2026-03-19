@@ -78,6 +78,10 @@ function EditSectionBtn({ onClick, active }) {
 
 /* ─── Componente principal ───────────────────────────────── */
 export default function Show({ auth, euthanasia: initialEuthanasia, products = [], documentTemplates = [] }) {
+    const permissions = auth.permissions || [];
+    const can = (permission) => permissions.includes(permission) || auth.user.role === 'admin';
+    const canManage = can('manage euthanasias');
+
     const [euthanasia, setEuthanasia] = useState(initialEuthanasia);
     const [confirmComplete, setConfirmComplete] = useState(false);
     const [showPrintModal, setShowPrintModal] = useState(false);
@@ -229,12 +233,14 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                             {STATUS[euthanasia.status]?.label}
                         </span>
                         
-                        <button 
-                            onClick={() => setShowPrintModal(true)}
-                            className="flex items-center gap-2 bg-white text-purple-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition hover:bg-purple-100 shadow-lg"
-                        >
-                            🖨️ Imprimir Documentos
-                        </button>
+                        {canManage && (
+                            <button 
+                                onClick={() => setShowPrintModal(true)}
+                                className="flex items-center gap-2 bg-white text-purple-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition hover:bg-purple-100 shadow-lg"
+                            >
+                                🖨️ Imprimir Documentos
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -282,7 +288,7 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                             <div className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Procedimiento</p>
-                                <EditSectionBtn onClick={() => openSection('procedimiento')} active={editSection === 'procedimiento'} />
+                                {canManage && <EditSectionBtn onClick={() => openSection('procedimiento')} active={editSection === 'procedimiento'} />}
                             </div>
 
                             {editSection === 'procedimiento' ? (
@@ -375,7 +381,7 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                         </div>
 
                         {/* Acción completar si está programada */}
-                        {euthanasia.status === 'scheduled' && (
+                        {(canManage && euthanasia.status === 'scheduled') && (
                             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 space-y-3">
                                 <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Este procedimiento está PROGRAMADO. Una vez realizado, márcalo como completado.</p>
                                 {!confirmComplete ? (
@@ -404,7 +410,7 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                             <div className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Motivo Clínico</p>
-                                <EditSectionBtn onClick={() => openSection('motivo')} active={editSection === 'motivo'} />
+                                {canManage && <EditSectionBtn onClick={() => openSection('motivo')} active={editSection === 'motivo'} />}
                             </div>
 
                             {editSection === 'motivo' ? (
@@ -445,7 +451,7 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                             <div className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Medicamentos / Fármacos Empleados</p>
-                                <EditSectionBtn onClick={() => openSection('medicamentos')} active={editSection === 'medicamentos'} />
+                                {canManage && <EditSectionBtn onClick={() => openSection('medicamentos')} active={editSection === 'medicamentos'} />}
                             </div>
 
                             {editSection === 'medicamentos' ? (

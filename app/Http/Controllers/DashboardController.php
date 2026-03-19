@@ -23,11 +23,14 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
         $user = Auth::user();
         $branchId = $user->branch_id;
         $role = $user->role;
+
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
 
         // --- MÉTRICAS COMUNES (Base para todos) ---
         $commonStats = [
@@ -45,14 +48,18 @@ class DashboardController extends Controller
             'adminMetrics' => null,
             'vetMetrics' => null,
             'receptionMetrics' => null,
+            'filters' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ]
         ];
 
         // --- 1. MÉTRICAS PARA ADMINISTRADORES ---
         if ($role === 'admin') {
-            $revenueMonth = (float) Receipt::whereMonth('date', now()->month)->where('branch_id', $branchId)->sum('total');
-            $expensesMonth = (float) CashMovement::where('type', 'out')->whereMonth('created_at', now()->month)->where('branch_id', $branchId)->sum('amount');
+            $revenueMonth = (float) Receipt::whereBetween('date', [$startDate, Carbon::parse($endDate)->endOfDay()])->where('branch_id', $branchId)->sum('total');
+            $expensesMonth = (float) CashMovement::where('type', 'out')->whereBetween('created_at', [$startDate, Carbon::parse($endDate)->endOfDay()])->where('branch_id', $branchId)->sum('amount');
             
-            // Margen operativo del mes
+            // Margen operativo del periodo
             $grossMargin = $revenueMonth > 0 ? (($revenueMonth - $expensesMonth) / $revenueMonth) * 100 : 0;
 
             // Margen por categorías (basado en inventario actual)
@@ -79,11 +86,71 @@ class DashboardController extends Controller
                     ];
                 });
 
+            // 1. Ventas por tipo de rubro
+            $salesByType = DB::table('receipt_items')
+                ->join('receipts', 'receipt_items.receipt_id', '=', 'receipts.id')
+                ->where('receipts.branch_id', $branchId)
+                ->whereBetween('receipts.date', [$startDate, Carbon::parse($endDate)->endOfDay()])
+                ->select(DB::raw("
+                    CASE 
+                        WHEN receipt_items.type = 'product' THEN 'Productos / Medicamentos'
+                        WHEN receipt_items.type = 'service' AND receipt_items.concept LIKE '%Consulta%' THEN 'Consultas'
+                        WHEN receipt_items.type = 'service' AND receipt_items.concept LIKE '%Cirug%' THEN 'Cirugías'
+                        WHEN receipt_items.type = 'service' AND receipt_items.concept LIKE '%Hosp%' THEN 'Hospitalización'
+                        WHEN receipt_items.type = 'service' AND (receipt_items.concept LIKE '%Vacun%' OR receipt_items.concept LIKE '%Vacuna%') THEN 'Vacunas'
+                        WHEN receipt_items.type = 'service' AND receipt_items.concept LIKE '%Estética%' THEN 'Estética/Peluquería'
+                        ELSE 'Otros Servicios'
+                    END as rubro
+                "), DB::raw("SUM(receipt_items.total) as total"))
+                ->groupBy('rubro')
+                ->get();
+
+            // 2. Ventas por método de pago
+            $salesByPaymentMethod = Receipt::where('branch_id', $branchId)
+                ->whereBetween('date', [$startDate, Carbon::parse($endDate)->endOfDay()])
+                ->select('payment_method', DB::raw('SUM(total) as total'))
+                ->groupBy('payment_method')
+                ->get();
+                
+            // 3. Ventas generadas por vendedor
+            $salesBySeller = DB::table('receipt_items')
+                ->join('receipts', 'receipt_items.receipt_id', '=', 'receipts.id')
+                ->leftJoin('users', 'receipt_items.assigned_user_id', '=', 'users.id')
+                ->where('receipts.branch_id', $branchId)
+                ->whereBetween('receipts.date', [$startDate, Carbon::parse($endDate)->endOfDay()])
+                ->select(DB::raw('COALESCE(users.name, "Sin Asignar") as seller_name'), DB::raw('SUM(receipt_items.total) as total'))
+                ->groupBy('seller_name')
+                ->orderByDesc('total')
+                ->get();
+                
+            // 4. Egresos y tipos de egresos
+            $expensesByType = CashMovement::where('branch_id', $branchId)
+                ->where('type', 'out')
+                ->whereBetween('created_at', [$startDate, Carbon::parse($endDate)->endOfDay()])
+                ->select('method', DB::raw('SUM(amount) as total'))
+                ->groupBy('method')
+                ->get();
+                
+            // Egresos por descripcion (top 10)
+            $expensesByDescription = CashMovement::where('branch_id', $branchId)
+                ->where('type', 'out')
+                ->whereBetween('created_at', [$startDate, Carbon::parse($endDate)->endOfDay()])
+                ->select('description', DB::raw('SUM(amount) as total'))
+                ->groupBy('description')
+                ->orderByDesc('total')
+                ->limit(10)
+                ->get();
+
             $data['adminMetrics'] = [
                 'total_revenue_month' => $revenueMonth,
                 'total_expenses_month' => $expensesMonth,
                 'gross_margin_percentage' => round($grossMargin, 2),
                 'category_margins' => $categoryMargins,
+                'sales_by_type' => $salesByType,
+                'sales_by_payment_method' => $salesByPaymentMethod,
+                'sales_by_seller' => $salesBySeller,
+                'expenses_by_type' => $expensesByType,
+                'expenses_by_description' => $expensesByDescription,
                 'inventory_value_cost' => (float) Lot::where('branch_id', $branchId)->where('status', 'active')->sum(DB::raw('current_quantity * unit_cost')),
                 'inventory_value_sale' => (float) Lot::where('lots.branch_id', $branchId)
                     ->where('lots.status', 'active')
@@ -117,9 +184,9 @@ class DashboardController extends Controller
                 'medical_records_today' => MedicalRecord::whereDate('created_at', today())->where('branch_id', $branchId)->count(),
             ];
 
-            // Distribución de Consultas (Mes)
+            // Distribución de Consultas
             $data['appointmentDistribution'] = Appointment::where('branch_id', $branchId)
-                ->whereDate('start_time', '>=', Carbon::now()->startOfMonth())
+                ->whereBetween('start_time', [$startDate, Carbon::parse($endDate)->endOfDay()])
                 ->select('type', DB::raw('count(*) as count'))
                 ->groupBy('type')
                 ->get();

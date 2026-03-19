@@ -16,6 +16,10 @@ class EuthanasiaController extends Controller
 
     public function index(Request $request)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('view euthanasias')) {
+            abort(403);
+        }
+
         $branchId = Auth::user()->branch_id;
 
         $query = Euthanasia::where('branch_id', $branchId)
@@ -43,6 +47,10 @@ class EuthanasiaController extends Controller
 
     public function create(Request $request)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage euthanasias')) {
+            abort(403);
+        }
+
         $branchId = Auth::user()->branch_id;
 
         $pet = null;
@@ -54,10 +62,9 @@ class EuthanasiaController extends Controller
             ->whereIn('role', ['admin', 'veterinarian'])
             ->get(['id', 'name']);
 
-        // Productos del inventario para medicamentos (marcados como controlados o farmacia)
+        // Productos del inventario para medicamentos (solo físicos, sin importar stock para registro médico)
         $products = Product::where('is_active', true)
-            ->whereHas('lots', fn($q) => $q->where('branch_id', $branchId)->where('current_quantity', '>', 0))
-            ->with(['lots' => fn($q) => $q->where('branch_id', $branchId)->where('status', 'active')])
+            ->where('is_service', false)
             ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
             ->orderBy('name')
             ->get(['id', 'name', 'unit', 'is_controlled']);
@@ -72,6 +79,10 @@ class EuthanasiaController extends Controller
 
     public function store(Request $request)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage euthanasias')) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'pet_id'             => 'required|exists:pets,id',
             'veterinarian_id'    => 'required|exists:users,id',
@@ -117,11 +128,15 @@ class EuthanasiaController extends Controller
 
     public function show(Euthanasia $euthanasia)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('view euthanasias')) {
+            abort(403);
+        }
+
         $branchId = Auth::user()->branch_id;
         $euthanasia->load(['pet.owner', 'veterinarian', 'branch']);
 
         $products = Product::where('is_active', true)
-            ->whereHas('lots', fn($q) => $q->where('branch_id', $branchId)->where('current_quantity', '>', 0))
+            ->where('is_service', false)
             ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
             ->orderBy('name')
             ->get(['id', 'name', 'unit', 'is_controlled']);
@@ -139,6 +154,10 @@ class EuthanasiaController extends Controller
 
     public function printConsent(Euthanasia $euthanasia, \App\Models\DocumentTemplate $template)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage euthanasias')) {
+            abort(403);
+        }
+
         $euthanasia->load(['pet.owner', 'veterinarian', 'branch']);
 
         $content = $this->parseTemplate($template->content, [
@@ -160,6 +179,10 @@ class EuthanasiaController extends Controller
 
     public function update(Request $request, Euthanasia $euthanasia)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage euthanasias')) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'status'             => 'nullable|in:scheduled,completed,cancelled',
             'performed_at'       => 'nullable|date',
@@ -195,12 +218,20 @@ class EuthanasiaController extends Controller
 
     public function destroy(Euthanasia $euthanasia)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage euthanasias')) {
+            abort(403);
+        }
+
         $euthanasia->delete();
         return redirect()->route('euthanasias.index')->with('message', 'Registro eliminado.');
     }
 
     public function printReport(Euthanasia $euthanasia)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('view euthanasias')) {
+            abort(403);
+        }
+
         $euthanasia->load(['pet.owner', 'veterinarian', 'branch']);
 
         return view('print.euthanasia', [

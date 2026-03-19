@@ -34,6 +34,8 @@ export default function PrintDocumentModal({
                 </div>
                 
                 <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    {children}
+
                     {documentTemplates.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {['surgery', 'hospitalization', 'euthanasia', 'general', 'witness', 'finance'].map(category => {
@@ -123,8 +125,6 @@ export default function PrintDocumentModal({
                             <Link href={route('document-templates.index')} className="text-brand-primary text-xs font-black underline mt-2 block">Ir a configuración para crear una</Link>
                         </div>
                     )}
-
-                    {children}
                 </div>
                 
                 <div className="p-6 bg-slate-50 dark:bg-gray-900/50 border-t dark:border-gray-700 flex justify-between items-center px-10">

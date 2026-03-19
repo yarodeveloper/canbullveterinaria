@@ -68,27 +68,33 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <img src="/icons/calendar-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
                                         Agenda
                                     </NavLink>
-                                    <NavLink
-                                        href={route('hospitalizations.index')}
-                                        active={route().current('hospitalizations.*')}
-                                    >
-                                        <img src="/icons/med-kit-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
-                                        Hospitalización
-                                    </NavLink>
-                                    <NavLink
-                                        href={route('surgeries.index')}
-                                        active={route().current('surgeries.*')}
-                                    >
-                                        <img src="/icons/band-aid-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
-                                        Cirugías
-                                    </NavLink>
-                                    <NavLink
-                                        href={route('euthanasias.index')}
-                                        active={route().current('euthanasias.*')}
-                                    >
-                                        <img src="/icons/leaf-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
-                                        Eutanasia
-                                    </NavLink>
+                                    {can('view hospitalizations') && (
+                                        <NavLink
+                                            href={route('hospitalizations.index')}
+                                            active={route().current('hospitalizations.*')}
+                                        >
+                                            <img src="/icons/med-kit-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
+                                            Hospitalización
+                                        </NavLink>
+                                    )}
+                                    {can('view surgeries') && (
+                                        <NavLink
+                                            href={route('surgeries.index')}
+                                            active={route().current('surgeries.*')}
+                                        >
+                                            <img src="/icons/band-aid-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
+                                            Cirugías
+                                        </NavLink>
+                                    )}
+                                    {can('view euthanasias') && (
+                                        <NavLink
+                                            href={route('euthanasias.index')}
+                                            active={route().current('euthanasias.*')}
+                                        >
+                                            <img src="/icons/leaf-svgrepo-com.svg" className="w-5 h-5 mr-2 icon-adaptive" alt="" />
+                                            Eutanasia
+                                        </NavLink>
+                                    )}
                                     <NavLink
                                         href={route('inventory.index')}
                                         active={route().current('inventory.*')}
@@ -170,6 +176,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                                         </div>
                                                         <Dropdown.Link href={route('staff.index')}>
                                                             Gestión de Personal
+                                                        </Dropdown.Link>
+                                                        <Dropdown.Link href={route('roles.index')}>
+                                                            Roles y Permisos
                                                         </Dropdown.Link>
                                                         <div className="border-t border-gray-100 dark:border-gray-700"></div>
                                                         <div className="block px-4 py-2 text-xs text-gray-400 uppercase tracking-widest">
@@ -318,24 +327,30 @@ export default function AuthenticatedLayout({ header, children }) {
                             >
                                 Agenda
                             </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                href={route('hospitalizations.index')}
-                                active={route().current('hospitalizations.*')}
-                            >
-                                Hospitalización
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                href={route('surgeries.index')}
-                                active={route().current('surgeries.*')}
-                            >
-                                Cirugías
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                href={route('euthanasias.index')}
-                                active={route().current('euthanasias.*')}
-                            >
-                                Eutanasia
-                            </ResponsiveNavLink>
+                            {can('view hospitalizations') && (
+                                <ResponsiveNavLink
+                                    href={route('hospitalizations.index')}
+                                    active={route().current('hospitalizations.*')}
+                                >
+                                    Hospitalización
+                                </ResponsiveNavLink>
+                            )}
+                            {can('view surgeries') && (
+                                <ResponsiveNavLink
+                                    href={route('surgeries.index')}
+                                    active={route().current('surgeries.*')}
+                                >
+                                    Cirugías
+                                </ResponsiveNavLink>
+                            )}
+                            {can('view euthanasias') && (
+                                <ResponsiveNavLink
+                                    href={route('euthanasias.index')}
+                                    active={route().current('euthanasias.*')}
+                                >
+                                    Eutanasia
+                                </ResponsiveNavLink>
+                            )}
                             <ResponsiveNavLink
                                 href={route('inventory.index')}
                                 active={route().current('inventory.*')}

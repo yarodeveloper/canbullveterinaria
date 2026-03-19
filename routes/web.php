@@ -4,6 +4,9 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\ConsentController;
+use App\Http\Controllers\GroomingOrderController;
+use App\Http\Controllers\PreventiveRecordController;
 
 Route::get('/', function () {
     $settings = \App\Models\SiteSetting::all()->pluck('value', 'key');
@@ -29,6 +32,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/pets/search', [\App\Http\Controllers\PetController::class, 'search'])->name('pets.search');
     Route::post('/pets/{pet}/link-owner', [\App\Http\Controllers\PetController::class, 'linkOwner'])->name('pets.link-owner');
+    Route::post('/pets/{pet}/photo', [\App\Http\Controllers\PetController::class, 'updatePhoto'])->name('pets.update-photo');
     Route::resource('pets', \App\Http\Controllers\PetController::class);
     Route::resource('clients', \App\Http\Controllers\ClientController::class);
 
@@ -39,10 +43,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/medical-records/{medicalRecord}', [\App\Http\Controllers\MedicalRecordController::class, 'show'])->name('medical-records.show');
     Route::get('/medical-records/{medicalRecord}/print/{template}', [\App\Http\Controllers\MedicalRecordController::class, 'printConsent'])->name('medical-records.consent.print');
 
-    Route::get('/consents', [\App\Http\Controllers\ConsentController::class, 'index'])->name('consents.index');
-    Route::get('/pets/{pet}/consents/create', [\App\Http\Controllers\ConsentController::class, 'create'])->name('consents.create');
-    Route::post('/pets/{pet}/consents', [\App\Http\Controllers\ConsentController::class, 'store'])->name('consents.store');
-    Route::get('/consents/{consent}', [\App\Http\Controllers\ConsentController::class, 'show'])->name('consents.show');
+    Route::get('/consents', [ConsentController::class, 'index'])->name('consents.index');
+    Route::get('/pets/{pet}/consents/create', [ConsentController::class, 'create'])->name('consents.create');
+    Route::post('/consents', [ConsentController::class, 'store'])->name('consents.store');
+    Route::get('/consents/{consent}', [ConsentController::class, 'show'])->name('consents.show');
+
+    // Grooming Orders
+    Route::get('/grooming-orders/create', [GroomingOrderController::class, 'create'])->name('grooming-orders.create');
+    Route::post('/grooming-orders', [GroomingOrderController::class, 'store'])->name('grooming-orders.store');
+    Route::get('/grooming-orders/{groomingOrder}', [GroomingOrderController::class, 'show'])->name('grooming-orders.show');
+    Route::put('/grooming-orders/{groomingOrder}', [GroomingOrderController::class, 'update'])->name('grooming-orders.update');
+    Route::post('/grooming-orders/{groomingOrder}/complete', [GroomingOrderController::class, 'complete'])->name('grooming-orders.complete');
 
     // Documentos Externos (PDF, Images)
     Route::post('pet-documents', [\App\Http\Controllers\PetDocumentController::class, 'store'])->name('pet-documents.store');
@@ -53,8 +64,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('appointments', \App\Http\Controllers\AppointmentController::class);
 
     // Carnet de Vacunación / Preventivos
-    Route::post('preventive-records', [\App\Http\Controllers\PreventiveRecordController::class, 'store'])->name('preventive-records.store');
-    Route::delete('preventive-records/{preventiveRecord}', [\App\Http\Controllers\PreventiveRecordController::class, 'destroy'])->name('preventive-records.destroy');
+    Route::post('preventive-records', [PreventiveRecordController::class, 'store'])->name('preventive-records.store');
+    Route::delete('preventive-records/{preventiveRecord}', [PreventiveRecordController::class, 'destroy'])->name('preventive-records.destroy');
 
     // Gestión Web
     Route::get('/settings/web', [\App\Http\Controllers\SiteSettingController::class, 'index'])->name('settings.web.index');
@@ -74,11 +85,13 @@ Route::middleware('auth')->group(function () {
 
     // Hospitalización
     Route::resource('hospitalizations', \App\Http\Controllers\HospitalizationController::class);
+    Route::get('/hospitalizations/{hospitalization}/report', [\App\Http\Controllers\HospitalizationController::class, 'printReport'])->name('hospitalizations.report');
     Route::post('/hospitalizations/{hospitalization}/monitoring', [\App\Http\Controllers\HospitalizationController::class, 'storeMonitoring'])->name('hospitalizations.monitoring.store');
     Route::get('/hospitalizations/{hospitalization}/consent/{template}', [\App\Http\Controllers\HospitalizationController::class, 'printConsent'])->name('hospitalizations.consent.print');
 
     // Cirugías
     Route::resource('surgeries', \App\Http\Controllers\SurgeryController::class);
+    Route::get('/surgeries/{surgery}/report', [\App\Http\Controllers\SurgeryController::class, 'printReport'])->name('surgeries.report');
     Route::get('/surgeries/{surgery}/consent/{template}', [\App\Http\Controllers\SurgeryController::class, 'printConsent'])->name('surgeries.consent.print');
 
     // Eutanasia
@@ -114,6 +127,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/cash/{cashMovement}/print', [\App\Http\Controllers\CashController::class, 'print'])->name('cash.print');
     // Personal y Usuarios
     Route::resource('staff', \App\Http\Controllers\StaffController::class);
+    Route::resource('roles', \App\Http\Controllers\RoleController::class);
 
 });
 

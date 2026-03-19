@@ -19,12 +19,14 @@ class Hospitalization extends Model
         'discharge_date',
         'initial_weight',
         'discharge_notes',
+        'medications',
     ];
 
     protected $casts = [
         'admission_date' => 'datetime',
         'discharge_date' => 'datetime',
         'initial_weight' => 'float',
+        'medications' => 'array',
     ];
 
     public function pet()

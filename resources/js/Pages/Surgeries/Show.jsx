@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import PrintDocumentModal from '@/Components/PrintDocumentModal';
+import MedicationsEditor from '@/Components/MedicationsEditor';
 
 const VITAL_RANGES = {
     Canino: {
@@ -49,7 +50,11 @@ const WarningIcon = ({ status, range }) => {
     return null;
 };
 
-export default function Show({ auth, surgery, templates, veterinarians, branches }) {
+export default function Show({ auth, surgery, templates, veterinarians, branches, products = [] }) {
+    const permissions = auth.permissions || [];
+    const can = (permission) => permissions.includes(permission) || auth.user.role === 'admin';
+    const canManage = can('manage surgeries');
+
     const [vitalSigns, setVitalSigns] = useState(surgery.vital_signs || { weight: '', hr: '', rr: '', temp: '', crt: '', bcs: '' });
     const [postVitalSigns, setPostVitalSigns] = useState(surgery.post_vital_signs || { weight: '', hr: '', rr: '', temp: '', crt: '', bcs: '' });
     const [activeTab, setActiveTab] = useState('pre_op');
@@ -154,12 +159,14 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                         </h2>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => setShowPrintModal(true)}
-                            className="px-4 py-1.5 bg-white dark:bg-gray-800 border border-brand-primary text-brand-primary rounded-full text-[10px] font-black uppercase hover:bg-brand-primary hover:text-white transition shadow-sm"
-                        >
-                            🖨️ Imprimir
-                        </button>
+                        {canManage && (
+                            <button
+                                onClick={() => setShowPrintModal(true)}
+                                className="px-4 py-1.5 bg-white dark:bg-gray-800 border border-brand-primary text-brand-primary rounded-full text-[10px] font-black uppercase hover:bg-brand-primary hover:text-white transition shadow-sm"
+                            >
+                                🖨️ Imprimir
+                            </button>
+                        )}
                         <span className={`px-4 py-1.5 rounded-full text-[10px] font-black text-white shadow-lg ${statusMap[surgery.status]?.color}`}>
                             {statusMap[surgery.status]?.label}
                         </span>
@@ -232,7 +239,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                                 </div>
                                             ) : (
                                                 <>
-                                                    {!isEditingTeam && <EditIcon onClick={() => setIsEditingTeam(true)} />}
+                                                    {(canManage && !isEditingTeam) && <EditIcon onClick={() => setIsEditingTeam(true)} />}
                                                     <div>
                                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 leading-none">Equipo Médico</p>
                                                         <div className="space-y-4">
@@ -269,7 +276,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                             )}
                                         </div>
 
-                                        {surgery.status === 'scheduled' && (
+                                        {(canManage && surgery.status === 'scheduled') && (
                                             <button
                                                 onClick={startSurgery}
                                                 className="w-full bg-brand-primary text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary-50 transition-all active:scale-95"
@@ -277,7 +284,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                                 Iniciar Cirugía
                                             </button>
                                         )}
-                                        {surgery.status === 'in-progress' && (
+                                        {(canManage && surgery.status === 'in-progress') && (
                                             <button
                                                 onClick={endSurgery}
                                                 className="w-full bg-emerald-500 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-100 transition-all active:scale-95"
@@ -324,8 +331,8 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                             {checklist[activeTab].map((item, idx) => (
                                                 <div
                                                     key={idx}
-                                                    onClick={() => surgery.status !== 'completed' && toggleCheckItem(activeTab, idx)}
-                                                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${item.checked
+                                                    onClick={() => canManage && surgery.status !== 'completed' && toggleCheckItem(activeTab, idx)}
+                                                    className={`p-4 rounded-2xl border transition-all ${canManage ? 'cursor-pointer' : 'cursor-not-allowed opacity-80'} flex items-center justify-between ${item.checked
                                                         ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/30'
                                                         : 'bg-white dark:bg-gray-900/40 border-gray-100 dark:border-gray-700'
                                                         }`}
@@ -350,37 +357,52 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                             <div className="space-y-4">
                                                 <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Documentos Legales (Consentimientos y Actas)</h4>
                                                 <div className="flex flex-col sm:flex-row gap-4">
-                                                    <button
-                                                        onClick={() => setShowPrintModal(true)}
-                                                        className="flex-1 flex items-center justify-center gap-4 py-5 bg-brand-primary text-white rounded-[2rem] text-xs font-black uppercase tracking-widest shadow-xl shadow-brand-primary/20 hover:opacity-90 transition active:scale-95"
-                                                    >
-                                                        📄 Centro de Impresión Quirúrgico
-                                                    </button>
+                                                    {canManage && (
+                                                        <button
+                                                            onClick={() => setShowPrintModal(true)}
+                                                            className="flex-1 flex items-center justify-center gap-3 py-3 bg-brand-primary/10 text-brand-primary rounded-2xl text-[10px] font-black uppercase tracking-widest border border-brand-primary/20 hover:bg-brand-primary/20 transition active:scale-95"
+                                                        >
+                                                            📄 Imprimir Docs. Legales
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
+
+                                            <MedicationsEditor 
+                                                medications={surgery.pre_operative_medications || []}
+                                                onSave={(meds) => {
+                                                    updateSurgery({ pre_operative_medications: meds });
+                                                }}
+                                                products={products}
+                                                canManage={canManage && surgery.status !== 'completed'}
+                                                title="Fármacos Pre-Operatorios"
+                                                iconColor="bg-blue-500"
+                                            />
 
                                             <div className="space-y-4">
                                                 <div className="flex items-center justify-between">
                                                     <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Notas Pre-operatorias</h4>
-                                                    <button
-                                                        onClick={() => {
-                                                            if (isEditingPreOp) {
-                                                                updateSurgery({ pre_op_notes: notes.pre });
-                                                            }
-                                                            setIsEditingPreOp(!isEditingPreOp);
-                                                        }}
-                                                        className="text-[10px] bg-white dark:bg-gray-800 text-brand-primary border border-gray-200 dark:border-gray-700 font-bold px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-50 flex items-center gap-2 transition"
-                                                    >
-                                                        {isEditingPreOp ? (
-                                                            <>
-                                                                <span>💾</span> Guardar
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <span>✏️</span> Editar
-                                                            </>
-                                                        )}
-                                                    </button>
+                                                    {canManage && (
+                                                        <button
+                                                            onClick={() => {
+                                                                if (isEditingPreOp) {
+                                                                    updateSurgery({ pre_op_notes: notes.pre });
+                                                                }
+                                                                setIsEditingPreOp(!isEditingPreOp);
+                                                            }}
+                                                            className="text-[10px] bg-white dark:bg-gray-800 text-brand-primary border border-gray-200 dark:border-gray-700 font-bold px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-50 flex items-center gap-2 transition"
+                                                        >
+                                                            {isEditingPreOp ? (
+                                                                <>
+                                                                    <span>💾</span> Guardar
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <span>✏️</span> Editar
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    )}
                                                 </div>
 
                                                 {isEditingPreOp ? (
@@ -479,19 +501,31 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                             <div className="space-y-4">
                                                 <div className="flex items-center justify-between">
                                                     <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Registro Quirúrgico (Relato)</h4>
-                                                    {surgery.status !== 'completed' && (
+                                                    {(canManage && surgery.status !== 'completed') && (
                                                         <button onClick={endSurgery} className="text-[10px] bg-brand-primary text-white font-black px-4 py-1.5 rounded-lg shadow hover:opacity-90 transition">
                                                             GUARDAR HOJA
                                                         </button>
                                                     )}
                                                 </div>
                                                 <textarea
+                                                    readOnly={!canManage}
                                                     value={notes.intra || ''}
                                                     onChange={e => setNotes({ ...notes, intra: e.target.value })}
                                                     placeholder="Describe el hallazgo, técnica utilizada, complicaciones, etc..."
                                                     className="w-full bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700 rounded-3xl py-6 px-8 focus:ring-brand-primary focus:border-brand-primary font-medium min-h-[250px]"
                                                 ></textarea>
                                             </div>
+
+                                            <MedicationsEditor 
+                                                medications={surgery.intra_operative_medications || []}
+                                                onSave={(meds) => {
+                                                    updateSurgery({ intra_operative_medications: meds });
+                                                }}
+                                                products={products}
+                                                canManage={canManage && surgery.status !== 'completed'}
+                                                title="Fármacos Intra-Operatorios (Anestesia / Fluidos...)"
+                                                iconColor="bg-amber-500"
+                                            />
                                         </div>
                                     )}
 
@@ -569,25 +603,42 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                             <div className="space-y-2">
                                                 <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Cuidado Post-Hospitalización</h4>
                                                 <textarea
+                                                    readOnly={!canManage}
                                                     value={notes.post || ''}
                                                     onChange={e => setNotes({ ...notes, post: e.target.value })}
                                                     placeholder="Instrucciones de recuperación, medicación post-op, retiro de puntos..."
                                                     className="w-full bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700 rounded-3xl py-6 px-8 focus:ring-brand-primary focus:border-brand-primary font-medium min-h-[200px]"
                                                 ></textarea>
                                             </div>
+
+                                            <MedicationsEditor 
+                                                medications={surgery.post_operative_medications || []}
+                                                onSave={(meds) => {
+                                                    updateSurgery({ post_operative_medications: meds });
+                                                }}
+                                                products={products}
+                                                canManage={canManage && surgery.status !== 'completed'}
+                                                title="Fármacos Post-Operatorios / Receta"
+                                                iconColor="bg-emerald-500"
+                                            />
+
                                             <div className="flex justify-between items-center">
-                                                <button
-                                                    onClick={savePostVitals}
-                                                    className="text-[10px] bg-brand-primary text-white font-black px-5 py-2.5 rounded-xl shadow-md shadow-primary-100 hover:opacity-90 transition flex items-center gap-2"
-                                                >
-                                                    💾 Guardar Post-op
-                                                </button>
-                                                <button
-                                                    onClick={goToHospitalization}
-                                                    className="bg-indigo-600 text-white px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition"
-                                                >
-                                                    ⛑  Dar de Alta y Pasar a Hospitalización
-                                                </button>
+                                                {canManage && (
+                                                    <button
+                                                        onClick={savePostVitals}
+                                                        className="text-[10px] bg-brand-primary text-white font-black px-5 py-2.5 rounded-xl shadow-md shadow-primary-100 hover:opacity-90 transition flex items-center gap-2"
+                                                    >
+                                                        💾 Guardar Post-op
+                                                    </button>
+                                                )}
+                                                {can('manage hospitalizations') && (
+                                                    <button
+                                                        onClick={goToHospitalization}
+                                                        className="bg-indigo-600 text-white px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition"
+                                                    >
+                                                        ⛑  Dar de Alta y Pasar a Hospitalización
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     )}
@@ -607,7 +658,22 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                 pet={surgery.pet}
                 documentTemplates={templates}
                 customPrintRoute={(template) => route('surgeries.consent.print', { surgery: surgery.id, template: template.id })}
-            />
+            >
+                <div className="mb-6 pb-6 border-b dark:border-gray-700">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Reportes Especiales</p>
+                    <a
+                        href={route('surgeries.report', surgery.id)}
+                        target="_blank"
+                        className="flex items-center gap-3 p-4 bg-brand-primary/5 dark:bg-brand-primary/10 border border-brand-primary/20 dark:border-brand-primary/30 rounded-2xl hover:bg-brand-primary/10 transition-all group"
+                    >
+                        <span className="text-xl">📋</span>
+                        <div className="flex-1 overflow-hidden">
+                            <p className="font-bold text-sm text-brand-primary truncate">Protocolo Quirúrgico Completo</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Reporte técnico con Valles y Medicación por Fases</p>
+                        </div>
+                    </a>
+                </div>
+            </PrintDocumentModal>
         </AuthenticatedLayout>
     );
 }

@@ -6,6 +6,8 @@ import { useState } from 'react';
 import GlasgowScaleModal from '@/Components/GlasgowScaleModal';
 import PrintDocumentModal from '@/Components/PrintDocumentModal';
 
+import MedicationsEditor from '@/Components/MedicationsEditor';
+
 const VITAL_RANGES = {
     Canino: {
         Cachorro: { hr: [100, 120], rr: [15, 20], temp: [38.5, 39.5], crt: [0.5, 1.5] },
@@ -65,7 +67,11 @@ const calculateAge = (dobString) => {
     return `${years} años ${months} meses`;
 };
 
-export default function Show({ auth, hospitalization, templates }) {
+export default function Show({ auth, hospitalization, templates, products = [] }) {
+    const permissions = auth.permissions || [];
+    const can = (permission) => permissions.includes(permission) || auth.user.role === 'admin';
+    const canManage = can('manage hospitalizations');
+
     const [showMonitoringForm, setShowMonitoringForm] = useState(false);
     const [showGlasgowModal, setShowGlasgowModal] = useState(false);
     const [showPrintModal, setShowPrintModal] = useState(false);
@@ -182,21 +188,38 @@ export default function Show({ auth, hospitalization, templates }) {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Monitoring List */}
                         <div className="lg:col-span-2 space-y-6">
-                                    <div className="flex justify-between items-center bg-slate-50 dark:bg-[#111822]/50 p-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                            <MedicationsEditor 
+                                medications={hospitalization.medications || []}
+                                onSave={(meds) => {
+                                    router.patch(route('hospitalizations.update', hospitalization.id), { medications: meds }, { 
+                                        preserveScroll: true 
+                                    });
+                                }}
+                                products={products}
+                                canManage={canManage && hospitalization.status === 'active'}
+                                title="Tratamiento Base O Fármacos Programados"
+                                iconColor="bg-amber-500"
+                            />
+
+                            <div className="flex justify-between items-center bg-slate-50 dark:bg-[#111822]/50 p-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
                                         <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-wider text-sm">Kardex de Monitoreo</h3>
                                         <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => setShowPrintModal(true)}
-                                                className="px-4 py-2 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 text-brand-primary rounded-xl text-xs font-black uppercase hover:bg-brand-primary hover:text-white transition shadow-sm"
-                                            >
-                                                🖨️ Imprimir
-                                            </button>
-                                            <button
-                                                onClick={() => setShowMonitoringForm(!showMonitoringForm)}
-                                                className="px-4 py-2 bg-brand-primary text-white rounded-xl text-xs font-black uppercase hover:opacity-90 transition shadow-lg shadow-primary-100"
-                                            >
-                                                {showMonitoringForm ? 'Cancelar' : '+ Registrar Signos'}
-                                            </button>
+                                            {canManage && (
+                                                <>
+                                                    <button
+                                                        onClick={() => setShowPrintModal(true)}
+                                                        className="px-4 py-2 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 text-brand-primary rounded-xl text-xs font-black uppercase hover:bg-brand-primary hover:text-white transition shadow-sm"
+                                                    >
+                                                        🖨️ Imprimir
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowMonitoringForm(!showMonitoringForm)}
+                                                        className="px-4 py-2 bg-brand-primary text-white rounded-xl text-xs font-black uppercase hover:opacity-90 transition shadow-lg shadow-primary-100"
+                                                    >
+                                                        {showMonitoringForm ? 'Cancelar' : '+ Registrar Signos'}
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
 
@@ -381,41 +404,55 @@ export default function Show({ auth, hospitalization, templates }) {
                                 <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-6">Acciones de Alta</h3>
 
                                 {hospitalization.status === 'active' ? (
-                                    <div className="space-y-4">
-                                        <button
-                                            onClick={() => {
-                                                if (confirm('¿Confirmar Alta Médica del paciente?')) {
-                                                    router.patch(route('hospitalizations.update', hospitalization.id), {
-                                                        status: 'discharged',
-                                                        discharge_notes: 'Alta médica por mejoría.'
-                                                    });
-                                                }
-                                            }}
-                                            className="w-full py-4 bg-green-100 text-green-700 rounded-2xl text-xs font-black uppercase hover:bg-green-700 hover:text-white transition"
-                                        >
-                                            ✅ Alta Médica
-                                        </button>
-                                        <Link
-                                            href={route('consents.create', [hospitalization.pet.id, { type: 'euthanasia' }])}
-                                            className="block w-full text-center py-4 bg-purple-100 text-purple-700 rounded-2xl text-xs font-black uppercase hover:bg-purple-700 hover:text-white transition"
-                                        >
-                                            ⚖️ Protocolo Eutanasia
-                                        </Link>
-                                        <button
-                                            onClick={() => {
-                                                const reason = prompt('Por favor, indica la causa o razón de la defunción:');
-                                                if (reason !== null) {
-                                                    router.patch(route('hospitalizations.update', hospitalization.id), {
-                                                        status: 'expired',
-                                                        discharge_notes: reason || 'Defunción registrada en internamiento.'
-                                                    });
-                                                }
-                                            }}
-                                            className="w-full py-4 bg-red-100 text-red-700 rounded-2xl text-xs font-black uppercase hover:bg-red-700 hover:text-white transition"
-                                        >
-                                            ⚠️ Reportar Defunción
-                                        </button>
-                                    </div>
+                                    canManage ? (
+                                        <div className="space-y-4">
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('¿Confirmar Alta Médica del paciente?')) {
+                                                        router.patch(route('hospitalizations.update', hospitalization.id), {
+                                                            status: 'discharged',
+                                                            discharge_notes: 'Alta médica por mejoría.'
+                                                        });
+                                                    }
+                                                }}
+                                                className="w-full py-4 bg-green-100 text-green-700 rounded-2xl text-xs font-black uppercase hover:bg-green-700 hover:text-white transition"
+                                            >
+                                                ✅ Alta Médica
+                                            </button>
+                                            {can('manage euthanasias') && (
+                                                <Link
+                                                    href={route('consents.create', [hospitalization.pet.id, { type: 'euthanasia' }])}
+                                                    className="block w-full text-center py-4 bg-purple-100 text-purple-700 rounded-2xl text-xs font-black uppercase hover:bg-purple-700 hover:text-white transition"
+                                                >
+                                                    ⚖️ Protocolo Eutanasia
+                                                </Link>
+                                            )}
+                                            <button
+                                                onClick={() => {
+                                                    const reason = prompt('Por favor, indica la causa o razón de la defunción:');
+                                                    if (reason !== null) {
+                                                        router.patch(route('hospitalizations.update', hospitalization.id), {
+                                                            status: 'expired',
+                                                            discharge_notes: reason || 'Defunción registrada en internamiento.'
+                                                        });
+                                                    }
+                                                }}
+                                                className="w-full py-4 bg-red-100 text-red-700 rounded-2xl text-xs font-black uppercase hover:bg-red-700 hover:text-white transition"
+                                            >
+                                                ⚠️ Reportar Defunción
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-slate-50 dark:bg-[#111822] text-center p-6 rounded-2xl">
+                                            <p className="text-xs font-medium text-gray-500 italic pb-2">Modo lectura</p>
+                                            <p className="font-bold text-slate-900 dark:text-white text-sm pb-2">
+                                                Visualización de Expediente
+                                            </p>
+                                            <div className="text-[10px] font-bold text-brand-primary uppercase bg-white dark:bg-[#1B2132] p-2 rounded-lg border border-brand-primary/20">
+                                                No tienes permisos de administrador
+                                            </div>
+                                        </div>
+                                    )
                                 ) : (
                                     <div className="bg-slate-50 dark:bg-[#111822] text-center p-6 rounded-2xl">
                                         <p className="text-xs font-medium text-gray-500 italic pb-2">Paciente dado de alta el:</p>
@@ -432,12 +469,14 @@ export default function Show({ auth, hospitalization, templates }) {
                             <div className="bg-white dark:bg-[#1B2132] p-8 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700/50">
                                 <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4">Documentos Legales</h4>
                                 <p className="text-[10px] text-slate-400 font-bold uppercase mb-6">Genera responsivas, contratos o actas para este ingreso.</p>
-                                <button
-                                    onClick={() => setShowPrintModal(true)}
-                                    className="w-full py-4 bg-brand-primary text-white rounded-2xl text-xs font-black uppercase hover:opacity-90 transition shadow-lg shadow-brand-primary/20"
-                                >
-                                    📄 Centro de Impresión
-                                </button>
+                                {canManage && (
+                                    <button
+                                        onClick={() => setShowPrintModal(true)}
+                                        className="w-full py-4 bg-brand-primary text-white rounded-2xl text-xs font-black uppercase hover:opacity-90 transition shadow-lg shadow-brand-primary/20"
+                                    >
+                                        📄 Centro de Impresión
+                                    </button>
+                                )}
                             </div>
 
                             <div className="bg-brand-primary p-8 rounded-3xl text-white shadow-xl shadow-primary-100">
@@ -486,7 +525,22 @@ export default function Show({ auth, hospitalization, templates }) {
                 pet={hospitalization.pet}
                 documentTemplates={templates}
                 customPrintRoute={(template) => route('hospitalizations.consent.print', { hospitalization: hospitalization.id, template: template.id })}
-            />
+            >
+                <div className="mb-6 pb-6 border-b dark:border-gray-700">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Reportes Especiales</p>
+                    <a
+                        href={route('hospitalizations.report', hospitalization.id)}
+                        target="_blank"
+                        className="flex items-center gap-3 p-4 bg-brand-primary/5 dark:bg-brand-primary/10 border border-brand-primary/20 dark:border-brand-primary/30 rounded-2xl hover:bg-brand-primary/10 transition-all group"
+                    >
+                        <span className="text-xl">📋</span>
+                        <div className="flex-1 overflow-hidden">
+                            <p className="font-bold text-sm text-brand-primary truncate">Resumen de Hospitalización</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Reporte técnico con Kardex y Tratamiento</p>
+                        </div>
+                    </a>
+                </div>
+            </PrintDocumentModal>
         </AuthenticatedLayout>
     );
 }

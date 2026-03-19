@@ -160,7 +160,6 @@ class ReceiptController extends Controller
             ]);
 
             if (!empty($validated['pending_charge_ids'])) {
-                $status = clone $receipt->status; // or just hardcode if needed
                 \App\Models\PendingCharge::whereIn('id', $validated['pending_charge_ids'])
                     ->update(['status' => 'invoiced']);
             }

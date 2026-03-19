@@ -107,7 +107,8 @@ class PetController extends Controller
                 'preventiveRecords.veterinarian',
                 'surgeries.leadSurgeon',
                 'hospitalizations.veterinarian',
-                'documents.uploader'
+                'documents.uploader',
+                'groomingOrders.user'
             ]),
             'protocols' => \App\Models\HealthProtocol::whereNull('branch_id')
                 ->orWhere('branch_id', Auth::user()->branch_id)
@@ -183,6 +184,25 @@ class PetController extends Controller
         $pet->delete();
 
         return redirect()->route('pets.index')->with('message', 'Mascota eliminada con éxito.');
+    }
+
+    public function updatePhoto(Request $request, Pet $pet)
+    {
+        $this->authorizeBranch($pet);
+        
+        $request->validate([
+            'photo' => 'required|image|max:2048',
+        ]);
+
+        if ($request->hasFile('photo')) {
+            if ($pet->photo_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($pet->photo_path);
+            }
+            $path = $request->file('photo')->store('pets/photos', 'public');
+            $pet->update(['photo_path' => $path]);
+        }
+
+        return back()->with('message', 'Foto actualizada exitosamente.');
     }
 
     public function search(Request $request)

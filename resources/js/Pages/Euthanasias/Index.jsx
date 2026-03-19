@@ -14,6 +14,9 @@ export default function Index({ auth, euthanasias, filters }) {
     const [search, setSearch]   = useState(filters?.search || '');
     const [status, setStatus]   = useState(filters?.status || 'all');
 
+    const permissions = auth.permissions || [];
+    const can = (permission) => permissions.includes(permission) || auth.user.role === 'admin';
+
     const applyFilters = (newFilters) => {
         router.get(route('euthanasias.index'), newFilters, { preserveState: true, replace: true });
     };
@@ -35,13 +38,15 @@ export default function Index({ auth, euthanasias, filters }) {
                             </div>
                         </div>
                     </div>
-                    <Link
-                        href={route('euthanasias.create')}
-                        className="inline-flex items-center gap-2 bg-brand-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-purple-200 dark:shadow-none hover:opacity-90 transition"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
-                        Nuevo Registro
-                    </Link>
+                    {can('manage euthanasias') && (
+                        <Link
+                            href={route('euthanasias.create')}
+                            className="inline-flex items-center gap-2 bg-brand-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-purple-200 dark:shadow-none hover:opacity-90 transition"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
+                            Nuevo Registro
+                        </Link>
+                    )}
                 </div>
 
                 {/* Filtros */}
@@ -67,8 +72,8 @@ export default function Index({ auth, euthanasias, filters }) {
                     </select>
                 </div>
 
-                {/* Tabla */}
-                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                {/* Listado */}
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden p-0">
                     {euthanasias.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                             <span className="text-5xl mb-3">🕊️</span>
@@ -76,54 +81,70 @@ export default function Index({ auth, euthanasias, filters }) {
                             <p className="text-xs mt-1">No hay procedimientos que coincidan con los filtros.</p>
                         </div>
                     ) : (
-                        <table className="w-full text-sm">
-                            <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Folio</th>
-                                    <th className="px-6 py-3 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Paciente</th>
-                                    <th className="px-6 py-3 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Propietario</th>
-                                    <th className="px-6 py-3 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Veterinario</th>
-                                    <th className="px-6 py-3 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Fecha</th>
-                                    <th className="px-6 py-3 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Motivo</th>
-                                    <th className="px-6 py-3 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Estado</th>
-                                    <th className="px-6 py-3"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-                                {euthanasias.map(e => (
-                                    <tr key={e.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition">
-                                        <td className="px-6 py-4 font-mono text-xs text-slate-500">{e.folio}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-sm font-black text-purple-600">
-                                                    {e.pet?.name?.charAt(0)}
+                        <ul className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                            {euthanasias.map(e => (
+                                <li key={e.id} className="group hover:bg-brand-primary transition-colors">
+                                    <Link href={route('euthanasias.show', e.id)} className="block px-6 py-5">
+                                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                            
+                                            {/* Info Paciente y Motivo */}
+                                            <div className="flex items-center min-w-0 gap-5 flex-1 relative w-full sm:w-auto">
+                                                <div className="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xl font-black text-purple-600 group-hover:scale-110 transition-transform group-hover:bg-white/20 group-hover:text-white">
+                                                    {e.pet?.name?.charAt(0) || 'P'}
                                                 </div>
-                                                <div>
-                                                    <p className="font-bold text-slate-800 dark:text-slate-200">{e.pet?.name}</p>
-                                                    <p className="text-[10px] text-slate-400">{e.pet?.species} • {e.pet?.breed}</p>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-3">
+                                                        <p className="text-base font-black text-slate-800 dark:text-slate-200 group-hover:text-white truncate">
+                                                            {e.pet?.name || 'Paciente Desconocido'}
+                                                        </p>
+                                                        <span className={`px-2.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-widest group-hover:bg-white group-hover:text-brand-primary group-hover:border-white ${STATUS[e.status]?.text}`}>
+                                                            {STATUS[e.status]?.label}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 group-hover:text-white/80 font-bold uppercase tracking-wide truncate">
+                                                        <span>{e.pet?.species || '-'} • {e.pet?.breed || '-'}</span>
+                                                        <span className="hidden sm:inline-block w-1 h-1 bg-slate-300 group-hover:bg-white/30 rounded-full"></span>
+                                                        <span className="max-w-[100px] truncate" title={e.reason}>{e.reason || 'Sin motivo especificado'}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{e.pet?.owner?.name || '—'}</td>
-                                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{e.veterinarian?.name || '—'}</td>
-                                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                                            {e.performed_at ? format(new Date(e.performed_at), "dd MMM yyyy", { locale: es }) : '—'}
-                                        </td>
-                                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400 max-w-[160px] truncate">{e.reason}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-lg text-[9px] font-black border uppercase ${STATUS[e.status]?.text}`}>
-                                                {STATUS[e.status]?.label}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <Link href={route('euthanasias.show', e.id)} className="text-brand-primary hover:underline text-xs font-bold">
-                                                Ver →
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+
+                                            {/* Fecha, Veterinario, y Folio */}
+                                            <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                                                <div className="text-left sm:text-right">
+                                                    <p className="text-[10px] font-black text-slate-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5">Veterinario</p>
+                                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-white truncate max-w-[120px]">
+                                                        👨‍⚕️ {e.veterinarian?.name || 'Sin Asignar'}
+                                                    </p>
+                                                </div>
+
+                                                <div className="text-right hidden sm:block w-24">
+                                                    <p className="text-[10px] font-black text-slate-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5">Procedimiento</p>
+                                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-white">
+                                                        {e.performed_at ? format(new Date(e.performed_at), "d MMM, HH:mm", { locale: es }) : 'Pendiente'}
+                                                    </p>
+                                                </div>
+
+                                                <div className="text-right hidden sm:block w-24">
+                                                    <p className="text-[10px] font-black text-slate-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5">Folio</p>
+                                                    <p className="text-xs font-mono font-bold text-slate-500 group-hover:text-white/90 uppercase">
+                                                        {e.folio}
+                                                    </p>
+                                                </div>
+
+                                                <div className="hidden md:flex flex-shrink-0">
+                                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 group-hover:border-white group-hover:bg-white/20 group-hover:text-white text-slate-300 transition-colors">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                                            <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
                     )}
                 </div>
             </div>

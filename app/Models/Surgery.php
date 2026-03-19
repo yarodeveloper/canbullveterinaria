@@ -29,6 +29,9 @@ class Surgery extends Model
         'checklist',
         'vital_signs',
         'post_vital_signs',
+        'pre_operative_medications',
+        'intra_operative_medications',
+        'post_operative_medications',
     ];
 
     protected $casts = [
@@ -38,6 +41,9 @@ class Surgery extends Model
         'checklist' => 'array',
         'vital_signs' => 'array',
         'post_vital_signs' => 'array',
+        'pre_operative_medications' => 'array',
+        'intra_operative_medications' => 'array',
+        'post_operative_medications' => 'array',
     ];
 
     public function pet()

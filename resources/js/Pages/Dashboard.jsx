@@ -1,12 +1,22 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
+import { Head, Link, router } from '@inertiajs/react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie, Legend } from 'recharts';
+import { useState } from 'react';
 
-export default function Dashboard({ auth, role, stats, revenueData, appointmentDistribution, hospitalizationOccupancy, recentActivities, adminMetrics, vetMetrics, receptionMetrics }) {
+export default function Dashboard({ auth, role, stats, revenueData, appointmentDistribution, hospitalizationOccupancy, recentActivities, adminMetrics, vetMetrics, receptionMetrics, filters }) {
     const permissions = auth.permissions || [];
     const isAdmin = role === 'admin';
     const isVet = role === 'veterinarian' || isAdmin;
     const isReception = role === 'receptionist' || isAdmin;
+
+    const [dateRange, setDateRange] = useState({
+        start_date: filters?.start_date || '',
+        end_date: filters?.end_date || ''
+    });
+
+    const handleFilter = () => {
+        router.get(route('dashboard'), dateRange, { preserveState: true });
+    };
 
     // --- CARDS DINÁMICAS POR ROL ---
     const getTopCards = () => {
@@ -66,6 +76,36 @@ export default function Dashboard({ auth, role, stats, revenueData, appointmentD
             <div className="py-8 px-4 sm:px-0 bg-slate-50/50 dark:bg-slate-900/20 min-h-screen">
                 <div className="mx-auto max-w-7xl">
                     
+                    {/* Filtros de Fecha */}
+                    {isAdmin && (
+                    <div className="flex flex-col sm:flex-row gap-4 mb-6 items-end bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <div className="flex-1 w-full sm:max-w-xs">
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha Inicial</label>
+                            <input 
+                                type="date" 
+                                value={dateRange.start_date}
+                                onChange={(e) => setDateRange({...dateRange, start_date: e.target.value})}
+                                className="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-sm focus:ring-brand-primary text-sm"
+                            />
+                        </div>
+                        <div className="flex-1 w-full sm:max-w-xs">
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha Final</label>
+                            <input 
+                                type="date" 
+                                value={dateRange.end_date}
+                                onChange={(e) => setDateRange({...dateRange, end_date: e.target.value})}
+                                className="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-sm focus:ring-brand-primary text-sm"
+                            />
+                        </div>
+                        <button 
+                            onClick={handleFilter}
+                            className="w-full sm:w-auto bg-brand-primary text-white font-bold py-2.5 px-6 rounded-xl hover:bg-brand-primary/90 transition-colors shadow-lg shadow-brand-primary/20 h-[42px] uppercase text-xs tracking-widest"
+                        >
+                            Filtrar
+                        </button>
+                    </div>
+                    )}
+
                     {/* Main Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                         {getTopCards().map((card, idx) => (
@@ -134,6 +174,78 @@ export default function Dashboard({ auth, role, stats, revenueData, appointmentD
                                     </ResponsiveContainer>
                                 </div>
                             </div>
+
+                             {/* NUEVAS GRÁFICAS ADMIN */}
+                             {isAdmin && (
+                                 <div className="grid md:grid-cols-2 gap-8">
+                                     {/* Ventas por Rubro */}
+                                     {adminMetrics.sales_by_type && adminMetrics.sales_by_type.length > 0 && (
+                                     <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[2.5rem] p-8 shadow-sm text-center">
+                                         <h3 className="text-sm font-black text-gray-900 dark:text-white mb-6 uppercase tracking-widest border-b pb-4 dark:border-gray-700">Ventas por Rubro</h3>
+                                         <div className="h-[250px] mb-6">
+                                             <ResponsiveContainer width="100%" height="100%">
+                                                 <PieChart>
+                                                     <Pie data={adminMetrics.sales_by_type} dataKey="total" nameKey="rubro" cx="50%" cy="50%" outerRadius={80} label={(entry) => entry.rubro.substring(0, 10) + '...'}>
+                                                         {adminMetrics.sales_by_type.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                                     </Pie>
+                                                     <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
+                                                 </PieChart>
+                                             </ResponsiveContainer>
+                                         </div>
+                                     </div>
+                                     )}
+
+                                     {/* Ventas por Vendedor */}
+                                     {adminMetrics.sales_by_seller && adminMetrics.sales_by_seller.length > 0 && (
+                                     <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[2.5rem] p-8 shadow-sm text-center">
+                                         <h3 className="text-sm font-black text-gray-900 dark:text-white mb-6 uppercase tracking-widest border-b pb-4 dark:border-gray-700">Ventas por Vendedor</h3>
+                                         <div className="h-[250px] mb-6">
+                                             <ResponsiveContainer width="100%" height="100%">
+                                                 <BarChart data={adminMetrics.sales_by_seller} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                                     <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+                                                     <XAxis type="number" tickFormatter={(val) => `$${val}`} tick={{ fontSize: 10 }} />
+                                                     <YAxis type="category" dataKey="seller_name" tick={{ fontSize: 10 }} width={80} />
+                                                     <Tooltip formatter={(val) => `$${Number(val).toLocaleString()}`} />
+                                                     <Bar dataKey="total" radius={[0, 8, 8, 0]} barSize={20}>
+                                                         {adminMetrics.sales_by_seller.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[(index+1) % COLORS.length]} />)}
+                                                     </Bar>
+                                                 </BarChart>
+                                             </ResponsiveContainer>
+                                         </div>
+                                     </div>
+                                     )}
+                                     
+                                     {/* Egresos por Descripción */}
+                                     {adminMetrics.expenses_by_description && adminMetrics.expenses_by_description.length > 0 && (
+                                     <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[2.5rem] p-8 shadow-sm">
+                                         <h3 className="text-sm font-black text-rose-600 mb-6 uppercase tracking-widest text-center border-b pb-4 dark:border-rose-900/20">Egresos Principales</h3>
+                                         <div className="grid grid-cols-1 gap-3">
+                                             {adminMetrics.expenses_by_description.map((item, idx) => (
+                                                 <div key={idx} className="flex justify-between items-center p-3 rounded-xl border border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                                                     <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 truncate max-w-[150px]" title={item.description}>{item.description}</span>
+                                                     <span className="text-xs font-black text-rose-500">${Number(item.total).toLocaleString()}</span>
+                                                 </div>
+                                             ))}
+                                         </div>
+                                     </div>
+                                     )}
+
+                                     {/* Métodos de Pago */}
+                                     {adminMetrics.sales_by_payment_method && adminMetrics.sales_by_payment_method.length > 0 && (
+                                     <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[2.5rem] p-8 shadow-sm">
+                                         <h3 className="text-sm font-black text-emerald-600 mb-6 uppercase tracking-widest text-center border-b pb-4 dark:border-emerald-900/20">Métodos de Pago</h3>
+                                         <div className="grid grid-cols-1 gap-3">
+                                             {adminMetrics.sales_by_payment_method.map((item, idx) => (
+                                                 <div key={idx} className="flex justify-between items-center p-3 rounded-xl border border-slate-50 dark:border-slate-800 bg-emerald-50/50 dark:bg-emerald-900/20">
+                                                     <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase">{item.payment_method}</span>
+                                                     <span className="text-xs font-black text-emerald-600">${Number(item.total).toLocaleString()}</span>
+                                                 </div>
+                                             ))}
+                                         </div>
+                                     </div>
+                                     )}
+                                 </div>
+                             )}
 
                             <div className="grid md:grid-cols-2 gap-8">
                                 {isVet && (

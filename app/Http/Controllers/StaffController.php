@@ -15,7 +15,7 @@ class StaffController extends Controller
     public function index()
     {
         // Solo administradores pueden ver esta lista
-        if (!auth()->user()->hasRole('admin')) {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage settings')) {
             abort(403);
         }
 
@@ -31,7 +31,7 @@ class StaffController extends Controller
 
     public function create()
     {
-        if (!auth()->user()->hasRole('admin')) {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage settings')) {
             abort(403);
         }
 
@@ -43,7 +43,7 @@ class StaffController extends Controller
 
     public function store(Request $request)
     {
-        if (!auth()->user()->hasRole('admin')) {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage settings')) {
             abort(403);
         }
 
@@ -73,7 +73,7 @@ class StaffController extends Controller
 
     public function edit(User $user)
     {
-        if (!auth()->user()->hasRole('admin')) {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage settings')) {
             abort(403);
         }
 
@@ -86,7 +86,7 @@ class StaffController extends Controller
 
     public function update(Request $request, User $user)
     {
-        if (!auth()->user()->hasRole('admin')) {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage settings')) {
             abort(403);
         }
 
@@ -121,7 +121,7 @@ class StaffController extends Controller
 
     public function destroy(User $user)
     {
-        if (!auth()->user()->hasRole('admin')) {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage settings')) {
             abort(403);
         }
 

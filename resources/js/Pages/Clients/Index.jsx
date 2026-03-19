@@ -57,66 +57,85 @@ export default function Index({ auth, clients, filters }) {
                                 </div>
                             </div>
 
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                    <thead className="bg-gray-50 dark:bg-gray-900">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contacto</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mascotas</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Actividad</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <div className="p-0">
+                                {clients.data.length > 0 ? (
+                                    <ul className="divide-y divide-gray-100 dark:divide-gray-700">
                                         {clients.data.map((client) => (
-                                            <tr key={client.id} className="group hover:bg-brand-primary transition-colors cursor-pointer">
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center">
-                                                        <div className="h-10 w-10 bg-brand-secondary group-hover:bg-white/20 rounded-full flex items-center justify-center text-brand-primary group-hover:text-white font-black text-xs uppercase border border-brand-primary/10 group-hover:border-white/50 transition-colors">
-                                                            {client.name.substring(0, 2)}
-                                                        </div>
-                                                        <div className="ml-4">
-                                                            <div className="text-sm font-bold flex items-center gap-2 group-hover:text-white transition-colors text-gray-900 dark:text-gray-100">
-                                                                {client.name}
-                                                                {client.behavior_profile && <BehaviorBadge behaviorId={client.behavior_profile} showLabel={false} className="scale-75" />}
+                                            <li key={client.id} className="group hover:bg-brand-primary transition-all duration-200">
+                                                <Link href={route('clients.show', client.id)} className="block px-6 py-5">
+                                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                                        {/* Info del Cliente */}
+                                                        <div className="flex items-center min-w-0 gap-5 flex-1 relative w-full sm:w-auto">
+                                                            <div className="flex-shrink-0 w-12 h-12 bg-brand-secondary/50 group-hover:bg-white/20 rounded-full flex items-center justify-center text-brand-primary group-hover:text-white font-black text-sm uppercase transition-colors group-hover:scale-110">
+                                                                {client.name.substring(0, 2)}
                                                             </div>
-                                                            <div className="text-xs text-gray-500 group-hover:text-white/80 transition-colors">{client.email}</div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <div className="flex items-center gap-3">
+                                                                    <p className="text-base font-black text-gray-900 dark:text-gray-100 group-hover:text-white truncate">
+                                                                        {client.name}
+                                                                    </p>
+                                                                    {client.behavior_profile && (
+                                                                        <div className="scale-75 origin-left">
+                                                                            <BehaviorBadge behaviorId={client.behavior_profile} showLabel={false} />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 group-hover:text-white/80 font-bold uppercase tracking-wide truncate">
+                                                                    <span>{client.phone || 'Sin Teléfono'}</span>
+                                                                    <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 group-hover:bg-white/30 rounded-full"></span>
+                                                                    <span>{client.email || 'Sin Email'}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Mascotas e Info extra */}
+                                                        <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                                                            <div className="text-left sm:text-right">
+                                                                <p className="text-[10px] font-black text-gray-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5">Pacientes</p>
+                                                                <span className="inline-flex items-center px-2 py-0.5 bg-green-100 group-hover:bg-white/20 text-green-700 group-hover:text-white text-xs rounded-full font-bold transition-colors">
+                                                                    🐾 {client.pets_count}
+                                                                </span>
+                                                            </div>
+                                                            
+                                                            <div className="text-right hidden sm:block w-32">
+                                                                <p className="text-[10px] font-black text-gray-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5">Dirección / Notas</p>
+                                                                <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-white truncate">
+                                                                    {client.address || '-'}
+                                                                </p>
+                                                            </div>
+
+                                                            <div className="hidden md:flex flex-shrink-0">
+                                                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 group-hover:border-white group-hover:bg-white/20 group-hover:text-white text-gray-300 transition-colors">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                                                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                                                                    </svg>
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm group-hover:text-white transition-colors">
-                                                    <p>{client.phone || 'No phone'}</p>
-                                                    <p className="text-xs text-gray-500 group-hover:text-white/80 transition-colors truncate w-32">{client.address || 'No address'}</p>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="px-2 py-1 bg-green-100 group-hover:bg-white/20 text-green-700 group-hover:text-white text-xs rounded-full font-bold transition-colors">
-                                                        {client.pets_count} Pacientes
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-xs text-gray-500 group-hover:text-white/80 transition-colors">
-                                                    {client.updated_at ? new Date(client.updated_at).toLocaleDateString() : '-'}
-                                                </td>
-                                                <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
-                                                    <Link
-                                                        href={route('clients.show', client.id)}
-                                                        className="inline-flex items-center p-2 bg-brand-secondary text-brand-primary rounded-lg hover:bg-brand-secondary/80 transition shadow-sm border border-brand-primary/10"
-                                                        title="Vista 360 (Perfil)"
-                                                    >
-                                                        <IconEye className="w-5 h-5" />
-                                                    </Link>
-                                                    <Link
-                                                        href={route('clients.edit', client.id)}
-                                                        className="inline-flex items-center p-2 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition shadow-sm border border-amber-100"
-                                                        title="Editar Cliente"
-                                                    >
-                                                        <IconEdit className="w-5 h-5" />
-                                                    </Link>
-                                                </td>
-                                            </tr>
+                                                </Link>
+                                            </li>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </ul>
+                                ) : (
+                                    <div className="text-center py-20 px-6">
+                                        <div className="text-6xl mb-6 opacity-20 transform hover:scale-110 transition-transform">👥</div>
+                                        <h3 className="text-xl font-black text-gray-400 uppercase tracking-widest mb-2">
+                                            {searchTerm ? 'No se encontraron clientes' : 'Aún no hay clientes'}
+                                        </h3>
+                                        <p className="text-gray-400 text-sm mb-8">
+                                            {searchTerm ? 'Intenta usar otros términos de búsqueda.' : 'Registra el primer cliente en el sistema.'}
+                                        </p>
+                                        {!searchTerm && (
+                                            <Link
+                                                href={route('clients.create')}
+                                                className="inline-block bg-brand-primary text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-brand-primary/20"
+                                            >
+                                                + Registrar Cliente
+                                            </Link>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

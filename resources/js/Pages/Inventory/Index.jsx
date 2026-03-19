@@ -195,126 +195,136 @@ export default function Index({ auth, products, categories, filters }) {
                         </div>
                     </div>
 
-                    {/* Tabla Estilo Kardex */}
-                    <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border dark:border-gray-700 shadow-xl overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead>
-                                    <tr className="bg-slate-50 dark:bg-gray-900/40 text-[10px] font-black text-slate-500 tracking-widest border-b dark:border-gray-700">
-                                        <th className="px-6 py-3">Articulo</th>
-                                        <th className="px-6 py-3 text-center">SKU</th>
-                                        <th className="px-6 py-3 text-center">Categoria</th>
-                                        {selectedType === 'product' && <th className="px-6 py-3 text-center">Disponible</th>}
-                                        <th className="px-6 py-3 text-center">P. Público</th>
-                                        {selectedType === 'product' && <th className="px-6 py-3 text-center">Status</th>}
-                                        <th className="px-6 py-3 text-center">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y dark:divide-gray-700">
-                                    {products.data.length > 0 ? products.data.map(product => {
-                                        const isLowStock = product.current_stock <= product.min_stock;
-                                        const expirationAlert = getExpirationAlert(product.lots);
-                                        return (
-                                            <tr key={product.id} className="hover:bg-brand-primary transition-colors group">
-                                                <td className="px-6 py-2">
+                      {/* Tabla Estilo Kardex / Listado */}
+                    <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border dark:border-gray-700 shadow-xl overflow-hidden p-0">
+                        {products.data.length > 0 ? (
+                            <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+                                {products.data.map(product => {
+                                    const isLowStock = product.current_stock <= product.min_stock;
+                                    const expirationAlert = getExpirationAlert(product.lots);
+                                    
+                                    const content = (
+                                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                            {/* Info de Artículo */}
+                                            <div className="flex items-center min-w-0 gap-5 flex-1 relative w-full sm:w-auto">
+                                                <div className="w-12 h-12 bg-slate-100 dark:bg-gray-700 group-hover:bg-white/20 rounded-2xl flex items-center justify-center text-2xl shrink-0 transition-transform group-hover:scale-110">
+                                                    {product.category.icon || '📦'}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 bg-brand-primary/10 group-hover:bg-white/20 rounded-lg flex items-center justify-center text-lg shrink-0">
-                                                            {product.category.icon || '📦'}
-                                                        </div>
-                                                        <div className="min-w-0">
-                                                             <p className="font-black text-gray-900 dark:text-gray-100 text-sm uppercase tracking-tight group-hover:text-white transition-colors truncate" title={product.name}>
-                                                                {product.name}
-                                                            </p>
-                                                            {!!product.is_controlled && (
-                                                                 <span className="text-[8px] font-black text-red-500 group-hover:text-white uppercase tracking-widest block mt-0.5">⚠️ Controlado</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                 <td className="px-6 py-2 text-center text-xs font-bold text-slate-600 group-hover:text-white/70">
-                                                    {product.sku || '-'}
-                                                </td>
-                                                <td className="px-6 py-2 text-center">
-                                                     <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest group-hover:bg-white group-hover:text-brand-primary">
-                                                        {product.category.name}
-                                                    </span>
-                                                </td>
-                                                {selectedType === 'product' && (
-                                                    <td className="px-6 py-2 text-center">
-                                                        <div className="flex flex-col items-center">
-                                                             <span className={`text-lg leading-none font-black ${isLowStock ? 'text-red-500 group-hover:text-white' : 'text-brand-primary group-hover:text-white'}`}>
-                                                                {parseFloat(product.current_stock).toLocaleString()}
+                                                        <p className="text-base font-black text-gray-900 dark:text-gray-100 group-hover:text-white uppercase tracking-tight truncate">
+                                                            {product.name}
+                                                        </p>
+                                                        {!!product.is_controlled && (
+                                                            <span className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border border-red-200 group-hover:bg-white group-hover:text-red-600">
+                                                                ⚠️ Controlado
                                                             </span>
-                                                            <span className="text-[8px] font-bold text-gray-400 group-hover:text-white/70 uppercase mt-0.5">{product.unit}</span>
-                                                        </div>
-                                                    </td>
-                                                )}
-                                                 <td className="px-6 py-2 text-center text-sm font-black text-slate-900 dark:text-gray-100 group-hover:text-white">
-                                                    ${parseFloat(product.price).toLocaleString()}
-                                                </td>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 group-hover:text-white/80 font-bold uppercase tracking-wide truncate">
+                                                        <span>{product.sku || 'Sin SKU'}</span>
+                                                        <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 group-hover:bg-white/30 rounded-full"></span>
+                                                        <span>{product.category.name}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Detalles (Stock / Precio / Estado) */}
+                                            <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end mt-4 sm:mt-0">
                                                 {selectedType === 'product' && (
-                                                    <td className="px-6 py-2 text-center">
-                                                         <div className="flex flex-col items-center gap-1">
+                                                    <div className="text-left sm:text-right w-20">
+                                                        <p className="text-[10px] font-black text-gray-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5">Stock</p>
+                                                        <p className={`text-base font-black ${isLowStock ? 'text-red-500 group-hover:text-red-200' : 'text-slate-700 dark:text-slate-300 group-hover:text-white'}`}>
+                                                            {parseFloat(product.current_stock).toLocaleString()} <span className="text-[10px]">{product.unit}</span>
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                                                                <div className="text-center sm:text-right w-24">
+                                                    <p className="text-[10px] font-black text-gray-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5">P. Público</p>
+                                                    <p className="text-base font-black text-brand-primary group-hover:text-white">
+                                                        ${parseFloat(product.price).toLocaleString()}
+                                                    </p>
+                                                </div>
+
+                                                {selectedType === 'product' && (
+                                                    <div className="text-right w-28 hidden md:block">
+                                                        <div className="flex flex-col items-end gap-1">
                                                             {isLowStock ? (
-                                                                <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-red-200 group-hover:bg-white group-hover:text-red-600 group-hover:border-white">
+                                                                <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border border-red-200 group-hover:bg-white group-hover:text-red-600">
                                                                     Poco Stock
                                                                 </span>
                                                             ) : (
-                                                                <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-emerald-200 group-hover:bg-white group-hover:text-emerald-600 group-hover:border-white">
+                                                                <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border border-emerald-200 group-hover:bg-white group-hover:text-emerald-600">
                                                                     Stock OK
                                                                 </span>
                                                             )}
                                                             {expirationAlert && (
-                                                                <span className={`${expirationAlert.color} px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border group-hover:bg-white group-hover:text-brand-primary group-hover:border-white`}>
+                                                                <span className={`${expirationAlert.color} px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border group-hover:bg-white group-hover:text-brand-primary mt-1`}>
                                                                     ⏰ {expirationAlert.label}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                    </td>
+                                                    </div>
                                                 )}
-                                                <td className="px-6 py-2 text-center">
-                                                         <div className="flex items-center justify-center gap-2">
-                                                            {selectedType === 'product' ? (
-                                                                <Link
-                                                                    href={route('inventory.show', product.id)}
-                                                                    className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-brand-primary px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white group-hover:bg-white group-hover:text-brand-primary transition-colors"
-                                                                >
-                                                                    👁️ Ver
-                                                                </Link>
-                                                            ) : (
-                                                                <button
-                                                                    className="inline-flex items-center gap-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white group-hover:bg-white group-hover:text-indigo-600 transition-colors"
-                                                                    onClick={() => openEditModal(product)}
-                                                                >
-                                                                    ✏️ Editar
-                                                                </button>
-                                                            )}
-                                                            
-                                                            {auth.user?.role === 'admin' && (
-                                                                <button
-                                                                    onClick={() => deleteProduct(product.id)}
-                                                                    className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 group-hover:text-white rounded-lg transition-all"
-                                                                    title="Eliminar del catálogo"
-                                                                >
-                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    }) : (
-                                        <tr>
-                                            <td colSpan="7" className="px-6 py-12 text-center text-gray-400">
-                                                <div className="text-3xl mb-2 opacity-50">📦</div>
-                                                <p className="text-[10px] font-black uppercase tracking-widest">No se encontraron artículos</p>
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
 
+                                                <div className="flex items-center justify-end gap-3 w-16">
+                                                    <div className="hidden md:flex flex-shrink-0">
+                                                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-[#1B2132] border-2 border-slate-200 dark:border-slate-700/50 group-hover:border-white group-hover:bg-white/20 group-hover:text-white text-gray-300 transition-colors">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                                                <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </span>
+                                                    </div>
+                                                    {auth.user?.role === 'admin' && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                deleteProduct(product.id);
+                                                            }}
+                                                            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 group-hover:bg-white/10 group-hover:text-white rounded-lg transition-all"
+                                                            title="Eliminar del catálogo"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+
+                                    return (
+                                        <li key={product.id} className="group hover:bg-brand-primary transition-colors cursor-pointer">
+                                            {selectedType === 'product' ? (
+                                                <Link href={route('inventory.show', product.id)} className="block px-6 py-5">
+                                                    {content}
+                                                </Link>
+                                            ) : (
+                                                <div 
+                                                    className="px-6 py-5"
+                                                    onClick={() => openEditModal(product)}
+                                                >
+                                                    {content}
+                                                </div>
+                                            )}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        ) : (
+                            <div className="text-center py-20 px-6">
+                                <div className="text-6xl mb-6 opacity-20 transform hover:scale-110 transition-transform">
+                                    {selectedType === 'product' ? '📦' : '✂️'}
+                                </div>
+                                <h3 className="text-xl font-black text-gray-400 uppercase tracking-widest mb-2">
+                                    {searchTerm ? 'No se encontraron resultados' : `Sin ${selectedType === 'product' ? 'productos' : 'servicios'}`}
+                                </h3>
+                                <p className="text-gray-400 text-sm mb-8">
+                                    {searchTerm ? 'Intenta usar otros términos de búsqueda.' : `Agrega el primer registro al catálogo.`}
+                                </p>
+                            </div>
+                        )}
                         {/* Paginación */}
                         {products.links && products.links.length > 3 && (
                             <div className="p-4 border-t dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/40 flex justify-center">

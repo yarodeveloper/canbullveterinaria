@@ -99,4 +99,9 @@ class Pet extends Model
     {
         return $this->hasMany(PetDocument::class);
     }
+
+    public function groomingOrders()
+    {
+        return $this->hasMany(GroomingOrder::class);
+    }
 }

@@ -52,6 +52,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
 
     const [showInventoryModal, setShowInventoryModal] = useState(false);
     const [inventorySearch, setInventorySearch] = useState('');
+    const [inventoryFilter, setInventoryFilter] = useState('all');
 
     const [searchType, setSearchType] = useState('client');
     const [generalSearch, setGeneralSearch] = useState('');
@@ -82,10 +83,20 @@ export default function Create({ auth, clients, products, pets, selectedClientId
     }, [productSearch, products]);
 
     const filteredInventory = useMemo(() => {
-        if (!inventorySearch) return [];
-        const search = inventorySearch.toLowerCase();
-        return products.filter(p => p.name.toLowerCase().includes(search) || (p.barcode && p.barcode.toLowerCase().includes(search)) || (p.sku && p.sku.toLowerCase().includes(search))).slice(0, 10);
-    }, [inventorySearch, products]);
+        let filtered = products;
+        if (inventoryFilter === 'product') {
+            filtered = filtered.filter(p => !p.is_service);
+        } else if (inventoryFilter === 'service') {
+            filtered = filtered.filter(p => p.is_service);
+        }
+
+        if (inventorySearch) {
+            const search = inventorySearch.toLowerCase();
+            filtered = filtered.filter(p => p.name.toLowerCase().includes(search) || (p.barcode && p.barcode.toLowerCase().includes(search)) || (p.sku && p.sku.toLowerCase().includes(search)));
+        }
+
+        return filtered.slice(0, 50);
+    }, [inventorySearch, inventoryFilter, products]);
 
     const handleClientSelect = (client) => {
         setSelectedClient(client);
@@ -243,7 +254,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
 
                         <div className="flex items-center gap-4">
                             <Link href={route('receipts.index')} className="hidden xl:flex bg-[#111623] hover:bg-[#2A3347] border border-[#2A3347] px-4 py-2 rounded-lg text-[10px] font-bold text-gray-300 uppercase tracking-widest transition items-center gap-2">📄 Ventas</Link>
-                            <button onClick={() => setShowInventoryModal(true)} className="hidden xl:flex bg-[#111623] hover:bg-[#2A3347] border border-[#2A3347] px-4 py-2 rounded-lg text-[10px] font-bold text-gray-300 uppercase tracking-widest transition items-center gap-2">📦 Almacén</button>
+                            <button onClick={() => setShowInventoryModal(true)} className="hidden xl:flex bg-[#111623] hover:bg-[#2A3347] border border-[#2A3347] px-4 py-2 rounded-lg text-[10px] font-bold text-gray-300 uppercase tracking-widest transition items-center gap-2">🔍 Buscar</button>
                             <button onClick={() => setShowWithdrawalModal(true)} className="hidden xl:flex bg-[#111623] hover:bg-[#2A3347] border border-[#2A3347] px-4 py-2 rounded-lg text-[10px] font-bold text-purple-400 uppercase tracking-widest transition items-center gap-2">💸 Retesar</button>
                             <button onClick={() => setShowCloseModal(true)} className="hidden xl:flex bg-[#111623] hover:bg-red-500/20 border border-red-500/20 px-4 py-2 rounded-lg text-[10px] font-bold text-red-400 uppercase tracking-widest transition items-center gap-2">🔐 Corte Z</button>
 
@@ -574,10 +585,15 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                             <button onClick={() => setShowInventoryModal(false)} className="text-3xl text-gray-500 hover:text-white transition">×</button>
                         </div>
                         <div className="p-6 flex flex-col flex-1 overflow-hidden">
+                            <div className="flex gap-2 mb-4 shrink-0">
+                                <button onClick={() => setInventoryFilter('all')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${inventoryFilter === 'all' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' : 'bg-[#111623] hover:bg-[#2A3347] text-gray-400'}`}>Todos</button>
+                                <button onClick={() => setInventoryFilter('product')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${inventoryFilter === 'product' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' : 'bg-[#111623] hover:bg-[#2A3347] text-gray-400'}`}>Productos</button>
+                                <button onClick={() => setInventoryFilter('service')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${inventoryFilter === 'service' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' : 'bg-[#111623] hover:bg-[#2A3347] text-gray-400'}`}>Servicios</button>
+                            </div>
                             <input type="text" autoFocus className="w-full mb-6 shrink-0 bg-[#0B0F19] border border-[#2A3347] rounded-2xl py-4 px-6 focus:ring-2 focus:ring-purple-500 text-white font-bold transition shadow-inner" placeholder="Buscar producto o código..." value={inventorySearch} onChange={e => setInventorySearch(e.target.value)} />
                             <div className="flex-1 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-[#2A3347]">
                                 {filteredInventory.length > 0 ? filteredInventory.map(item => (
-                                    <div key={item.id} className="flex justify-between items-center bg-[#111623] border border-[#2A3347] p-4 rounded-2xl hover:bg-[#252E43] transition">
+                                    <div key={item.id} onClick={() => { handleProductSelect(item); setShowInventoryModal(false); }} className="cursor-pointer flex justify-between items-center bg-[#111623] border border-[#2A3347] p-4 rounded-2xl hover:bg-[#252E43] transition">
                                         <div>
                                             <h4 className="font-black text-white uppercase leading-tight">{item.name}</h4>
                                             <p className="text-[10px] font-bold text-gray-500 uppercase mt-1">{item.category?.name || 'S/C'} • SKU {item.sku || 'N/A'}</p>

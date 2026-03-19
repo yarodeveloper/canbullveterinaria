@@ -48,8 +48,12 @@ export default function PetCarnet({ pet, clinic }) {
                     <div className="p-8 md:p-14">
                         <div className="flex flex-col md:flex-row items-center gap-10">
                             <div className="relative">
-                                <div className="w-44 h-44 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-7xl shadow-inner border-8 border-white dark:border-gray-800 overflow-hidden relative group">
-                                    <span className="relative z-10">{pet.species === 'Dog' || pet.species === 'Canino' ? '🐶' : '🐱'}</span>
+                                <div className="w-44 h-44 bg-indigo-50 dark:bg-indigo-900/30 rounded-[3rem] shadow-inner border-8 border-white dark:border-gray-800 overflow-hidden relative group flex items-center justify-center">
+                                    {pet.photo_path ? (
+                                        <img src={`/storage/${pet.photo_path}`} alt={pet.name} className="w-full h-full object-cover relative z-10" />
+                                    ) : (
+                                        <span className="relative z-10 text-7xl">{pet.species === 'Dog' || pet.species === 'Canino' ? '🐶' : '🐱'}</span>
+                                    )}
                                     <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/20 to-transparent"></div>
                                 </div>
                                 <div className="absolute -bottom-2 -right-2 bg-green-500 text-white p-3 rounded-full border-4 border-white dark:border-gray-900 shadow-xl">
@@ -62,7 +66,7 @@ export default function PetCarnet({ pet, clinic }) {
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
                                     </span>
-                                    Certificado Digital de Salud
+                                    Identificación Oficial y Carnet Electrónico
                                 </div>
                                 <h1 className="text-6xl font-black text-gray-900 dark:text-white mb-3 tracking-tighter italic">
                                     {pet.name}
@@ -73,13 +77,21 @@ export default function PetCarnet({ pet, clinic }) {
                                     <span className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-lg">🆔 {pet.microchip || 'S/N'}</span>
                                 </div>
                             </div>
-                            <div className="hidden md:block print:hidden">
+                            <div className="flex flex-col items-center gap-3 w-full md:w-auto mt-6 md:mt-0 print:flex print:flex-col print:items-center">
+                                <div className="bg-white p-2 border-2 border-gray-100 rounded-2xl shadow-sm">
+                                    <img
+                                        src={`https://chart.googleapis.com/chart?chs=100x100&cht=qr&chl=${encodeURIComponent(window.location.href)}&choe=UTF-8`}
+                                        alt="QR Carnet"
+                                        className="w-20 h-20"
+                                    />
+                                </div>
                                 <button
                                     onClick={handlePrint}
-                                    className="bg-indigo-50 hover:bg-indigo-100 p-5 rounded-3xl transition-all shadow-sm border border-indigo-100 group"
+                                    className="bg-indigo-50 hover:bg-indigo-100 p-3 rounded-2xl transition-all shadow-sm border border-indigo-100 flex items-center justify-center gap-2 text-[10px] font-black text-indigo-600 uppercase tracking-widest print:hidden group"
                                     title="Descargar Plan de Salud"
                                 >
-                                    <svg className="w-8 h-8 text-indigo-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                                    <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                                    Imprimir
                                 </button>
                             </div>
                         </div>

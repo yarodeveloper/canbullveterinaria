@@ -8,6 +8,9 @@ export default function Index({ auth, hospitalizations, filters }) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [statusFilter, setStatusFilter] = useState(filters?.status || 'all');
 
+    const permissions = auth.permissions || [];
+    const can = (permission) => permissions.includes(permission) || auth.user.role === 'admin';
+
     const getStatusStyle = (status) => {
         const styles = {
             active: 'bg-green-100 text-green-700 border-green-200',
@@ -45,12 +48,14 @@ export default function Index({ auth, hospitalizations, filters }) {
             header={
                 <div className="flex justify-between items-center">
                     <h2 className="font-semibold text-xl text-slate-800 dark:text-slate-200 leading-tight">Zonas de Hospitalización</h2>
-                    <Link
-                        href={route('hospitalizations.create')}
-                        className="bg-brand-primary text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-primary-100"
-                    >
-                        + Ingresar Paciente
-                    </Link>
+                    {can('manage hospitalizations') && (
+                        <Link
+                            href={route('hospitalizations.create')}
+                            className="bg-brand-primary text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-primary-100"
+                        >
+                            + Ingresar Paciente
+                        </Link>
+                    )}
                 </div>
             }
         >
@@ -153,7 +158,7 @@ export default function Index({ auth, hospitalizations, filters }) {
                                             ? 'Intenta borrar algunos filtros.'
                                             : 'Las zonas de hospitalización se encuentran completamente libres.'}
                                     </p>
-                                    {(!searchTerm && statusFilter === 'all') && (
+                                    {(!searchTerm && statusFilter === 'all' && can('manage hospitalizations')) && (
                                         <Link
                                             href={route('hospitalizations.create')}
                                             className="inline-block bg-brand-primary text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-brand-primary/20"

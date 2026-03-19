@@ -15,6 +15,10 @@ class SurgeryController extends Controller
 
     public function index(Request $request)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('view surgeries')) {
+            abort(403);
+        }
+
         $branchId = Auth::user()->branch_id;
         
         $query = Surgery::where('branch_id', $branchId)->with(['pet', 'leadSurgeon']);
@@ -43,6 +47,10 @@ class SurgeryController extends Controller
 
     public function create(Request $request)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage surgeries')) {
+            abort(403);
+        }
+
         $pet = null;
         if ($request->has('pet_id')) {
             $pet = Pet::with('owner')->find($request->pet_id);
@@ -67,6 +75,10 @@ class SurgeryController extends Controller
 
     public function store(Request $request)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage surgeries')) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'pet_id' => 'required|exists:pets,id',
             'veterinarian_id' => 'required|exists:users,id',
@@ -111,6 +123,10 @@ class SurgeryController extends Controller
 
     public function show(Surgery $surgery)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('view surgeries')) {
+            abort(403);
+        }
+
         $surgery->load(['pet.consents', 'pet.hospitalizations' => function($q) {
             $q->where('status', 'active');
         }, 'leadSurgeon', 'anesthesiologist', 'branch']);
@@ -125,17 +141,27 @@ class SurgeryController extends Controller
             ->whereIn('role', ['admin', 'veterinarian'])
             ->get();
         $branches = \App\Models\Branch::all();
+        $products = \App\Models\Product::where('is_active', true)
+            ->where('is_service', false)
+            ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
+            ->orderBy('name')
+            ->get(['id', 'name', 'unit', 'is_controlled', 'price']);
 
         return Inertia::render('Surgeries/Show', [
             'surgery' => $surgery,
             'templates' => $templates,
             'veterinarians' => $veterinarians,
-            'branches' => $branches
+            'branches' => $branches,
+            'products' => $products
         ]);
     }
 
     public function update(Request $request, Surgery $surgery)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage surgeries')) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'status' => 'nullable|string',
             'start_time' => 'nullable|date',
@@ -150,6 +176,9 @@ class SurgeryController extends Controller
             'anesthesiologist_id' => 'nullable|exists:users,id',
             'asa_classification' => 'nullable|string',
             'branch_id' => 'nullable|exists:branches,id',
+            'pre_operative_medications' => 'nullable|array',
+            'intra_operative_medications' => 'nullable|array',
+            'post_operative_medications' => 'nullable|array',
         ]);
 
         $surgery->update($validated);
@@ -159,6 +188,10 @@ class SurgeryController extends Controller
 
     public function printConsent(Surgery $surgery, \App\Models\DocumentTemplate $template)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage surgeries')) {
+            abort(403);
+        }
+
         $surgery->load('pet.owner', 'leadSurgeon');
 
         $content = $this->parseTemplate($template->content, [
@@ -174,6 +207,19 @@ class SurgeryController extends Controller
             'content' => $content,
             'title' => $template->title,
             'pet' => $surgery->pet
+        ]);
+    }
+
+    public function printReport(Surgery $surgery)
+    {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('view surgeries')) {
+            abort(403);
+        }
+
+        $surgery->load(['pet.owner', 'leadSurgeon', 'anesthesiologist', 'branch']);
+
+        return view('print.surgery', [
+            'surgery' => $surgery,
         ]);
     }
 }

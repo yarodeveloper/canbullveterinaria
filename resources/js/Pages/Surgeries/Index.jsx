@@ -8,6 +8,9 @@ export default function Index({ auth, surgeries, filters }) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [statusFilter, setStatusFilter] = useState(filters?.status || 'all');
 
+    const permissions = auth.permissions || [];
+    const can = (permission) => permissions.includes(permission) || auth.user.role === 'admin';
+
     const getStatusStyle = (status) => {
         const styles = {
             scheduled: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -45,12 +48,14 @@ export default function Index({ auth, surgeries, filters }) {
             header={
                 <div className="flex justify-between items-center">
                     <h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Módulo de Cirugías</h2>
-                    <Link
-                        href={route('surgeries.create')}
-                        className="bg-brand-primary text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-primary-100"
-                    >
-                        + Programar Cirugía
-                    </Link>
+                    {can('manage surgeries') && (
+                        <Link
+                            href={route('surgeries.create')}
+                            className="bg-brand-primary text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-primary-100"
+                        >
+                            + Programar Cirugía
+                        </Link>
+                    )}
                 </div>
             }
         >
@@ -153,7 +158,7 @@ export default function Index({ auth, surgeries, filters }) {
                                             ? 'Intenta con otros términos de búsqueda.'
                                             : 'Administra el quirófano y protocolos quirúrgicos desde aquí.'}
                                     </p>
-                                    {(!searchTerm && statusFilter === 'all') && (
+                                    {(!searchTerm && statusFilter === 'all' && can('manage surgeries')) && (
                                         <Link
                                             href={route('surgeries.create')}
                                             className="inline-block bg-brand-primary text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-brand-primary/20"

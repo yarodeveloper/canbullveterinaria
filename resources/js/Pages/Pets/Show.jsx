@@ -17,20 +17,25 @@ const TimelineItem = ({ event }) => {
     let date = new Date(event.timeline_date);
 
     if (event.timeline_type === "vaccine") {
+        badgeColor = "text-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800";
+        badgeType = "🌿 Prevención";
         dotColor = "bg-emerald-500";
-        title = event.name || "Vacunación";
-        badgeType = event.type || "VACUNA";
-        badgeColor = "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50";
+        title = event.category === "vaccine" ? `Vacuna Aplicada: ${event.product?.name || "N/A"}` : `Desparasitación: ${event.product?.name || "N/A"}`;
     } else if (event.timeline_type === "surgery") {
-        dotColor = "bg-purple-500";
-        title = event.surgery_type || "Cirugía";
-        badgeType = "CIRUGÍA";
-        badgeColor = "bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800/50";
+        badgeColor = "text-blue-500 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800";
+        badgeType = "✂️ Cirugía";
+        dotColor = "bg-blue-500";
+        title = `Protocolo Quirúrgico`;
     } else if (event.timeline_type === "hospitalization") {
+        badgeColor = "text-teal-500 bg-teal-50 dark:bg-teal-900/30 border-teal-200 dark:border-teal-800";
+        badgeType = "🏥 Hospitalización";
         dotColor = "bg-teal-500";
-        title = "Hospitalización";
-        badgeType = "HOSPITALIZACIÓN";
-        badgeColor = "bg-teal-50 text-teal-600 border-teal-200 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-800/50";
+        title = `Ingreso a Hospitalización`;
+    } else if (event.timeline_type === "grooming") {
+        badgeColor = "text-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-900/30 border-fuchsia-200 dark:border-fuchsia-800";
+        badgeType = "🛁 Estética";
+        dotColor = "bg-fuchsia-500";
+        title = `Servicio de Estética / Grooming`;
     } else if (event.timeline_type === "lab") {
         dotColor = "bg-orange-500";
         title = "Laboratorio";
@@ -77,6 +82,12 @@ const TimelineItem = ({ event }) => {
                     {event.timeline_type === "hospitalization" && (
                         <Link href={route("hospitalizations.show", event.id)} className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest flex items-center gap-1 transition hover:opacity-70">
                             VER KARDEX
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-50" viewBox="0 0 20 20" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+                        </Link>
+                    )}
+                    {event.timeline_type === "grooming" && (
+                        <Link href={route("grooming-orders.show", event.id)} className="text-[10px] font-bold text-fuchsia-600 dark:text-fuchsia-400 uppercase tracking-widest flex items-center gap-1 transition hover:opacity-70">
+                            VER ORDEN
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-50" viewBox="0 0 20 20" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                         </Link>
                     )}
@@ -152,6 +163,18 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
         }
     };
 
+    const handlePhotoUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            router.post(route('pets.update-photo', pet.id), {
+                photo: file
+            }, {
+                preserveScroll: true,
+                forceFormData: true
+            });
+        }
+    };
+
     const timelineEvents = [
         ...(pet.medical_records || []).map(record => ({
             ...record,
@@ -172,6 +195,11 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
             ...prev,
             timeline_type: 'vaccine',
             timeline_date: new Date(prev.application_date || prev.created_at),
+        })),
+        ...(pet.grooming_orders || []).map(order => ({
+            ...order,
+            timeline_type: 'grooming',
+            timeline_date: new Date(order.created_at),
         }))
     ].sort((a, b) => b.timeline_date - a.timeline_date);
 
@@ -180,7 +208,8 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
         if (timelineFilter === 'consultations' && event.timeline_type === 'consultation') return true;
         if (timelineFilter === 'surgery' && event.timeline_type === 'surgery') return true;
         if (timelineFilter === 'hospitalization' && event.timeline_type === 'hospitalization') return true;
-        if (timelineFilter === 'lab' && event.timeline_type === 'vaccine') return true;
+        if (timelineFilter === 'lab' && event.timeline_type === 'vaccine') return true; // (maybe refine filter name later)
+        if (timelineFilter === 'grooming' && event.timeline_type === 'grooming') return true;
         return false;
     });
     const [editingState, setEditingState] = useState(null);
@@ -256,28 +285,49 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                     <h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                         Expediente: {pet.name}
                     </h2>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-1.5 bg-gray-100 dark:bg-gray-800/50 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner">
                         <Link
                             href={route('medical-records.create', pet.id)}
-                            className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:opacity-90 transition shadow-lg shrink-0 ${pet.status === 'deceased' ? 'bg-red-500' : 'bg-brand-primary'}`}
+                            className={`inline-flex items-center px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm ${pet.status === 'deceased' ? 'bg-white dark:bg-gray-900 text-red-600 hover:bg-red-500 hover:text-white border-2 border-red-100 group' : 'bg-white dark:bg-gray-900 text-brand-primary hover:bg-brand-primary hover:text-white border-2 border-brand-primary/10 group'}`}
                             title={pet.status === 'deceased' ? 'Consulta Post-mortem' : 'Nueva Consulta'}
                         >
-                            <IconPlus className="w-4 h-4 mr-1" /> {pet.status === 'deceased' ? 'Post-mortem' : 'Consulta'}
+                            <img src={pet.status === 'deceased' ? "/icons/leaf-svgrepo-com.svg" : "/icons/vet-with-cat-svgrepo-com.svg"} className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" />
+                            {pet.status === 'deceased' ? 'Post-mortem' : 'Consulta'}
                         </Link>
                         <Link
                             href={route('hospitalizations.create', { pet_id: pet.id })}
-                            className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:opacity-90 transition shadow-lg shrink-0 ${pet.status === 'deceased' ? 'bg-purple-800 opacity-50' : 'bg-purple-600 dark:bg-purple-500'}`}
+                            className={`hidden md:inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm ${pet.status === 'deceased' ? 'opacity-50 grayscale cursor-not-allowed bg-gray-50' : 'bg-white dark:bg-gray-900 text-purple-600 hover:bg-purple-600 hover:text-white border-2 border-purple-100 group'}`}
                             title="Hospitalización"
+                            onClick={pet.status === 'deceased' ? (e) => e.preventDefault() : undefined}
                         >
-                            🏥 Hospitalizar
+                            <img src="/icons/med-kit-svgrepo-com.svg" className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Hosp.
                         </Link>
                         <Link
                             href={route('surgeries.create', { pet_id: pet.id })}
-                            className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:opacity-90 transition shadow-lg shrink-0 ${pet.status === 'deceased' ? 'bg-indigo-800 opacity-50' : 'bg-indigo-600 dark:bg-indigo-500'}`}
+                            className={`hidden md:inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm ${pet.status === 'deceased' ? 'opacity-50 grayscale cursor-not-allowed bg-gray-50' : 'bg-white dark:bg-gray-900 text-blue-600 hover:bg-blue-600 hover:text-white border-2 border-blue-100 group'}`}
                             title="Programar Cirugía"
+                            onClick={pet.status === 'deceased' ? (e) => e.preventDefault() : undefined}
                         >
-                            ✂️ Cirugía
+                            <img src="/icons/band-aid-svgrepo-com.svg" className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Cirugía
                         </Link>
+                        {pet.status !== 'deceased' && (
+                            <>
+                                <Link
+                                    href={route('grooming-orders.create', { pet_id: pet.id })}
+                                    className="hidden md:inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm bg-white dark:bg-gray-900 text-fuchsia-600 hover:bg-fuchsia-600 hover:text-white border-2 border-fuchsia-100 dark:border-fuchsia-900/50 group"
+                                    title="Servicio de Estética / Grooming"
+                                >
+                                    <span className="mr-1.5 text-base grayscale group-hover:grayscale-0 transition-all opacity-80 group-hover:opacity-100">🛁</span> Estética
+                                </Link>
+                                <Link
+                                    href={route('euthanasias.create', { pet_id: pet.id })}
+                                    className="hidden md:inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm bg-white dark:bg-gray-900 text-slate-500 hover:bg-slate-800 hover:text-white border-2 border-slate-200 dark:border-slate-700 group"
+                                    title="Registrar Eutanasia"
+                                >
+                                    <img src="/icons/leaf-svgrepo-com.svg" className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Eutanasia
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             }
@@ -292,10 +342,17 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                         <div className="lg:col-span-3 space-y-6">
                             <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 border dark:border-gray-700">
                                 <div className="flex flex-col items-center relative">
-                                    <div className="relative group">
+                                    <div className="relative group cursor-pointer inline-block">
                                         <PetAvatar pet={pet} className={`h-32 w-32 mb-4 ${pet.status === 'deceased' ? 'grayscale opacity-60' : ''}`} />
+                                        {/* Overlay for Photo Upload */}
+                                        <label className="absolute inset-0 max-h-32 flex flex-col items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer mb-4">
+                                            <IconEdit className="w-8 h-8 mb-1" />
+                                            <span className="text-[10px] font-bold uppercase tracking-widest">Cambiar</span>
+                                            <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+                                        </label>
+                                        
                                         {pet.status === 'deceased' && (
-                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none max-h-32">
                                                 <div className="bg-black/70 text-white text-[10px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full border border-white/20 shadow-xl blur-[0.3px] rotate-[-12deg]">
                                                     ✞ Fallecido
                                                 </div>
@@ -495,6 +552,7 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                         <button onClick={() => setTimelineFilter('consultations')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase whitespace-nowrap flex-1 sm:flex-none ${timelineFilter === 'consultations' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Consultas</button>
                                         <button onClick={() => setTimelineFilter('surgery')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase whitespace-nowrap flex-1 sm:flex-none ${timelineFilter === 'surgery' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Cirugías</button>
                                         <button onClick={() => setTimelineFilter('hospitalization')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase whitespace-nowrap flex-1 sm:flex-none ${timelineFilter === 'hospitalization' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Hospitalización</button>
+                                        <button onClick={() => setTimelineFilter('grooming')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase whitespace-nowrap flex-1 sm:flex-none ${timelineFilter === 'grooming' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Estética</button>
                                         <button onClick={() => setTimelineFilter('lab')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase whitespace-nowrap flex-1 sm:flex-none ${timelineFilter === 'lab' ? 'bg-white dark:bg-gray-700 text-brand-primary dark:text-white shadow-sm' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>Lab/Vacunas</button>
                                     </div>
                                 </div>
