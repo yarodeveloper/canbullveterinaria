@@ -1,3 +1,10 @@
+@php
+    $settings = \App\Models\SiteSetting::all()->pluck('value', 'key');
+    $logoUrl = $settings['site_logo'] ?? null;
+    $primaryColor = $settings['primary_color'] ?? '#84329B';
+    $secondaryColor = $settings['secondary_color'] ?? '#EC4899';
+    $siteName = $settings['site_name'] ?? 'CanBull';
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -96,7 +103,7 @@
             display: block;
             width: 100%;
             padding: 15px;
-            background: #4F46E5;
+            background: {{ $primaryColor }};
             color: white;
             text-align: center;
             text-decoration: none;
@@ -113,8 +120,7 @@
     <button onclick="window.print()" class="print-btn no-print">🖨️ IMPRIMIR DOCUMENTO</button>
 
 @php
-    $settings = \App\Models\SiteSetting::all()->pluck('value', 'key');
-    $logoUrl = $settings['site_logo'] ?? null;
+    $siteName = $settings['site_name'] ?? 'CanBull';
 @endphp
 
 <div class="header">
@@ -123,24 +129,30 @@
             @if($logoUrl)
                 <img src="{{ Str::startsWith($logoUrl, 'http') ? $logoUrl : asset($logoUrl) }}" style="max-height: 70px; width: auto;" alt="Logo">
             @else
-                <div style="font-size: 28px; font-weight: 900; color: #4F46E5; letter-spacing: -1px;">CanBull</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="{{ asset('icons/pet-svgrepo-com.svg') }}" style="max-height: 40px; filter: opacity(0.5);">
+                    <div style="font-size: 28px; font-weight: 900; color: {{ $primaryColor }}; letter-spacing: -1px;">{{ $siteName }}</div>
+                </div>
             @endif
         </div>
         
         <div style="text-align: right;">
             <h1 style="font-size: 22px; margin: 0; line-height: 1.1; color: #111827;">{{ $title }}</h1>
             <p style="margin: 8px 0 0 0; font-size: 9px; color: #6b7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">
-                @if(isset($settings['contact_address']))
-                    {{ $settings['contact_address'] }} <br>
-                @endif
-                @if(isset($settings['contact_phone']))
-                    TEL: {{ $settings['contact_phone'] }} | 
-                @endif
+                @php
+                    $branch = $pet->branch ?? null;
+                    $address = $branch->address ?? $settings['contact_address'] ?? '';
+                    $phone = $branch->phone ?? $settings['contact_phone'] ?? '';
+                    $email = $branch->email ?? $settings['contact_email'] ?? '';
+                @endphp
+                {{ $address }} <br>
+                @if($phone) TEL: {{ $phone }} | @endif
+                @if($email) {{ $email }} | @endif
                 {{ \Carbon\Carbon::now()->translatedFormat('d F, Y') }}
             </p>
         </div>
     </div>
-    <div style="height: 3px; background: linear-gradient(to right, #4F46E5, #EC4899); border-radius: 2px; margin-top: 20px;"></div>
+    <div style="height: 3px; background: linear-gradient(to right, {{ $primaryColor }}, {{ $secondaryColor }}); border-radius: 2px; margin-top: 20px;"></div>
 </div>
 
 

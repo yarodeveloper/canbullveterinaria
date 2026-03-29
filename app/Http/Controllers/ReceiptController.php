@@ -84,6 +84,8 @@ class ReceiptController extends Controller
             'activeRegister' => $activeRegister,
             'generalPublicClient' => $generalPublicClient,
             'staff' => $staff,
+            'posPrinterName' => \App\Models\SiteSetting::where('key', 'pos_printer_name')->value('value') ?? 'POS-80',
+            'posTicketPreview' => filter_var(\App\Models\SiteSetting::where('key', 'pos_ticket_preview')->value('value'), FILTER_VALIDATE_BOOLEAN),
         ]);
     }
 
@@ -175,6 +177,7 @@ class ReceiptController extends Controller
 
                 ReceiptItem::create([
                     'receipt_id' => $receipt->id,
+                    'product_id' => $item['product_id'] ?? null,
                     'concept' => $item['concept'],
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
@@ -267,9 +270,24 @@ class ReceiptController extends Controller
                 ]);
             }
 
-            return redirect()->route('receipts.show', $receipt->id)
-                ->with('message', 'Recibo generado correctamente.');
+            return redirect()->route('receipts.create')
+                ->with([
+                    'message' => 'Cobro completado exitosamente.',
+                    'print_receipt_id' => $receipt->id
+                ]);
         });
+    }
+
+    public function print(Receipt $receipt)
+    {
+        $receipt->load(['client', 'items.assignedUser', 'branch', 'cashRegister', 'movements']);
+        $posPrinterName = \App\Models\SiteSetting::where('key', 'pos_printer_name')->value('value') ?? 'POS-80';
+        
+        return Inertia::render('Finance/Receipts/Print', [
+            'receipt' => $receipt,
+            'posPrinterName' => $posPrinterName,
+            'posTicketPreview' => filter_var(\App\Models\SiteSetting::where('key', 'pos_ticket_preview')->value('value'), FILTER_VALIDATE_BOOLEAN),
+        ]);
     }
 
     public function show(Receipt $receipt)

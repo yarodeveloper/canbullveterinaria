@@ -1,12 +1,23 @@
-import { Head, useForm, Link } from '@inertiajs/react';
 import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, useForm, Link } from '@inertiajs/react';
 
-export default function Create({ auth, pet, services, groomers }) {
+const roleLabels = {
+    admin: 'Adm.',
+    vet: 'Vet.',
+    veterinarian: 'Vet.',
+    surgeon: 'Cirujano',
+    specialist: 'Esp.',
+    groomer: 'Estilista',
+    staff: 'Staff'
+};
+
+export default function Create({ auth, pet, services, groomers, ...props }) {
     const { data, setData, post, processing, errors } = useForm({
+        appointment_id: props.appointment_id || '',
         pet_id: pet.id,
         client_id: pet.owner ? pet.owner.id : '',
-        user_id: '',
+        user_id: props.prefill?.groomer_id || '',
         arrival_condition: '',
         notes: '',
         items: [] // list of {product_id, quantity, concept, price}
@@ -52,11 +63,11 @@ export default function Create({ auth, pet, services, groomers }) {
                         <div className="p-8">
                             
                             <div className="flex items-center gap-4 mb-8 pb-8 border-b border-gray-100 dark:border-gray-700">
-                                <div className="w-16 h-16 rounded-2xl bg-fuchsia-100 dark:bg-fuchsia-900/30 flex items-center justify-center text-3xl shadow-inner">
+                                <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 dark:bg-brand-primary/20 flex items-center justify-center text-3xl shadow-inner">
                                     ✂️
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-black text-fuchsia-600 dark:text-fuchsia-400 uppercase tracking-widest mb-1">Paciente para Estética</h3>
+                                    <h3 className="text-sm font-black text-brand-primary dark:text-brand-primary uppercase tracking-widest mb-1">Paciente para Estética</h3>
                                     <h4 className="text-2xl font-black text-gray-900 dark:text-white leading-none">{pet.name}</h4>
                                     <p className="text-xs font-bold text-gray-500 uppercase mt-2">Dueño: {pet.owner ? pet.owner.name : 'N/A'}</p>
                                 </div>
@@ -67,14 +78,14 @@ export default function Create({ auth, pet, services, groomers }) {
                                     <div className="space-y-2">
                                         <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Atiende (Groomer / Estilista)</label>
                                         <select
-                                            className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-fuchsia-500 font-bold text-gray-700 dark:text-gray-300 transition-colors"
+                                            className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 transition-colors"
                                             value={data.user_id}
                                             onChange={e => setData('user_id', e.target.value)}
                                             required
                                         >
                                             <option value="">-- Seleccionar --</option>
                                             {groomers.map(g => (
-                                                <option key={g.id} value={g.id}>{g.name}</option>
+                                                <option key={g.id} value={g.id}>{g.name} ({roleLabels[g.role] || g.role})</option>
                                             ))}
                                         </select>
                                     </div>
@@ -84,7 +95,7 @@ export default function Create({ auth, pet, services, groomers }) {
                                         
                                         <div className="flex flex-col sm:flex-row gap-2">
                                             <select
-                                                className="flex-1 w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-fuchsia-500 font-bold text-gray-700 dark:text-gray-300 transition-colors"
+                                                className="flex-1 w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 transition-colors"
                                                 value={selectedService}
                                                 onChange={e => setSelectedService(e.target.value)}
                                             >
@@ -96,8 +107,9 @@ export default function Create({ auth, pet, services, groomers }) {
                                             <button
                                                 type="button"
                                                 onClick={addService}
-                                                className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white px-6 font-black uppercase tracking-widest rounded-xl text-xs transition min-h-[48px] shrink-0 shadow-sm"
+                                                className="bg-brand-primary hover:opacity-90 text-white px-5 font-black uppercase tracking-[0.1em] rounded-xl text-[10px] transition min-h-[48px] shrink-0 shadow-lg shadow-brand-primary/20 flex items-center gap-2"
                                             >
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
                                                 Agregar
                                             </button>
                                         </div>
@@ -121,7 +133,7 @@ export default function Create({ auth, pet, services, groomers }) {
                                                 ))}
                                                 <div className="pt-2 text-right">
                                                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Estimado</p>
-                                                    <p className="text-xl font-black text-fuchsia-600 dark:text-fuchsia-400">${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                                                    <p className="text-xl font-black text-brand-primary">${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
                                                 </div>
                                             </div>
                                         )}
@@ -130,7 +142,7 @@ export default function Create({ auth, pet, services, groomers }) {
                                     <div className="space-y-2 md:col-span-2">
                                         <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Condición de Llegada</label>
                                         <textarea
-                                            className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-fuchsia-500 font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                                            className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-brand-primary font-medium text-gray-700 dark:text-gray-300 transition-colors"
                                             rows="3"
                                             value={data.arrival_condition}
                                             onChange={e => setData('arrival_condition', e.target.value)}
@@ -142,7 +154,7 @@ export default function Create({ auth, pet, services, groomers }) {
                                     <div className="space-y-2 md:col-span-2">
                                         <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Notas Adicionales (Opcional)</label>
                                         <textarea
-                                            className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-fuchsia-500 font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                                            className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-brand-primary font-medium text-gray-700 dark:text-gray-300 transition-colors"
                                             rows="2"
                                             value={data.notes}
                                             onChange={e => setData('notes', e.target.value)}
@@ -162,7 +174,7 @@ export default function Create({ auth, pet, services, groomers }) {
                                     <button
                                         type="submit"
                                         disabled={processing || data.items.length === 0}
-                                        className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-fuchsia-500/30 disabled:opacity-50"
+                                        className="bg-brand-primary hover:opacity-90 text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-brand-primary/30 disabled:opacity-50"
                                     >
                                         {processing ? 'Guardando...' : 'Registrar Orden'}
                                     </button>

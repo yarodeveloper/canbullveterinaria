@@ -4,7 +4,7 @@ import { Head, Link, useForm, router } from '@inertiajs/react';
 import BehaviorSelector, { BehaviorBadge } from '@/Components/BehaviorSelector';
 import PrintDocumentModal from '@/Components/PrintDocumentModal';
 
-export default function Show({ auth, client, documentTemplates = [] }) {
+export default function Show({ auth, client, documentTemplates = [], financialSummary = {} }) {
     const [editingState, setEditingState] = useState(null); // 'contact', 'emergency', 'crm', null
     const [selectedPet, setSelectedPet] = useState(null);
     const [showPrintModal, setShowPrintModal] = useState(false);
@@ -181,6 +181,10 @@ export default function Show({ auth, client, documentTemplates = [] }) {
                                 ) : (
                                     <div className="space-y-4">
                                         <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Sucursal de Registro</p>
+                                            <p className="font-bold text-sm text-brand-primary uppercase">{client.branch?.name || 'Sucursal General'}</p>
+                                        </div>
+                                        <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Teléfono Principal</p>
                                             <p className="font-bold text-lg text-gray-800 dark:text-gray-200">{client.phone || 'No registrado'}</p>
                                             {client.phone && (
@@ -347,33 +351,86 @@ export default function Show({ auth, client, documentTemplates = [] }) {
                                     )}
                                 </div>
                             </div>
-
-                            {/* Facturacion Rapida (Placeholder para futuro) */}
-                            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-yellow-50 to-transparent dark:from-yellow-900/10 rounded-bl-full opacity-50 pointer-events-none"></div>
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-xs font-bold uppercase text-gray-400 tracking-widest relative z-10">Resumen Financiero</h3>
-                                    <span className="text-[10px] bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-500 border border-yellow-200 dark:border-yellow-700/30 px-2 py-1 rounded font-bold uppercase tracking-wider relative z-10">Próximamente</span>
+                            
+                            {/* Resumen Financiero Reforzado */}
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 overflow-hidden">
+                                <div className="p-6 border-b dark:border-gray-700 bg-gray-50/30 dark:bg-slate-900/40 flex justify-between items-center">
+                                    <div>
+                                        <h3 className="text-xs font-black uppercase text-gray-400 tracking-widest">Resumen Financiero</h3>
+                                        <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold">Estado de cuenta del cliente</p>
+                                    </div>
+                                    <span className="text-lg">💰</span>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x dark:divide-gray-700/50">
-                                    <div className="pt-4 sm:pt-0">
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Saldo Pendiente</p>
-                                        <p className="text-2xl font-black text-red-500">$0.00</p>
+                                <div className="p-8">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center sm:divide-x dark:divide-gray-700/50">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-2">Adeudo x Crédito (Fiado)</p>
+                                            <p className={`text-2xl font-black ${financialSummary.pending_credit > 0 ? 'text-rose-600' : 'text-emerald-500'}`}>
+                                                ${(financialSummary.pending_credit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                            </p>
+                                            {financialSummary.pending_credit > 0 && (
+                                                <p className="text-[9px] text-rose-400 italic mt-1 font-bold">Ventas por cobrar</p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Última Liquidación</p>
+                                            <p className="text-slate-800 dark:text-white text-lg font-black">
+                                                {financialSummary.last_payment_date ? new Date(financialSummary.last_payment_date).toLocaleDateString() : 'N/A'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-2">Total Histórico</p>
+                                            <p className="text-indigo-600 dark:text-indigo-400 text-xl font-black">
+                                                ${(financialSummary.total_historical || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="pt-4 sm:pt-0">
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Último Pago</p>
-                                        <p className="text-gray-400 text-lg font-medium">-</p>
-                                    </div>
-                                    <div className="pt-4 sm:pt-0">
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Total Histórico</p>
-                                        <p className="text-gray-400 text-lg font-medium">$0.00</p>
-                                    </div>
+
+                                    {/* Desglose de Pendientes */}
+                                    {(financialSummary.pending_receipts?.length > 0 || financialSummary.pending_charges?.length > 0) && (
+                                        <div className="mt-10 space-y-6 pt-6 border-t dark:border-gray-700">
+                                            {financialSummary.pending_receipts?.length > 0 && (
+                                                <div>
+                                                    <h4 className="text-[10px] font-black text-rose-600 uppercase mb-4 tracking-widest flex items-center gap-2">
+                                                        <span className="w-1.5 h-1.5 bg-rose-600 rounded-full"></span> Recibos con Saldo (Crédito)
+                                                    </h4>
+                                                    <div className="space-y-2">
+                                                        {financialSummary.pending_receipts.map(r => (
+                                                            <div key={r.id} className="flex justify-between items-center p-3 rounded-xl bg-rose-50/50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20">
+                                                                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">#{r.receipt_number} • {new Date(r.date).toLocaleDateString()}</span>
+                                                                <span className="text-xs font-black text-rose-600">${Number(r.total).toLocaleString()}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {financialSummary.pending_charges?.length > 0 && (
+                                                <div>
+                                                    <h4 className="text-[10px] font-black text-amber-600 uppercase mb-4 tracking-widest flex items-center gap-2">
+                                                        <span className="w-1.5 h-1.5 bg-amber-600 rounded-full"></span> Cargos Pendientes de Cobro (En POS)
+                                                    </h4>
+                                                    <div className="space-y-2">
+                                                        {financialSummary.pending_charges.map(c => (
+                                                            <div key={c.id} className="flex justify-between items-center p-3 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
+                                                                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                                                                    {c.pet?.name}: {c.product?.name || c.concept}
+                                                                </span>
+                                                                <span className="text-xs font-black text-amber-600">${(Number(c.product?.price || 0) * Number(c.quantity || 1)).toLocaleString()}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
             <PrintDocumentModal 
                 isOpen={showPrintModal}
                 onClose={() => {

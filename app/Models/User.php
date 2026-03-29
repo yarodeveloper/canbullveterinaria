@@ -32,6 +32,7 @@ class User extends Authenticatable
         'tax_id',
         'crm_notes',
         'behavior_profile',
+        'professional_license',
     ];
 
     public function pets()

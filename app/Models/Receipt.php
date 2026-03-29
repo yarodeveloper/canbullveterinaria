@@ -47,4 +47,9 @@ class Receipt extends Model
     {
         return $this->belongsTo(CashRegister::class);
     }
+
+    public function movements()
+    {
+        return $this->hasMany(CashMovement::class);
+    }
 }

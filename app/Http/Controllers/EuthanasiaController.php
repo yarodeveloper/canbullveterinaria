@@ -21,9 +21,12 @@ class EuthanasiaController extends Controller
         }
 
         $branchId = Auth::user()->branch_id;
-
-        $query = Euthanasia::where('branch_id', $branchId)
-            ->with(['pet.owner', 'veterinarian']);
+        $query = Euthanasia::with(['pet.owner', 'veterinarian']);
+        
+        // Ver las de la sucursal por defecto, pero permitir búsqueda global
+        if (!$request->filled('search') && $branchId) {
+            $query->where('branch_id', $branchId);
+        }
 
         if ($request->filled('search')) {
             $s = $request->input('search');
@@ -62,6 +65,20 @@ class EuthanasiaController extends Controller
             ->whereIn('role', ['admin', 'veterinarian'])
             ->get(['id', 'name']);
 
+        $clients = User::where('role', 'client')
+            ->where(function($q) use ($branchId) {
+                if ($branchId) {
+                    $q->where('branch_id', $branchId)->orWhereNull('branch_id');
+                }
+            })
+            ->where('email', '!=', 'publico@general.com')
+            ->get(['id', 'name']);
+
+        $pets = Pet::query()
+            ->with(['owner', 'branch'])
+            ->limit(100)
+            ->get(['id', 'name', 'user_id', 'breed', 'species', 'branch_id']);
+
         // Productos del inventario para medicamentos (solo físicos, sin importar stock para registro médico)
         $products = Product::where('is_active', true)
             ->where('is_service', false)
@@ -95,10 +112,15 @@ class EuthanasiaController extends Controller
             'owner_present'      => 'boolean',
             'owner_authorization' => 'nullable|string',
             'consent_signed'     => 'boolean',
+            'owner_name_override' => 'nullable|string|max:255',
             'disposition'        => 'nullable|string',
             'cremation_provider' => 'nullable|string',
             'notes'              => 'nullable|string',
             'folio'              => 'nullable|string|unique:euthanasias,folio',
+            'pending_charges'    => 'nullable|array',
+            'pending_charges.*.product_id' => 'required|exists:products,id',
+            'pending_charges.*.quantity' => 'required|numeric|min:0.01',
+            'pending_charges.*.notes'    => 'nullable|string',
         ]);
 
         $validated['branch_id'] = Auth::user()->branch_id;
@@ -109,6 +131,34 @@ class EuthanasiaController extends Controller
         }
 
         $euthanasia = Euthanasia::create($validated);
+
+        // Handle Pending Charges (Send to Cash Register)
+        if (!empty($validated['pending_charges'])) {
+            $pet = Pet::find($validated['pet_id']);
+            // Find the robust owner ID
+            $ownerId = $pet->user_id;
+            if (!$ownerId && $pet->owners()->exists()) {
+                $ownerId = $pet->owners()->first()->id;
+            }
+            
+            // Fallback to "Público en General" if no owner found
+            if (!$ownerId) {
+                $ownerId = \App\Models\User::where('email', 'publico@general.com')->value('id');
+            }
+
+            foreach ($validated['pending_charges'] as $charge) {
+                \App\Models\PendingCharge::create([
+                    'branch_id' => $euthanasia->branch_id,
+                    'client_id' => $ownerId,
+                    'pet_id' => $pet->id,
+                    'product_id' => $charge['product_id'],
+                    'quantity' => $charge['quantity'],
+                    'assigned_user_id' => Auth::id(),
+                    'status' => 'pending',
+                    'notes' => $charge['notes'] ?? null,
+                ]);
+            }
+        }
 
         // Si el procedimiento se marca como completado, marcar al paciente como fallecido
         if ($validated['status'] === 'completed') {
@@ -193,13 +243,46 @@ class EuthanasiaController extends Controller
             'owner_present'      => 'nullable|boolean',
             'owner_authorization' => 'nullable|string',
             'consent_signed'     => 'nullable|boolean',
+            'owner_name_override' => 'nullable|string|max:255',
             'disposition'        => 'nullable|string',
             'cremation_provider' => 'nullable|string',
             'notes'              => 'nullable|string',
             'folio'              => 'nullable|string|unique:euthanasias,folio,' . $euthanasia->id,
+            'pending_charges' => 'nullable|array',
+            'pending_charges.*.product_id' => 'required|exists:products,id',
+            'pending_charges.*.quantity' => 'required|numeric|min:0.01',
+            'pending_charges.*.notes' => 'nullable|string',
         ]);
 
         $euthanasia->update($validated);
+
+        // Handle Pending Charges (Send to Cash Register)
+        if (!empty($validated['pending_charges'])) {
+            $pet = $euthanasia->pet;
+            // Find the robust owner ID
+            $ownerId = $pet->user_id;
+            if (!$ownerId && $pet->owners()->exists()) {
+                $ownerId = $pet->owners()->first()->id;
+            }
+            
+            // Fallback to "Público en General" if no owner found
+            if (!$ownerId) {
+                $ownerId = \App\Models\User::where('email', 'publico@general.com')->value('id');
+            }
+
+            foreach ($validated['pending_charges'] as $charge) {
+                \App\Models\PendingCharge::create([
+                    'branch_id' => $euthanasia->branch_id,
+                    'client_id' => $ownerId,
+                    'pet_id' => $pet->id,
+                    'product_id' => $charge['product_id'],
+                    'quantity' => $charge['quantity'],
+                    'assigned_user_id' => Auth::id(),
+                    'status' => 'pending',
+                    'notes' => $charge['notes'] ?? null,
+                ]);
+            }
+        }
 
         // Si se completa, marcar paciente como fallecido
         if (isset($validated['status']) && $validated['status'] === 'completed') {

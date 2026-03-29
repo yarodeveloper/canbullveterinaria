@@ -58,6 +58,7 @@ trait ParsesDocumentTemplates
         // 2. Veterinarian Information
         if (isset($data['veterinarian'])) {
             $replacements['{veterinarian_name}'] = $data['veterinarian']->name;
+            $replacements['{veterinarian_cedula}'] = $data['veterinarian']->professional_license ?? '---';
         }
 
         // 3. Branch Information
@@ -79,6 +80,7 @@ trait ParsesDocumentTemplates
             '{pet_name}' => '_________________',
             '{client_name}' => '_________________',
             '{veterinarian_name}' => '_________________',
+            '{veterinarian_cedula}' => '_________________',
             '{folio}' => '_________________',
             '{witness_name}' => '_________________',
         ];

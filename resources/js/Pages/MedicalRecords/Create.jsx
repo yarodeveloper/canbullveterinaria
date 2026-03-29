@@ -1,6 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
-import React, { useState } from 'react';
+import { format } from 'date-fns';
+import React, { useState, useEffect } from 'react';
+import MedicationsEditor from '@/Components/MedicationsEditor';
+import PendingChargesEditor from '@/Components/PendingChargesEditor';
 
 const formatDate = (dateString) => {
     if (!dateString) return "Desconocida";
@@ -76,7 +79,7 @@ const sexMap = {
     "Unknown": "Desconocido"
 };
 
-const PillSelector = ({ options, value, onChange, colorClass = "bg-fuchsia-600" }) => (
+const PillSelector = ({ options, value, onChange, colorClass = "bg-brand-primary" }) => (
     <div className="flex flex-wrap gap-2">
         {options.map((opt) => (
             <button
@@ -94,16 +97,19 @@ const PillSelector = ({ options, value, onChange, colorClass = "bg-fuchsia-600" 
     </div>
 );
 
-export default function Create({ auth, pet, products }) {
+export default function Create({ auth, pet, products, prefill, record, isEditing = false }) {
     const [previews, setPreviews] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const { data, setData, post, processing, errors } = useForm({
-        type: 'consultation',
-        subjective: '',
-        objective: '',
-        assessment: '',
-        plan: '',
-        vital_signs: {
+    const { data, setData, post, put, processing, errors } = useForm({
+        appointment_id: prefill?.appointment_id || '',
+        type: record?.type || prefill?.type || 'consultation',
+        user_id: record?.user_id || prefill?.vet_id || auth.user.id,
+        created_at: record?.created_at ? format(new Date(record.created_at), "yyyy-MM-dd'T'HH:mm") : (prefill?.date || format(new Date(), "yyyy-MM-dd'T'HH:mm")),
+        subjective: record?.subjective || '',
+        objective: record?.objective || '',
+        assessment: record?.assessment || '',
+        plan: record?.plan || '',
+        vital_signs: record?.vital_signs || {
             weight: pet.weight || '',
             temp: '',
             hr: '',
@@ -114,7 +120,7 @@ export default function Create({ auth, pet, products }) {
             lymph_nodes: '',
             abdominal_palpation: ''
         },
-        anamnesis: {
+        anamnesis: record?.anamnesis || {
             reason: '',
             mood: 'Alerta',
             appetite: 'Normal',
@@ -137,16 +143,28 @@ export default function Create({ auth, pet, products }) {
             deworming_date: '',
             diet: ''
         },
-        physical_state: 'Ideal',
+        physical_state: record?.physical_state || 'Ideal',
         attachments: [],
         pending_charges: [],
+        medications: record?.medications || [],
+        applied_medications: record?.applied_medications || [],
     });
+
+    const [medSearchQuery, setMedSearchQuery] = useState('');
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('medical-records.store', pet.id), {
-            forceFormData: true,
-        });
+        if (isEditing) {
+            put(route('medical-records.update', record.id), {
+                onSuccess: () => setData('pending_charges', []),
+                preserveScroll: true,
+            });
+        } else {
+            post(route('medical-records.store', pet.id), {
+                onSuccess: () => setData('pending_charges', []),
+            });
+        }
     };
 
     const updateVitalSign = (field, value) => {
@@ -195,7 +213,33 @@ export default function Create({ auth, pet, products }) {
     const safeProducts = Array.isArray(products) ? products : Object.values(products || {});
     const safeQuery = normalize(searchQuery);
     const filteredProducts = safeQuery
-        ? safeProducts.filter(p => normalize(p.name).includes(safeQuery)).slice(0, 5)
+        ? safeProducts.filter(p => normalize(p?.name).includes(safeQuery)).slice(0, 10)
+        : [];
+
+    const addMedication = (product) => {
+        setData('medications', [...data.medications, {
+            id: product.id,
+            name: product.name,
+            dosage: '',
+            frequency: '',
+            duration: '',
+            notes: ''
+        }]);
+        setMedSearchQuery('');
+    };
+
+    const removeMedication = (idx) => {
+        setData('medications', data.medications.filter((_, i) => i !== idx));
+    };
+
+    const updateMedication = (idx, field, value) => {
+        const newMeds = [...data.medications];
+        newMeds[idx][field] = value;
+        setData('medications', newMeds);
+    };
+
+    const filteredMeds = medSearchQuery
+        ? safeProducts.filter(p => normalize(p.name).includes(normalize(medSearchQuery))).slice(0, 5)
         : [];
 
     // Common styling abstractions based on mockup
@@ -211,55 +255,39 @@ export default function Create({ auth, pet, products }) {
 
             <div className="min-h-screen bg-slate-50 dark:bg-[#111822] text-slate-700 dark:text-slate-300 py-8 font-sans transition-colors duration-200">
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-                    {pet.status === 'deceased' && (
-                        <div className="mb-8 bg-black border-l-4 border-red-600 text-white px-8 py-4 rounded-2xl flex items-center justify-between shadow-2xl overflow-hidden relative group">
-                            <div className="absolute inset-0 bg-red-600/10 animate-pulse"></div>
-                            <div className="flex items-center gap-5 relative z-10">
-                                <span className="text-3xl">✞</span>
-                                <div>
-                                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-red-500">Alerta de Seguridad Clínica</p>
-                                    <h4 className="text-lg font-black uppercase leading-tight">Paciente Fallecido: Modo Post-mortem Activo</h4>
-                                    <p className="text-[10px] font-bold text-gray-400 mt-0.5 uppercase tracking-widest leading-none">Cualquier registro guardado se integrará como información histórica o legal de {pet.name}.</p>
-                                </div>
-                            </div>
-                            <div className="hidden md:block relative z-10">
-                                <span className="px-4 py-2 bg-red-600 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-600/30">Registro Limitado</span>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Header Inline replacement */}
+                    {/* Header Mejorado con Acciones Superiores */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                         <div className="flex items-center gap-4">
-                            <Link href={route('pets.show', pet.id)} className="p-3 bg-white/80 dark:bg-white/80 dark:bg-slate-800/80 hover:bg-slate-700 rounded-xl transition text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                            <Link href={route('pets.show', pet.id)} className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-100 rounded-xl transition border border-slate-200 dark:border-slate-700">
+                                <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                             </Link>
-
                             <div>
-                                <h2 className="font-extrabold text-2xl text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                                    <img src="/icons/vet-with-cat-svgrepo-com.svg" className="w-8 h-8 icon-adaptive" alt="" />
-                                    Consulta Clínica Avanzada
-                                </h2>
-                                <p className="text-[10px] text-fuchsia-400 font-bold uppercase tracking-widest mt-1">Formato SOAP Digital • {pet.name}</p>
+                                <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
+                                    {isEditing ? `Modificar Consulta #${record.id}` : 'Nueva Consulta Clínica'}
+                                </h1>
+                                <p className="text-[10px] text-brand-primary font-bold uppercase tracking-[0.2em] mt-2">Expediente Médico de {pet.name}</p>
                             </div>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={() => document.getElementById('medical-record-form')?.requestSubmit()}
-                            disabled={processing}
-                            className="hidden sm:flex px-6 py-3 bg-fuchsia-600 hover:bg-fuchsia-500 text-white rounded-xl font-bold uppercase text-[10px] tracking-widest shadow-lg shadow-fuchsia-500/20 transition-all active:scale-95 disabled:opacity-50 items-center justify-center gap-2 border border-fuchsia-400/50"
-                        >
-                            {processing ? 'Guardando...' : (
+                        <div className="flex items-center gap-2">
+                            {isEditing && (
                                 <>
-                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                                    Guardar Historia
+                                    <a href={route('medical-records.prescription.print', record.id)} target="_blank" className="px-5 py-2.5 bg-brand-primary hover:opacity-90 text-white rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg transition-all flex items-center gap-2">
+                                        🖨️ Receta
+                                    </a>
+                                    <a href={route('medical-records.report.print', record.id)} target="_blank" className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg transition-all flex items-center gap-2">
+                                        📄 Reporte
+                                    </a>
                                 </>
                             )}
-                        </button>
+                            <Link href={route('pets.show', pet.id)} className="px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg transition-all flex items-center gap-2">
+                                Cerrar
+                            </Link>
+                        </div>
                     </div>
 
-                    <form id="medical-record-form" onSubmit={submit} className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+
+                    <form id="medical-record-form" onSubmit={submit} className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start overflow-visible">
 
                         {/* Columna Izquierda (3-4 cols) */}
                         <div className="xl:col-span-3 space-y-6">
@@ -267,10 +295,10 @@ export default function Create({ auth, pet, products }) {
                             {/* Resumen del Paciente */}
                             <div className={cardBase}>
                                 <h3 className={`${headerTitle} text-slate-500 dark:text-slate-400`}>
-                                    <span className="text-fuchsia-500">🐾</span> Resumen del Paciente
+                                    <span className="text-brand-primary">🐾</span> Resumen del Paciente
                                 </h3>
                                 <div className="flex items-center gap-4 mt-4 mb-6">
-                                    <div className="w-14 h-14 bg-fuchsia-500/20 rounded-full flex items-center justify-center text-fuchsia-500 border-2 border-fuchsia-500/30 shadow-lg shadow-fuchsia-500/20 flex-shrink-0 overflow-hidden relative">
+                                    <div className="w-14 h-14 bg-brand-primary/20 rounded-full flex items-center justify-center text-brand-primary border-2 border-brand-primary/30 shadow-lg shadow-brand-primary/20 flex-shrink-0 overflow-hidden relative">
                                         {pet.photo_path ? (
                                             <img src={`/storage/${pet.photo_path}`} alt={pet.name} className="w-full h-full object-cover" />
                                         ) : pet.species?.toLowerCase() === 'felino' || pet.species?.toLowerCase() === 'gato' ? (
@@ -281,7 +309,7 @@ export default function Create({ auth, pet, products }) {
                                     </div>
                                     <div>
                                         <h4 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{pet.name}</h4>
-                                        <p className="text-[11px] text-fuchsia-300 font-semibold">{pet.species} • {pet.breed?.name || pet.breed || 'Mestizo'}</p>
+                                        <p className="text-[11px] text-brand-primary/70 font-semibold">{pet.species} • {pet.breed?.name || pet.breed || 'Mestizo'}</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 border-t border-slate-200 dark:border-slate-700/50 pt-4">
@@ -290,7 +318,7 @@ export default function Create({ auth, pet, products }) {
                                         <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                                             {formatDate(pet.dob)}
                                         </p>
-                                        {pet.dob && <p className="text-[10px] text-fuchsia-400 font-bold mt-0.5">{calculateAge(pet.dob)}</p>}
+                                        {pet.dob && <p className="text-[10px] text-brand-primary/80 font-bold mt-0.5">{calculateAge(pet.dob)}</p>}
                                     </div>
                                     <div>
                                         <p className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1">Sexo</p>
@@ -300,30 +328,30 @@ export default function Create({ auth, pet, products }) {
                             </div>
 
                             {/* Historial Médico */}
-                            <div className={`${cardBase} border-fuchsia-500/30 overflow-hidden relative`}>
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-fuchsia-500/10 rounded-bl-full blur-xl"></div>
-                                <h3 className={`${headerTitle} text-fuchsia-400 mb-6 relative z-10`}>
-                                    <svg className="w-4 h-4 text-fuchsia-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <div className={`${cardBase} border-brand-primary/30 overflow-hidden relative`}>
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-brand-primary/10 rounded-bl-full blur-xl"></div>
+                                <h3 className={`${headerTitle} text-brand-primary mb-6 relative z-10`}>
+                                    <svg className="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     Historia Médico Anamnesico
                                 </h3>
                                 <div className="space-y-4 relative z-10">
-                                    <div className="bg-slate-100 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-300 dark:border-slate-800 focus-within:border-fuchsia-500/50 transition-colors">
+                                    <div className="bg-slate-100 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-300 dark:border-slate-800 focus-within:border-brand-primary/50 transition-colors">
                                         <p className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-2">Vacunas y Fecha de Aplicación</p>
                                         <div className="grid grid-cols-2 gap-2">
-                                            <input type="text" placeholder="Vacuna..." value={data.anamnesis.vaccine_history} onChange={e => updateAnamnesis('vaccine_history', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-fuchsia-500 focus:border-fuchsia-400 px-3 py-2" />
-                                            <input type="date" value={data.anamnesis.vaccine_date} onChange={e => updateAnamnesis('vaccine_date', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-fuchsia-500 focus:border-fuchsia-400 px-3 py-2 [color-scheme:dark]" />
+                                            <input type="text" placeholder="Vacuna..." value={data.anamnesis.vaccine_history} onChange={e => updateAnamnesis('vaccine_history', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-brand-primary focus:border-brand-primary/40 px-3 py-2" />
+                                            <input type="date" value={data.anamnesis.vaccine_date} onChange={e => updateAnamnesis('vaccine_date', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-brand-primary focus:border-brand-primary/40 px-3 py-2 [color-scheme:dark]" />
                                         </div>
                                     </div>
-                                    <div className="bg-slate-100 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-300 dark:border-slate-800 focus-within:border-fuchsia-500/50 transition-colors">
+                                    <div className="bg-slate-100 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-300 dark:border-slate-800 focus-within:border-brand-primary/50 transition-colors">
                                         <p className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-2">Desparasitación y Fecha</p>
                                         <div className="grid grid-cols-2 gap-2">
-                                            <input type="text" placeholder="Desparasitante..." value={data.anamnesis.deworming_history} onChange={e => updateAnamnesis('deworming_history', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-fuchsia-500 focus:border-fuchsia-400 px-3 py-2" />
-                                            <input type="date" value={data.anamnesis.deworming_date} onChange={e => updateAnamnesis('deworming_date', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-fuchsia-500 focus:border-fuchsia-400 px-3 py-2 [color-scheme:dark]" />
+                                            <input type="text" placeholder="Desparasitante..." value={data.anamnesis.deworming_history} onChange={e => updateAnamnesis('deworming_history', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-brand-primary focus:border-brand-primary/40 px-3 py-2" />
+                                            <input type="date" value={data.anamnesis.deworming_date} onChange={e => updateAnamnesis('deworming_date', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-brand-primary focus:border-brand-primary/40 px-3 py-2 [color-scheme:dark]" />
                                         </div>
                                     </div>
-                                    <div className="bg-slate-100 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-300 dark:border-slate-800 focus-within:border-fuchsia-500/50 transition-colors">
+                                    <div className="bg-slate-100 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-300 dark:border-slate-800 focus-within:border-brand-primary/50 transition-colors">
                                         <p className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-2">Dieta Actual</p>
-                                        <input type="text" placeholder="Tipo de dieta / Croquetas..." value={data.anamnesis.diet} onChange={e => updateAnamnesis('diet', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-fuchsia-500 focus:border-fuchsia-400 px-3 py-2 uppercase font-semibold" />
+                                        <input type="text" placeholder="Tipo de dieta / Croquetas..." value={data.anamnesis.diet} onChange={e => updateAnamnesis('diet', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-brand-primary focus:border-brand-primary/40 px-3 py-2 uppercase font-semibold" />
                                     </div>
                                 </div>
                             </div>
@@ -339,7 +367,7 @@ export default function Create({ auth, pet, products }) {
                                     <div className="space-y-1">
                                         <label className="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Peso (kg)</label>
                                         <input type="number" step="0.01" value={data.vital_signs.weight} onChange={e => updateVitalSign('weight', e.target.value)}
-                                            className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all font-semibold" placeholder="0.00" />
+                                            className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-brand-primary focus:border-brand-primary transition-all font-semibold" placeholder="0.00" />
                                     </div>
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-center w-full">
@@ -347,7 +375,7 @@ export default function Create({ auth, pet, products }) {
                                             <WarningIcon status={checkRange(pet.species, pet.dob, 'temp', data.vital_signs.temp)} range={VITAL_RANGES[(pet.species?.toLowerCase() === 'canino' || pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(pet.dob)]?.['temp']} />
                                         </div>
                                         <input type="number" step="0.1" value={data.vital_signs.temp} onChange={e => updateVitalSign('temp', e.target.value)}
-                                            className={`w-full bg-slate-100 dark:bg-slate-900/50 border text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all font-semibold ${checkRange(pet.species, pet.dob, 'temp', data.vital_signs.temp) === 'high' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20' : checkRange(pet.species, pet.dob, 'temp', data.vital_signs.temp) === 'low' ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-300 dark:border-slate-700'}`} placeholder="38.5" />
+                                            className={`w-full bg-slate-100 dark:bg-slate-900/50 border text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-brand-primary focus:border-brand-primary transition-all font-semibold ${checkRange(pet.species, pet.dob, 'temp', data.vital_signs.temp) === 'high' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20' : checkRange(pet.species, pet.dob, 'temp', data.vital_signs.temp) === 'low' ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-300 dark:border-slate-700'}`} placeholder="38.5" />
                                     </div>
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-center w-full">
@@ -355,7 +383,7 @@ export default function Create({ auth, pet, products }) {
                                             <WarningIcon status={checkRange(pet.species, pet.dob, 'hr', data.vital_signs.hr)} range={VITAL_RANGES[(pet.species?.toLowerCase() === 'canino' || pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(pet.dob)]?.['hr']} />
                                         </div>
                                         <input type="number" value={data.vital_signs.hr} onChange={e => updateVitalSign('hr', e.target.value)}
-                                            className={`w-full bg-slate-100 dark:bg-slate-900/50 border text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all font-semibold ${checkRange(pet.species, pet.dob, 'hr', data.vital_signs.hr) === 'high' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20' : checkRange(pet.species, pet.dob, 'hr', data.vital_signs.hr) === 'low' ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-300 dark:border-slate-700'}`} placeholder="80" />
+                                            className={`w-full bg-slate-100 dark:bg-slate-900/50 border text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-brand-primary focus:border-brand-primary transition-all font-semibold ${checkRange(pet.species, pet.dob, 'hr', data.vital_signs.hr) === 'high' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20' : checkRange(pet.species, pet.dob, 'hr', data.vital_signs.hr) === 'low' ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-300 dark:border-slate-700'}`} placeholder="80" />
                                     </div>
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-center w-full">
@@ -363,13 +391,13 @@ export default function Create({ auth, pet, products }) {
                                             <WarningIcon status={checkRange(pet.species, pet.dob, 'rr', data.vital_signs.rr)} range={VITAL_RANGES[(pet.species?.toLowerCase() === 'canino' || pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(pet.dob)]?.['rr']} />
                                         </div>
                                         <input type="number" value={data.vital_signs.rr} onChange={e => updateVitalSign('rr', e.target.value)}
-                                            className={`w-full bg-slate-100 dark:bg-slate-900/50 border text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all font-semibold ${checkRange(pet.species, pet.dob, 'rr', data.vital_signs.rr) === 'high' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20' : checkRange(pet.species, pet.dob, 'rr', data.vital_signs.rr) === 'low' ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-300 dark:border-slate-700'}`} placeholder="24" />
+                                            className={`w-full bg-slate-100 dark:bg-slate-900/50 border text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-brand-primary focus:border-brand-primary transition-all font-semibold ${checkRange(pet.species, pet.dob, 'rr', data.vital_signs.rr) === 'high' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20' : checkRange(pet.species, pet.dob, 'rr', data.vital_signs.rr) === 'low' ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-300 dark:border-slate-700'}`} placeholder="24" />
                                     </div>
 
                                     <div className="col-span-2 space-y-1 mt-2">
                                         <label className="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Mucosas</label>
                                         <select value={data.vital_signs.mucous} onChange={e => updateVitalSign('mucous', e.target.value)}
-                                            className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-lg text-sm focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all appearance-none cursor-pointer">
+                                            className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-lg text-sm focus:ring-brand-primary focus:border-brand-primary transition-all appearance-none cursor-pointer">
                                             <option value="">Seleccionar...</option>
                                             <option value="Rosa Normal">Rosadas (Normal)</option>
                                             <option value="Pálidas/Blanco">Pálidas/blancas</option>
@@ -382,7 +410,7 @@ export default function Create({ auth, pet, products }) {
                                     <div className="space-y-1">
                                         <label className="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">CC (1-9)</label>
                                         <input type="text" value={data.vital_signs.bcs} onChange={e => updateVitalSign('bcs', e.target.value)}
-                                            className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all font-semibold" placeholder="5" />
+                                            className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-brand-primary focus:border-brand-primary transition-all font-semibold" placeholder="5" />
                                     </div>
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-center w-full">
@@ -390,22 +418,22 @@ export default function Create({ auth, pet, products }) {
                                             <WarningIcon status={checkRange(pet.species, pet.dob, 'crt', data.vital_signs.tllc)} range={VITAL_RANGES[(pet.species?.toLowerCase() === 'canino' || pet.species?.toLowerCase() === 'perro') ? 'Canino' : 'Felino'][getAgeGroup(pet.dob)]?.['crt']} />
                                         </div>
                                         <input type="number" value={data.vital_signs.tllc} onChange={e => updateVitalSign('tllc', e.target.value)}
-                                            className={`w-full bg-slate-100 dark:bg-slate-900/50 border text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all font-semibold ${checkRange(pet.species, pet.dob, 'crt', data.vital_signs.tllc) === 'high' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20' : checkRange(pet.species, pet.dob, 'crt', data.vital_signs.tllc) === 'low' ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-300 dark:border-slate-700'}`} placeholder="2" />
+                                            className={`w-full bg-slate-100 dark:bg-slate-900/50 border text-slate-900 dark:text-slate-100 rounded-lg text-sm focus:ring-brand-primary focus:border-brand-primary transition-all font-semibold ${checkRange(pet.species, pet.dob, 'crt', data.vital_signs.tllc) === 'high' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20' : checkRange(pet.species, pet.dob, 'crt', data.vital_signs.tllc) === 'low' ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-300 dark:border-slate-700'}`} placeholder="2" />
                                     </div>
 
                                     <div className="col-span-2 space-y-2 mt-2">
                                         <label className="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Ganglios</label>
                                         <div className="flex gap-2">
-                                            <button type="button" onClick={() => updateVitalSign('lymph_nodes', 'Normal')} className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase transition ${data.vital_signs.lymph_nodes === 'Normal' ? 'bg-fuchsia-600 border border-transparent text-white shadow-lg shadow-fuchsia-500/30 ring-2 ring-fuchsia-400 ring-offset-1 ring-offset-slate-900 scale-105' : 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-700 hover:text-white'}`}>Normal</button>
-                                            <button type="button" onClick={() => updateVitalSign('lymph_nodes', 'Alterado')} className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase transition ${data.vital_signs.lymph_nodes === 'Alterado' ? 'bg-fuchsia-600 border border-transparent text-white shadow-lg shadow-fuchsia-500/30 ring-2 ring-fuchsia-400 ring-offset-1 ring-offset-slate-900 scale-105' : 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-700 hover:text-white'}`}>Alterado</button>
+                                            <button type="button" onClick={() => updateVitalSign('lymph_nodes', 'Normal')} className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase transition ${data.vital_signs.lymph_nodes === 'Normal' ? 'bg-brand-primary border border-transparent text-white shadow-lg shadow-brand-primary/30 ring-2 ring-brand-primary/40 ring-offset-1 ring-offset-slate-900 scale-105' : 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-700 hover:text-white'}`}>Normal</button>
+                                            <button type="button" onClick={() => updateVitalSign('lymph_nodes', 'Alterado')} className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase transition ${data.vital_signs.lymph_nodes === 'Alterado' ? 'bg-brand-primary border border-transparent text-white shadow-lg shadow-brand-primary/30 ring-2 ring-brand-primary/40 ring-offset-1 ring-offset-slate-900 scale-105' : 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-700 hover:text-white'}`}>Alterado</button>
                                         </div>
                                     </div>
 
                                     <div className="col-span-2 space-y-2">
                                         <label className="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Palpación Abdominal</label>
                                         <div className="flex gap-2">
-                                            <button type="button" onClick={() => updateVitalSign('abdominal_palpation', 'Normal')} className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase transition ${data.vital_signs.abdominal_palpation === 'Normal' ? 'bg-fuchsia-600 border border-transparent text-white shadow-lg shadow-fuchsia-500/30 ring-2 ring-fuchsia-400 ring-offset-1 ring-offset-slate-900 scale-105' : 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-700 hover:text-white'}`}>Normal</button>
-                                            <button type="button" onClick={() => updateVitalSign('abdominal_palpation', 'Alterado')} className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase transition ${data.vital_signs.abdominal_palpation === 'Alterado' ? 'bg-fuchsia-600 border border-transparent text-white shadow-lg shadow-fuchsia-500/30 ring-2 ring-fuchsia-400 ring-offset-1 ring-offset-slate-900 scale-105' : 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-700 hover:text-white'}`}>Alterado</button>
+                                            <button type="button" onClick={() => updateVitalSign('abdominal_palpation', 'Normal')} className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase transition ${data.vital_signs.abdominal_palpation === 'Normal' ? 'bg-brand-primary border border-transparent text-white shadow-lg shadow-brand-primary/30 ring-2 ring-brand-primary/40 ring-offset-1 ring-offset-slate-900 scale-105' : 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-700 hover:text-white'}`}>Normal</button>
+                                            <button type="button" onClick={() => updateVitalSign('abdominal_palpation', 'Alterado')} className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase transition ${data.vital_signs.abdominal_palpation === 'Alterado' ? 'bg-brand-primary border border-transparent text-white shadow-lg shadow-brand-primary/30 ring-2 ring-brand-primary/40 ring-offset-1 ring-offset-slate-900 scale-105' : 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-700 hover:text-white'}`}>Alterado</button>
                                         </div>
                                     </div>
                                 </div>
@@ -421,7 +449,7 @@ export default function Create({ auth, pet, products }) {
                                         <button
                                             key={bcs} type="button" onClick={() => setData('physical_state', bcs)}
                                             className={`aspect-square sm:aspect-auto sm:py-2 flex flex-col items-center justify-center rounded-xl border transition-all ${data.physical_state === bcs
-                                                ? 'bg-fuchsia-600 border-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/30 ring-2 ring-fuchsia-400 ring-offset-1 ring-offset-slate-900 scale-[1.03]'
+                                                ? 'bg-brand-primary border-brand-primary text-white shadow-lg shadow-brand-primary/30 ring-2 ring-brand-primary/40 ring-offset-1 ring-offset-slate-900 scale-[1.03]'
                                                 : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-700'
                                                 }`}
                                         >
@@ -434,18 +462,18 @@ export default function Create({ auth, pet, products }) {
                         </div>
 
                         {/* Columna Derecha */}
-                        <div className="xl:col-span-9 space-y-6">
+                        <div className="xl:col-span-9 space-y-6 overflow-visible">
 
                             {/* Motivo de la Consulta Principal */}
                             <div className={cardBase}>
-                                <label className="block text-xs font-black text-fuchsia-400 uppercase tracking-widest mb-3">
+                                <label className="block text-xs font-black text-brand-primary uppercase tracking-widest mb-3">
                                     Motivo de la Consulta
                                 </label>
                                 <textarea
                                     value={data.anamnesis.reason}
                                     onChange={e => updateAnamnesis('reason', e.target.value)}
                                     rows="1"
-                                    className="w-full bg-slate-50 dark:bg-[#111822] border border-slate-300 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl text-lg px-4 py-3 placeholder-slate-600 focus:ring-fuchsia-500 focus:border-fuchsia-500 shadow-inner resize-y transition-all min-h-[50px] font-medium"
+                                    className="w-full bg-slate-50 dark:bg-[#111822] border border-slate-300 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl text-lg px-4 py-3 placeholder-slate-600 focus:ring-brand-primary focus:border-brand-primary shadow-inner resize-y transition-all min-h-[50px] font-medium"
                                     placeholder="Ej: Inapetencia desde hace 5 días y decaimiento..."
                                     required
                                 ></textarea>
@@ -461,73 +489,73 @@ export default function Create({ auth, pet, products }) {
                                     {/* 1 */}
                                     <div className="space-y-3">
                                         <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-amber-500/20 pb-1">1. Estado de Ánimo</p>
-                                        <PillSelector options={['Alerta', 'Relajado/decaído', 'Nervioso', 'Agresivo']} value={data.anamnesis.mood} onChange={v => updateAnamnesis('mood', v)} colorClass="bg-fuchsia-600" />
+                                        <PillSelector options={['Alerta', 'Relajado/decaído', 'Nervioso', 'Agresivo']} value={data.anamnesis.mood} onChange={v => updateAnamnesis('mood', v)} colorClass="bg-brand-primary" />
                                     </div>
                                     {/* 2 */}
                                     <div className="space-y-3">
                                         <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-amber-500/20 pb-1">2. Apetito</p>
-                                        <PillSelector options={['Normal', 'Disminuido', 'Aumentado']} value={data.anamnesis.appetite} onChange={v => updateAnamnesis('appetite', v)} colorClass="bg-fuchsia-600" />
+                                        <PillSelector options={['Normal', 'Disminuido', 'Aumentado']} value={data.anamnesis.appetite} onChange={v => updateAnamnesis('appetite', v)} colorClass="bg-brand-primary" />
                                     </div>
                                     {/* 3 */}
                                     <div className="space-y-3">
                                         <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-amber-500/20 pb-1">3. Vómito</p>
-                                        <PillSelector options={['Ausente', '< 2x/día', '> 3x/día', 'Intermitente']} value={data.anamnesis.vomiting} onChange={v => updateAnamnesis('vomiting', v)} colorClass="bg-fuchsia-600" />
+                                        <PillSelector options={['Ausente', '< 2x/día', '> 3x/día', 'Intermitente']} value={data.anamnesis.vomiting} onChange={v => updateAnamnesis('vomiting', v)} colorClass="bg-brand-primary" />
                                     </div>
                                     {/* 4 */}
                                     <div className="space-y-3">
                                         <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-amber-500/20 pb-1">4. Heces</p>
-                                        <PillSelector options={['Normal', 'Disminuido', 'Aumentado']} value={data.anamnesis.stool} onChange={v => updateAnamnesis('stool', v)} colorClass="bg-fuchsia-600" />
+                                        <PillSelector options={['Normal', 'Disminuido', 'Aumentado']} value={data.anamnesis.stool} onChange={v => updateAnamnesis('stool', v)} colorClass="bg-brand-primary" />
                                     </div>
                                     {/* 5 */}
                                     <div className="space-y-3">
                                         <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-amber-500/20 pb-1">5. Diarrea</p>
-                                        <PillSelector options={['Ausente', '< 2x/día', '> 3x/día', 'Intermitente']} value={data.anamnesis.diarrhea} onChange={v => updateAnamnesis('diarrhea', v)} colorClass="bg-fuchsia-600" />
+                                        <PillSelector options={['Ausente', '< 2x/día', '> 3x/día', 'Intermitente']} value={data.anamnesis.diarrhea} onChange={v => updateAnamnesis('diarrhea', v)} colorClass="bg-brand-primary" />
                                     </div>
                                     {/* 6 */}
                                     <div className="space-y-3">
                                         <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-amber-500/20 pb-1">6. Micción</p>
-                                        <PillSelector options={['Normal', 'Disminuido', 'Aumentado']} value={data.anamnesis.urination} onChange={v => updateAnamnesis('urination', v)} colorClass="bg-fuchsia-600" />
+                                        <PillSelector options={['Normal', 'Disminuido', 'Aumentado']} value={data.anamnesis.urination} onChange={v => updateAnamnesis('urination', v)} colorClass="bg-brand-primary" />
                                     </div>
                                     {/* 7 */}
                                     <div className="space-y-3">
                                         <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-amber-500/20 pb-1">7. Color Orina</p>
-                                        <PillSelector options={['Transparente', 'Ámbar (oscuro)', 'Amarillo (claro)', 'Hematuria (rojo)']} value={data.anamnesis.urine_color} onChange={v => updateAnamnesis('urine_color', v)} colorClass="bg-fuchsia-600" />
+                                        <PillSelector options={['Transparente', 'Ámbar (oscuro)', 'Amarillo (claro)', 'Hematuria (rojo)']} value={data.anamnesis.urine_color} onChange={v => updateAnamnesis('urine_color', v)} colorClass="bg-brand-primary" />
                                     </div>
                                     {/* 8 */}
                                     <div className="space-y-3">
                                         <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-amber-500/20 pb-1">8. Reflejo Tusígeno</p>
-                                        <PillSelector options={['Ausente', 'Presente']} value={data.anamnesis.cough_reflex} onChange={v => updateAnamnesis('cough_reflex', v)} colorClass="bg-fuchsia-600" />
+                                        <PillSelector options={['Ausente', 'Presente']} value={data.anamnesis.cough_reflex} onChange={v => updateAnamnesis('cough_reflex', v)} colorClass="bg-brand-primary" />
                                     </div>
                                     {/* 9 */}
                                     <div className="space-y-3">
                                         <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-amber-500/20 pb-1">9. Reflejo Deglutorio</p>
-                                        <PillSelector options={['Ausente', 'Presente']} value={data.anamnesis.swallowing_reflex} onChange={v => updateAnamnesis('swallowing_reflex', v)} colorClass="bg-fuchsia-600" />
+                                        <PillSelector options={['Ausente', 'Presente']} value={data.anamnesis.swallowing_reflex} onChange={v => updateAnamnesis('swallowing_reflex', v)} colorClass="bg-brand-primary" />
                                     </div>
 
                                     {/* 10 */}
                                     <div className="space-y-3">
                                         <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-amber-500/20 pb-1">10. Descarga Nasal</p>
-                                        <PillSelector options={['Ausente', 'Presente']} value={data.anamnesis.nasal_discharge} onChange={v => updateAnamnesis('nasal_discharge', v)} colorClass="bg-fuchsia-600" />
+                                        <PillSelector options={['Ausente', 'Presente']} value={data.anamnesis.nasal_discharge} onChange={v => updateAnamnesis('nasal_discharge', v)} colorClass="bg-brand-primary" />
                                         {data.anamnesis.nasal_discharge === 'Presente' && (
-                                            <input type="text" placeholder="Observaciones..." className="w-full mt-2 bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-fuchsia-500 focus:border-fuchsia-400 px-3 py-2 transition-all shadow-inner"
+                                            <input type="text" placeholder="Observaciones..." className="w-full mt-2 bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-brand-primary focus:border-brand-primary/40 px-3 py-2 transition-all shadow-inner"
                                                 value={data.anamnesis.nasal_discharge_notes} onChange={e => updateAnamnesis('nasal_discharge_notes', e.target.value)} />
                                         )}
                                     </div>
                                     {/* 11 */}
                                     <div className="space-y-3">
                                         <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-amber-500/20 pb-1">11. Descarga Auricular</p>
-                                        <PillSelector options={['Ausente', 'Presente']} value={data.anamnesis.auricular_discharge} onChange={v => updateAnamnesis('auricular_discharge', v)} colorClass="bg-fuchsia-600" />
+                                        <PillSelector options={['Ausente', 'Presente']} value={data.anamnesis.auricular_discharge} onChange={v => updateAnamnesis('auricular_discharge', v)} colorClass="bg-brand-primary" />
                                         {data.anamnesis.auricular_discharge === 'Presente' && (
-                                            <input type="text" placeholder="Observaciones..." className="w-full mt-2 bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-fuchsia-500 focus:border-fuchsia-400 px-3 py-2 transition-all shadow-inner"
+                                            <input type="text" placeholder="Observaciones..." className="w-full mt-2 bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-brand-primary focus:border-brand-primary/40 px-3 py-2 transition-all shadow-inner"
                                                 value={data.anamnesis.auricular_discharge_notes} onChange={e => updateAnamnesis('auricular_discharge_notes', e.target.value)} />
                                         )}
                                     </div>
                                     {/* 12 */}
                                     <div className="space-y-3">
                                         <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-amber-500/20 pb-1">12. Descarga Vulvar/Prep.</p>
-                                        <PillSelector options={['Ausente', 'Presente']} value={data.anamnesis.vulvar_discharge} onChange={v => updateAnamnesis('vulvar_discharge', v)} colorClass="bg-fuchsia-600" />
+                                        <PillSelector options={['Ausente', 'Presente']} value={data.anamnesis.vulvar_discharge} onChange={v => updateAnamnesis('vulvar_discharge', v)} colorClass="bg-brand-primary" />
                                         {data.anamnesis.vulvar_discharge === 'Presente' && (
-                                            <input type="text" placeholder="Observaciones..." className="w-full mt-2 bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-fuchsia-500 focus:border-fuchsia-400 px-3 py-2 transition-all shadow-inner"
+                                            <input type="text" placeholder="Observaciones..." className="w-full mt-2 bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-brand-primary focus:border-brand-primary/40 px-3 py-2 transition-all shadow-inner"
                                                 value={data.anamnesis.vulvar_discharge_notes} onChange={e => updateAnamnesis('vulvar_discharge_notes', e.target.value)} />
                                         )}
                                     </div>
@@ -566,23 +594,122 @@ export default function Create({ auth, pet, products }) {
                                         className="w-full bg-slate-50 dark:bg-[#111822] border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-sm p-4 focus:ring-amber-500 focus:border-amber-500 shadow-inner" placeholder="Tu interpretación médica..." required></textarea>
                                 </div>
 
+
+
                                 {/* P */}
                                 <div className="relative pl-12 pr-4 py-2 group">
-                                    <div className="absolute left-0 top-1 w-8 h-8 bg-fuchsia-500/20 rounded-full flex items-center justify-center font-black text-fuchsia-400 border border-fuchsia-500/30 group-hover:scale-110 transition-transform">P</div>
-                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-[0.2em] mb-2 flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
-                                        Plan <span className="text-slate-500 lowercase tracking-normal italic text-[10px] ml-1">(Tratamiento, Receta, Próxima cita)</span>
+                                    <div className="absolute left-0 top-1 w-8 h-8 bg-brand-primary/20 rounded-full flex items-center justify-center font-black text-brand-primary border border-brand-primary/30 group-hover:scale-110 transition-transform">P</div>
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                                <div className="flex items-center gap-2">
+                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-[0.2em] flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+                                        Tratamiento / Plan Estratégico <span className="text-slate-500 lowercase tracking-normal italic text-[10px] ml-1">(Indicaciones, Receta y Artículos/Servicios)</span>
                                     </label>
-                                    <textarea value={data.plan} onChange={e => setData('plan', e.target.value)} rows="4"
-                                        className="w-full bg-slate-50 dark:bg-[#111822] border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-sm p-4 focus:ring-fuchsia-500 focus:border-fuchsia-500 shadow-inner" placeholder="Indica el tratamiento a seguir..." required></textarea>
+                                    
+                                    <div className="flex items-center gap-1.5 ml-4">
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setShowPreviewModal(true)}
+                                            className="px-3 py-1 bg-brand-primary/10 text-brand-primary text-[9px] font-black uppercase tracking-widest rounded-lg border border-brand-primary/20 hover:bg-brand-primary hover:text-white transition shadow-sm"
+                                        >
+                                            👁 Ver Vista Previa Receta
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                                        
+                                        {/* Herramienta de Agregar Fármacos */}
+                                        <div className="relative group/med w-full md:w-80">
+                                            <div className="relative">
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="🔍 Buscar Artículo o Servicio..." 
+                                                    value={medSearchQuery}
+                                                    onChange={(e) => setMedSearchQuery(e.target.value)}
+                                                    className="w-full bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-full text-[10px] px-4 py-2 focus:ring-brand-primary focus:border-brand-primary placeholder-slate-400 font-bold uppercase transition-all shadow-sm"
+                                                />
+                                            </div>
+                                            {medSearchQuery && (
+                                                <div className="absolute z-[100] w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-48 overflow-y-auto p-1 ring-1 ring-slate-900/5 transition-all">
+                                                    {safeProducts.filter(p => {
+                                                        const name = normalize(p?.name);
+                                                        const query = normalize(medSearchQuery);
+                                                        return name.includes(query);
+                                                    }).slice(0, 10).map(med => (
+                                                        <button 
+                                                            key={`med-${med.id}`}
+                                                            type="button"
+                                                            onClick={() => addMedication(med)}
+                                                            className="w-full text-left px-3 py-2.5 hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 rounded-lg text-[10px] font-bold text-slate-600 dark:text-slate-400 flex flex-col transition-colors border-b border-slate-50 dark:border-slate-700/50 last:border-0"
+                                                        >
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <span className="text-slate-900 dark:text-white uppercase truncate">{med.name}</span>
+                                                                {med.is_service ? (
+                                                                    <span className="text-[7px] bg-slate-100 dark:bg-slate-700 text-slate-400 px-1 py-0.5 rounded uppercase">Servicio</span>
+                                                                ) : (
+                                                                    <span className="text-[7px] bg-brand-primary/10 text-brand-primary px-1 py-0.5 rounded uppercase">Stock: {med.stock || 0}</span>
+                                                                )}
+                                                            </div>
+                                                            <span className="text-[8px] text-slate-400 font-normal truncate">{med.category?.name || 'Veterinaria'}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    <textarea value={data.plan} onChange={e => setData('plan', e.target.value)} rows="5"
+                                        className="w-full bg-white dark:bg-[#111822] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-[2rem] text-sm p-6 focus:ring-brand-primary focus:border-brand-primary shadow-sm mb-4 min-h-[150px]" 
+                                        placeholder="Escribe las indicaciones generales para el propietario (dieta, reposo, cuidados especiales)..."></textarea>
+
+                                    {/* Listado de Medicamentos/Servicios con estilo unificado */}
+                                    <div className="space-y-3 mt-4">
+                                        {data.medications.length > 0 && <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-2">Artículos y Servicios Programados (Receta)</p>}
+                                            <div className="grid grid-cols-1 gap-2">
+                                                {data.medications.map((m, i) => (
+                                                    <div key={`m-list-${i}`} className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group/med-item">
+                                                        <div className="flex justify-between items-center px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700/50">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-brand-primary"></span>
+                                                                <p className="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">{m.name}</p>
+                                                            </div>
+                                                            <button 
+                                                                type="button" 
+                                                                onClick={() => removeMedication(i)} 
+                                                                className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                            </button>
+                                                        </div>
+                                                        <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                            <div>
+                                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Dosis / Aplicación</label>
+                                                                <input type="text" placeholder="Ej: 5ml / 1 tableta" value={m.dosage} onChange={e => updateMedication(i, 'dosage', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-xl text-[11px] py-1.5 focus:ring-brand-primary focus:bg-white dark:focus:bg-slate-900 transition-all font-bold" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Frecuencia / Cada</label>
+                                                                <input type="text" placeholder="Ej: Cada 8 horas" value={m.frequency} onChange={e => updateMedication(i, 'frequency', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-xl text-[11px] py-1.5 focus:ring-brand-primary focus:bg-white dark:focus:bg-slate-900 transition-all font-bold" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Duración del Tto.</label>
+                                                                <input type="text" placeholder="Ej: Por 5 días" value={m.duration} onChange={e => updateMedication(i, 'duration', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-xl text-[11px] py-1.5 focus:ring-brand-primary focus:bg-white dark:focus:bg-slate-900 transition-all font-bold" />
+                                                            </div>
+                                                            <div className="sm:col-span-3">
+                                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Observaciones / Recomendaciones (Ej: Con alimento)</label>
+                                                                <input type="text" placeholder="Instrucciones adicionales..." value={m.notes} onChange={e => updateMedication(i, 'notes', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-xl text-[11px] py-1.5 focus:ring-brand-primary focus:bg-white dark:focus:bg-slate-900 transition-all" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
                             {/* Subida de Archivos */}
-                            <div className={`${cardBase} border border-dashed border-slate-600 hover:border-slate-500 hover:bg-slate-100 dark:bg-slate-800/30 transition-all relative text-center py-12 my-8 group cursor-pointer overflow-hidden`}>
+                            <div className={`${cardBase} border border-dashed border-slate-600 hover:border-slate-500 hover:bg-slate-100 dark:bg-slate-800/30 transition-all relative text-center py-12 my-8 group cursor-pointer`}>
                                 <input type="file" multiple onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                                <div className="absolute inset-0 bg-fuchsia-900/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <div className="absolute inset-0 bg-brand-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
-                                <svg className="w-12 h-12 mx-auto text-slate-500 group-hover:text-fuchsia-400 group-hover:scale-110 transition-all mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                <svg className="w-12 h-12 mx-auto text-slate-500 group-hover:text-brand-primary group-hover:scale-110 transition-all mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
 
                                 <h4 className="text-slate-700 dark:text-slate-300 font-bold mt-2 mb-1 uppercase tracking-widest text-[11px]">Subir Imágenes o PDF</h4>
                                 <p className="text-[10px] text-slate-500 tracking-wide uppercase font-medium">Rayos X, Ultrasonido, Laboratorio...</p>
@@ -601,96 +728,36 @@ export default function Create({ auth, pet, products }) {
                             </div>
 
                             {/* Enviar a Caja */}
-                            <div className={`${cardBase} border-emerald-500/30 overflow-hidden relative mt-8`}>
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full blur-xl"></div>
-                                <h3 className={`${headerTitle} text-emerald-500 relative z-10`}>
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    Cargos a Caja (Punto de Venta)
-                                </h3>
-                                
-                                <div className="relative z-10 mt-6">
-                                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-2">Añadir Cargos o Servicios</p>
-                                    <div className="relative">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Buscar servicio o producto..." 
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full bg-slate-50 dark:bg-[#111822] border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-4 py-3 focus:ring-emerald-500 focus:border-emerald-500 shadow-inner text-sm"
-                                        />
-                                        {searchQuery && (
-                                            <div className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto overflow-x-hidden p-2">
-                                                {filteredProducts.length > 0 ? filteredProducts.map(product => (
-                                                    <button 
-                                                        key={product.id}
-                                                        type="button"
-                                                        onClick={() => addCharge(product)}
-                                                        className="w-full text-left px-4 py-3 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 rounded-lg transition-colors group flex justify-between items-center"
-                                                    >
-                                                        <span className="font-bold text-slate-700 dark:text-slate-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 text-xs">{product.name}</span>
-                                                        <span className="text-emerald-600 dark:text-emerald-400 font-black text-xs">${parseFloat(product.price).toLocaleString()}</span>
-                                                    </button>
-                                                )) : (
-                                                    <div className="px-4 py-3 text-sm text-slate-500 italic">No se encontraron productos o servicios...</div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
+                            <PendingChargesEditor 
+                                charges={data.pending_charges}
+                                products={products}
+                                onAddCharge={(p) => setData('pending_charges', [...data.pending_charges, p])}
+                                onRemoveCharge={(idx) => setData('pending_charges', data.pending_charges.filter((_, i) => i !== idx))}
+                                onUpdateCharge={(idx, field, value) => {
+                                    const newCharges = [...data.pending_charges];
+                                    newCharges[idx][field] = value;
+                                    setData('pending_charges', newCharges);
+                                }}
+                                cardBase={cardBase}
+                                headerTitle={headerTitle}
+                            />
 
-                                    {data.pending_charges.length > 0 && (
-                                        <div className="mt-6 space-y-3">
-                                            {data.pending_charges.map((charge, idx) => (
-                                                <div key={idx} className="flex flex-col sm:flex-row gap-3 items-center bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                                                    <div className="flex-1">
-                                                        <p className="font-bold text-xs text-slate-800 dark:text-slate-200 uppercase">{charge.name}</p>
-                                                        <p className="text-[10px] text-emerald-500 font-black">${parseFloat(charge.price).toLocaleString()}</p>
-                                                    </div>
-                                                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                                                        <input 
-                                                            type="number" 
-                                                            min="1" 
-                                                            value={charge.quantity}
-                                                            onChange={(e) => updateCharge(idx, 'quantity', e.target.value)}
-                                                            className="w-16 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded-lg text-sm text-center py-2 focus:ring-emerald-500" 
-                                                        />
-                                                        <input 
-                                                            type="text" 
-                                                            placeholder="Notas (opcional)" 
-                                                            value={charge.notes}
-                                                            onChange={(e) => updateCharge(idx, 'notes', e.target.value)}
-                                                            className="flex-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded-lg text-xs py-2 px-3 focus:ring-emerald-500" 
-                                                        />
-                                                        <button 
-                                                            type="button" 
-                                                            onClick={() => removeCharge(idx)}
-                                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                                                        >
-                                                            ✕
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                            
-                                            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-sm">
-                                                <span className="font-black text-slate-500 uppercase tracking-widest text-[10px]">Total Estimado</span>
-                                                <span className="font-black text-emerald-600 text-xl">${data.pending_charges.reduce((sum, item) => sum + (parseFloat(item.price || 0) * (item.quantity*1 || 1)), 0).toLocaleString()}</span>
-                                            </div>
-                                            <p className="text-[9px] text-slate-400 uppercase tracking-widest text-center mt-2">Los cambios y cargos se confirmarán al finalizar y guardar la historia médica.</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="pt-6 flex justify-end pb-8">
+                            <div className="pt-6 flex justify-end pb-8 gap-4">
+                                <Link
+                                    href={route('pets.show', pet.id)}
+                                    className="px-10 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold uppercase text-xs tracking-widest transition-all active:scale-95 shadow-lg shadow-black/20"
+                                >
+                                    Cerrar / Finalizar
+                                </Link>
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full sm:w-auto px-10 py-4 bg-fuchsia-600 hover:bg-fuchsia-500 text-white rounded-xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-fuchsia-500/30 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 border border-fuchsia-400/50"
+                                    className="flex-1 sm:flex-none px-10 py-4 bg-brand-primary hover:opacity-90 text-white rounded-xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-brand-primary/30 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 border border-brand-primary/50"
                                 >
-                                    {processing ? 'Procesando...' : (
+                                    {processing ? 'Guardando...' : (
                                         <>
                                             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                                            Finalizar y Guardar Historia
+                                            {isEditing ? 'Actualizar Cambios' : 'Guardar y Continuar'}
                                         </>
                                     )}
                                 </button>
@@ -701,6 +768,54 @@ export default function Create({ auth, pet, products }) {
                     </form>
                 </div>
             </div>
+
+            {/* Modal de Vista Previa de Receta */}
+            {showPreviewModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
+                    <div className="bg-white dark:bg-[#1B2132] rounded-[2.5rem] w-full max-w-lg border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-8 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">👁️ Vista Previa Receta</h3>
+                                <p className="text-[10px] text-brand-primary font-bold uppercase tracking-widest mt-1">Borrador de indicaciones médicas</p>
+                            </div>
+                            <button onClick={() => setShowPreviewModal(false)} className="text-slate-400 hover:text-red-500 transition-colors text-2xl">×</button>
+                        </div>
+
+                        <div className="p-8 overflow-y-auto flex-1 custom-scrollbar space-y-6">
+                            <div className="border-l-4 border-brand-primary pl-4 py-2">
+                                <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-4 italic">Rx / Prescripción</p>
+                                
+                                {data.medications.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {data.medications.map((m, i) => (
+                                            <div key={`prev-${i}`} className="border-b border-slate-100 dark:border-slate-800 pb-3 last:border-0">
+                                                <p className="font-black text-sm text-slate-900 dark:text-white uppercase leading-tight">{m.name}</p>
+                                                <p className="text-xs text-brand-primary font-bold mt-1">
+                                                    {m.dosage || '—'} • {m.frequency || '—'} • {m.duration || '—'}
+                                                </p>
+                                                {m.notes && <p className="text-[10px] text-slate-500 font-medium italic mt-1">{m.notes}</p>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-slate-400 font-bold italic">No se han agregado fármacos estructurados.</p>
+                                )}
+                            </div>
+
+                            <div className="mt-8 border-t border-slate-100 dark:border-slate-800 pt-6">
+                                <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3 italic">Indicaciones Generales / Plan</p>
+                                <div className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
+                                    {data.plan || 'Sin indicaciones generales registradas.'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+                            <button onClick={() => setShowPreviewModal(false)} className="px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest">Cerrar Vista Previa</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }

@@ -3,7 +3,9 @@ import { Head, Link, router } from '@inertiajs/react';
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import MedicationsEditor from '@/Components/MedicationsEditor';
 import PrintDocumentModal from '@/Components/PrintDocumentModal';
+import PendingChargesEditor from '@/Components/PendingChargesEditor';
 
 /* ─── Constantes ─────────────────────────────────────────── */
 const DISPOSITION_LABELS = {
@@ -85,6 +87,7 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
     const [euthanasia, setEuthanasia] = useState(initialEuthanasia);
     const [confirmComplete, setConfirmComplete] = useState(false);
     const [showPrintModal, setShowPrintModal] = useState(false);
+    const [pendingCharges, setPendingCharges] = useState([]);
 
     // Sincronizar estado local con props de Inertia
     React.useEffect(() => {
@@ -92,7 +95,7 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
     }, [initialEuthanasia]);
 
     // Estados de edición por sección
-    const [editSection, setEditSection] = useState(null); // 'procedimiento' | 'motivo' | 'medicamentos'
+    const [editSection, setEditSection] = useState(null); // 'procedimiento' | 'motivo' | 'medicamentos' | 'contexto'
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState(null);
 
@@ -103,12 +106,19 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
         folio: euthanasia.folio || '',
         status: euthanasia.status || 'completed',
         veterinarian_id: euthanasia.veterinarian_id || '',
+    });
+
+    const [formNotas, setFormNotas] = useState({
+        notes: euthanasia.notes || '',
+    });
+
+    const [formContexto, setFormContexto] = useState({
         owner_present: euthanasia.owner_present || false,
         consent_signed: euthanasia.consent_signed || false,
+        owner_name_override: euthanasia.owner_name_override || '',
         disposition: euthanasia.disposition || '',
         cremation_provider: euthanasia.cremation_provider || '',
         owner_authorization: euthanasia.owner_authorization || '',
-        notes: euthanasia.notes || '',
     });
 
     const [formMotivo, setFormMotivo] = useState({
@@ -116,22 +126,11 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
         reason_detail: euthanasia.reason_detail || '',
     });
 
-    // Medicamentos — estado local editable
-    const [editMeds, setEditMeds] = useState(
-        (euthanasia.medications || []).map(m => ({ ...m }))
-    );
-    const [medSearch, setMedSearch] = useState('');
-    const [allowManual, setAllowManual] = useState(false);
-
-    // Filtrar productos localmente
-    const filteredProducts = medSearch.length > 1
-        ? products.filter(p =>
-            p.name.toLowerCase().includes(medSearch.toLowerCase()) &&
-            !editMeds.find(m => m.id === p.id)
-          )
-        : [];
-
     const medications = euthanasia.medications || [];
+
+    const handleSaveMeds = (meds) => {
+        saveSection({ medications: meds });
+    };
 
     /* ── Marcar completado ─ */
     const complete = () => {
@@ -150,6 +149,7 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
             onSuccess: () => {
                 setSaving(false);
                 setEditSection(null);
+                if (payload.pending_charges) setPendingCharges([]);
             },
             onError: () => {
                 setSaving(false);
@@ -158,27 +158,7 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
         });
     };
 
-    /* ── Búsqueda local de medicamentos del inventario ─ */
-    const searchMeds = (q) => {
-        setMedSearch(q);
-    };
 
-    const addMedFromInventory = (p) => {
-        setEditMeds(prev => [...prev, { id: p.id, name: p.name, unit: p.unit, is_controlled: p.is_controlled, is_manual: false, concentration: '', dose_mg_kg: '', total_dose: '', volume_ml: '', route: 'IV', lot_number: '', notes: '' }]);
-        setMedSearch('');
-    };
-
-    const addManualMed = () => {
-        setEditMeds(prev => [...prev, { id: null, name: '', unit: '', is_controlled: true, is_manual: true, concentration: '', dose_mg_kg: '', total_dose: '', volume_ml: '', route: 'IV', lot_number: '', notes: '' }]);
-    };
-
-    const updateMed = (idx, field, value) => {
-        setEditMeds(prev => prev.map((m, i) => i === idx ? { ...m, [field]: value } : m));
-    };
-
-    const removeMed = (idx) => {
-        setEditMeds(prev => prev.filter((_, i) => i !== idx));
-    };
 
     const openSection = (section) => {
         if (editSection === section) { setEditSection(null); return; }
@@ -190,20 +170,28 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                 folio: euthanasia.folio || '',
                 status: euthanasia.status || 'completed',
                 veterinarian_id: euthanasia.veterinarian_id || '',
+            });
+        }
+        if (section === 'notas') {
+            setFormNotas({
+                notes: euthanasia.notes || '',
+            });
+        }
+        if (section === 'contexto') {
+            setFormContexto({
                 owner_present: euthanasia.owner_present || false,
                 consent_signed: euthanasia.consent_signed || false,
+                owner_name_override: euthanasia.owner_name_override || '',
                 disposition: euthanasia.disposition || '',
                 cremation_provider: euthanasia.cremation_provider || '',
                 owner_authorization: euthanasia.owner_authorization || '',
-                notes: euthanasia.notes || '',
             });
         }
         if (section === 'motivo') {
             setFormMotivo({ reason: euthanasia.reason || REASONS[0], reason_detail: euthanasia.reason_detail || '' });
         }
         if (section === 'medicamentos') {
-            setEditMeds((euthanasia.medications || []).map(m => ({ ...m })));
-            setMedSearch('');
+            // No longer needed as MedicationsEditor handles its own local state or we can just pass onSave
         }
         setEditSection(section);
     };
@@ -322,47 +310,6 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                                             <option value="cancelled">❌ Cancelada</option>
                                         </select>
                                     </div>
-                                    <div className="space-y-2 pt-1">
-                                        <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 dark:text-slate-300 font-semibold">
-                                            <input type="checkbox" checked={formProcedimiento.owner_present}
-                                                onChange={e => setFormProcedimiento(f => ({ ...f, owner_present: e.target.checked }))}
-                                                className="w-4 h-4 rounded text-purple-600" />
-                                            Propietario presente
-                                        </label>
-                                        <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 dark:text-slate-300 font-semibold">
-                                            <input type="checkbox" checked={formProcedimiento.consent_signed}
-                                                onChange={e => setFormProcedimiento(f => ({ ...f, consent_signed: e.target.checked }))}
-                                                className="w-4 h-4 rounded text-purple-600" />
-                                            Consentimiento firmado
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Destino del Cuerpo</label>
-                                        <select value={formProcedimiento.disposition}
-                                            onChange={e => setFormProcedimiento(f => ({ ...f, disposition: e.target.value }))}
-                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
-                                            <option value="">— Seleccionar —</option>
-                                            {DISPOSITION_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                                        </select>
-                                        {(formProcedimiento.disposition === 'cremacion_individual' || formProcedimiento.disposition === 'cremacion_colectiva') && (
-                                            <input type="text" value={formProcedimiento.cremation_provider}
-                                                onChange={e => setFormProcedimiento(f => ({ ...f, cremation_provider: e.target.value }))}
-                                                placeholder="Proveedor cremación"
-                                                className="mt-2 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Autorización del Propietario</label>
-                                        <textarea value={formProcedimiento.owner_authorization}
-                                            onChange={e => setFormProcedimiento(f => ({ ...f, owner_authorization: e.target.value }))}
-                                            rows={2} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Notas</label>
-                                        <textarea value={formProcedimiento.notes}
-                                            onChange={e => setFormProcedimiento(f => ({ ...f, notes: e.target.value }))}
-                                            rows={2} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
-                                    </div>
                                     <button disabled={saving} onClick={() => saveSection(formProcedimiento)}
                                         className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition">
                                         {saving ? 'Guardando…' : '✓ Guardar cambios'}
@@ -376,6 +323,7 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                                             : null} />
                                     <InfoRow label="Veterinario Responsable" value={euthanasia.veterinarian?.name} />
                                     <InfoRow label="Sucursal" value={euthanasia.branch?.name} />
+                                    <InfoRow label="Peso (kg)" value={euthanasia.weight ? `${euthanasia.weight} kg` : null} />
                                 </>
                             )}
                         </div>
@@ -447,190 +395,148 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                         </div>
 
                         {/* ── Medicamentos ── */}
+                        <MedicationsEditor 
+                            title="Tratamiento Base O Fármacos Programados"
+                            medications={euthanasia.medications}
+                            products={products}
+                            canManage={canManage}
+                            onSave={handleSaveMeds}
+                        />
+
+                        {/* Cargos a Caja */}
                         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-4">
                             <div className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Medicamentos / Fármacos Empleados</p>
-                                {canManage && <EditSectionBtn onClick={() => openSection('medicamentos')} active={editSection === 'medicamentos'} />}
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cargos a Caja (Punto de Venta)</p>
                             </div>
-
-                            {editSection === 'medicamentos' ? (
-                                <div className="space-y-4 pt-1">
-                                    {/* Buscador de inventario */}
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative flex-1">
-                                            <input
-                                                type="text"
-                                                value={medSearch}
-                                                onChange={e => searchMeds(e.target.value)}
-                                                placeholder="Buscar medicamento del inventario…"
-                                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            />
-                                            {filteredProducts.length > 0 && (
-                                                <div className="absolute z-40 w-full mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-h-44 overflow-auto">
-                                                    {filteredProducts.map(p => (
-                                                        <button key={p.id} type="button" onClick={() => addMedFromInventory(p)}
-                                                            className="w-full text-left px-4 py-2.5 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition flex items-center gap-3 text-sm">
-                                                            {p.is_controlled && <span className="text-[9px] bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded font-black uppercase">Controlado</span>}
-                                                            <span className="font-semibold text-slate-800 dark:text-white">{p.name}</span>
-                                                            <span className="text-slate-400 text-xs">{p.unit}</span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <label className="flex items-center gap-1.5 cursor-pointer">
-                                            <div className={`w-9 h-5 rounded-full transition-colors relative ${allowManual ? 'bg-purple-500' : 'bg-slate-200 dark:bg-slate-600'}`}
-                                                onClick={() => setAllowManual(!allowManual)}>
-                                                <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${allowManual ? 'translate-x-4' : ''}`}></div>
-                                            </div>
-                                            <span className="text-[10px] font-bold text-slate-500 whitespace-nowrap">Manual</span>
-                                        </label>
-                                    </div>
-
-                                    {allowManual && (
-                                        <button type="button" onClick={addManualMed}
-                                            className="flex items-center gap-2 text-xs font-bold text-purple-600 hover:text-purple-800 transition">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
-                                            Agregar medicamento no registrado en inventario
-                                        </button>
-                                    )}
-
-                                    {/* Lista editable */}
-                                    {editMeds.length === 0 ? (
-                                        <div className="text-center py-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 text-xs">
-                                            Busca y agrega medicamentos
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            {editMeds.map((med, idx) => (
-                                                <div key={idx} className={`p-4 rounded-xl border-2 ${med.is_controlled ? 'border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20'}`}>
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <div className="flex items-center gap-2">
-                                                            {med.is_controlled && <span className="text-[9px] bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded font-black uppercase">⚠️ Controlado</span>}
-                                                            {med.is_manual ? (
-                                                                <input value={med.name} onChange={e => updateMed(idx, 'name', e.target.value)}
-                                                                    placeholder="Nombre del medicamento"
-                                                                    className="font-bold text-sm bg-transparent border-b border-slate-300 focus:outline-none focus:border-purple-500 text-slate-800 dark:text-white px-1" />
-                                                            ) : (
-                                                                <span className="font-bold text-sm text-slate-800 dark:text-white">{med.name}</span>
-                                                            )}
-                                                        </div>
-                                                        <button type="button" onClick={() => removeMed(idx)} className="text-slate-400 hover:text-red-500 transition">
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                                                        </button>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
-                                                        {[
-                                                            { field: 'concentration', label: 'Concentración', placeholder: 'Ej: 390 mg/mL' },
-                                                            { field: 'dose_mg_kg',    label: 'Dosis (mg/kg)', placeholder: 'Ej: 87' },
-                                                            { field: 'total_dose',    label: 'Dosis Total',  placeholder: 'Ej: 87 mg' },
-                                                            { field: 'volume_ml',     label: 'Volumen (mL)', placeholder: 'Ej: 5.5' },
-                                                            { field: 'lot_number',    label: 'N° Lote',      placeholder: 'LOT-001' },
-                                                        ].map(f => (
-                                                            <div key={f.field}>
-                                                                <p className="text-[8px] font-black text-slate-400 uppercase mb-1">{f.label}</p>
-                                                                <input value={med[f.field]} onChange={e => updateMed(idx, f.field, e.target.value)}
-                                                                    placeholder={f.placeholder}
-                                                                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500" />
-                                                            </div>
-                                                        ))}
-                                                        <div>
-                                                            <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Vía</p>
-                                                            <select value={med.route} onChange={e => updateMed(idx, 'route', e.target.value)}
-                                                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500">
-                                                                {['IV', 'IM', 'SC', 'PO', 'Intracardíaca', 'Otra'].map(r => <option key={r} value={r}>{r}</option>)}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div className="mt-2">
-                                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Notas</p>
-                                                        <input value={med.notes} onChange={e => updateMed(idx, 'notes', e.target.value)}
-                                                            placeholder="Observaciones de aplicación…"
-                                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    <button disabled={saving} onClick={() => saveSection({ medications: editMeds })}
-                                        className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition">
-                                        {saving ? 'Guardando…' : '✓ Guardar Medicamentos'}
-                                    </button>
-                                </div>
-                            ) : (
-                                medications.length === 0 ? (
-                                    <p className="text-sm italic text-slate-400">Sin medicamentos registrados.</p>
-                                ) : (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-xs">
-                                            <thead>
-                                                <tr className="border-b border-slate-100 dark:border-slate-700">
-                                                    {['Medicamento', 'Concentración', 'Dosis mg/kg', 'Total', 'Vol. (mL)', 'Vía', 'N° Lote', 'Notas'].map(h => (
-                                                        <th key={h} className="pb-2 text-left text-[9px] font-black text-slate-400 uppercase tracking-wider pr-4">{h}</th>
-                                                    ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
-                                                {medications.map((m, i) => (
-                                                    <tr key={i} className={m.is_controlled ? 'bg-red-50/40 dark:bg-red-900/10' : ''}>
-                                                        <td className="py-2 pr-4 font-bold text-slate-800 dark:text-white whitespace-nowrap">
-                                                            {m.is_controlled && <span className="text-[8px] text-red-500 font-black mr-1">⚠️</span>}
-                                                            {m.name}
-                                                        </td>
-                                                        <td className="py-2 pr-4 text-slate-600 dark:text-slate-400">{m.concentration || '—'}</td>
-                                                        <td className="py-2 pr-4 text-slate-600 dark:text-slate-400">{m.dose_mg_kg || '—'}</td>
-                                                        <td className="py-2 pr-4 text-slate-600 dark:text-slate-400">{m.total_dose || '—'}</td>
-                                                        <td className="py-2 pr-4 text-slate-600 dark:text-slate-400">{m.volume_ml || '—'}</td>
-                                                        <td className="py-2 pr-4 font-bold text-slate-700 dark:text-slate-300">{m.route || '—'}</td>
-                                                        <td className="py-2 pr-4 font-mono text-slate-500">{m.lot_number || '—'}</td>
-                                                        <td className="py-2 text-slate-500 italic">{m.notes || '—'}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )
-                            )}
+                            <PendingChargesEditor 
+                                charges={pendingCharges}
+                                onAddCharge={(charge) => setPendingCharges([...pendingCharges, charge])}
+                                onRemoveCharge={(index) => setPendingCharges(pendingCharges.filter((_, i) => i !== index))}
+                                onUpdateCharge={(index, data) => {
+                                    const newCharges = [...pendingCharges];
+                                    newCharges[index] = { ...newCharges[index], ...data };
+                                    setPendingCharges(newCharges);
+                                }}
+                                products={products}
+                                allowSave={true}
+                                onSave={() => saveSection({ pending_charges: pendingCharges })}
+                            />
                         </div>
 
                         {/* Contexto familiar */}
                         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-4">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <div className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                                Contexto y Disposición
-                            </p>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                <div className={`p-3 rounded-xl border text-center ${euthanasia.owner_present ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-slate-50 border-slate-200 dark:bg-slate-900/30 dark:border-slate-700'}`}>
-                                    <p className="text-lg">{euthanasia.owner_present ? '✅' : '❌'}</p>
-                                    <p className="text-[9px] font-black text-slate-500 uppercase mt-1">Propietario presente</p>
-                                </div>
-                                <div className={`p-3 rounded-xl border text-center ${euthanasia.consent_signed ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-slate-50 border-slate-200 dark:bg-slate-900/30 dark:border-slate-700'}`}>
-                                    <p className="text-lg">{euthanasia.consent_signed ? '✅' : '❌'}</p>
-                                    <p className="text-[9px] font-black text-slate-500 uppercase mt-1">Consentimiento firmado</p>
-                                </div>
-                                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 text-center col-span-2">
-                                    <p className="text-lg">{euthanasia.disposition ? DISPOSITION_LABELS[euthanasia.disposition] : '—'}</p>
-                                    <p className="text-[9px] font-black text-slate-500 uppercase mt-1">Destino del cuerpo</p>
-                                    {euthanasia.cremation_provider && <p className="text-xs text-slate-500 mt-0.5">{euthanasia.cremation_provider}</p>}
-                                </div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contexto y Disposición</p>
+                                {canManage && <EditSectionBtn onClick={() => openSection('contexto')} active={editSection === 'contexto'} />}
                             </div>
-                            {euthanasia.owner_authorization && (
-                                <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl p-4">
-                                    <p className="text-[9px] font-black text-indigo-400 uppercase tracking-wider mb-1">Autorización del Propietario</p>
-                                    <p className="text-xs text-slate-700 dark:text-slate-300 italic leading-relaxed">"{euthanasia.owner_authorization}"</p>
+
+                            {editSection === 'contexto' ? (
+                                <div className="space-y-4 pt-1">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                                            <input type="checkbox" checked={formContexto.owner_present}
+                                                onChange={e => setFormContexto(f => ({ ...f, owner_present: e.target.checked }))}
+                                                className="w-4 h-4 rounded text-purple-600" />
+                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Dueño presente</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                                            <input type="checkbox" checked={formContexto.consent_signed}
+                                                onChange={e => setFormContexto(f => ({ ...f, consent_signed: e.target.checked }))}
+                                                className="w-4 h-4 rounded text-purple-600" />
+                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Firma registrada</span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Nombre de quien Firma/Autoriza</label>
+                                        <input type="text" value={formContexto.owner_name_override}
+                                            onChange={e => setFormContexto(f => ({ ...f, owner_name_override: e.target.value }))}
+                                            placeholder={euthanasia.pet?.owner?.name || 'Nombre responsable'}
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Destino del Cuerpo</label>
+                                        <select value={formContexto.disposition}
+                                            onChange={e => setFormContexto(f => ({ ...f, disposition: e.target.value }))}
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                            <option value="">— Seleccionar —</option>
+                                            {DISPOSITION_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                        </select>
+                                        {(formContexto.disposition === 'cremacion_individual' || formContexto.disposition === 'cremacion_colectiva') && (
+                                            <input type="text" value={formContexto.cremation_provider}
+                                                onChange={e => setFormContexto(f => ({ ...f, cremation_provider: e.target.value }))}
+                                                placeholder="Proveedor cremación"
+                                                className="mt-2 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Autorización del Propietario (Texto)</label>
+                                        <textarea value={formContexto.owner_authorization}
+                                            onChange={e => setFormContexto(f => ({ ...f, owner_authorization: e.target.value }))}
+                                            rows={4} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
+                                    </div>
+                                    <button disabled={saving} onClick={() => saveSection(formContexto)}
+                                        className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-lg">
+                                        {saving ? 'Guardando…' : '✓ Guardar Contexto'}
+                                    </button>
                                 </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                        <div className={`p-3 rounded-xl border text-center ${euthanasia.owner_present ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-slate-50 border-slate-200 dark:bg-slate-900/30 dark:border-slate-700'}`}>
+                                            <p className="text-lg">{euthanasia.owner_present ? '✅' : '❌'}</p>
+                                            <p className="text-[9px] font-black text-slate-500 uppercase mt-1">Propietario presente</p>
+                                        </div>
+                                        <div className={`p-3 rounded-xl border text-center ${euthanasia.consent_signed ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-slate-50 border-slate-200 dark:bg-slate-900/30 dark:border-slate-700'}`}>
+                                            <p className="text-lg">{euthanasia.consent_signed ? '✅' : '❌'}</p>
+                                            <p className="text-[9px] font-black text-slate-500 uppercase mt-1">Consentimiento firmado</p>
+                                        </div>
+                                        <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 text-center col-span-2">
+                                            <p className="text-lg">{euthanasia.disposition ? DISPOSITION_LABELS[euthanasia.disposition] : '—'}</p>
+                                            <p className="text-[9px] font-black text-slate-500 uppercase mt-1">Destino del cuerpo</p>
+                                            {euthanasia.cremation_provider && <p className="text-xs text-slate-500 mt-0.5">{euthanasia.cremation_provider}</p>}
+                                        </div>
+                                    </div>
+                                    {(euthanasia.owner_name_override || euthanasia.pet?.owner?.name) && (
+                                        <div className="pt-2">
+                                            <InfoRow label="Firmante / Responsable en registro" value={euthanasia.owner_name_override || euthanasia.pet?.owner?.name} />
+                                        </div>
+                                    )}
+                                    {euthanasia.owner_authorization && (
+                                        <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl p-4">
+                                            <p className="text-[9px] font-black text-indigo-400 uppercase tracking-wider mb-1">Autorización del Propietario</p>
+                                            <p className="text-xs text-slate-700 dark:text-slate-300 italic leading-relaxed">"{euthanasia.owner_authorization}"</p>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
 
                         {/* Notas */}
-                        {euthanasia.notes && (
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Notas del Procedimiento</p>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">{euthanasia.notes}</p>
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-4">
+                            <div className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Notas del Procedimiento</p>
+                                {canManage && <EditSectionBtn onClick={() => openSection('notas')} active={editSection === 'notas'} />}
                             </div>
-                        )}
+                            
+                            {editSection === 'notas' ? (
+                                <div className="space-y-3 pt-1">
+                                    <textarea value={formNotas.notes}
+                                        onChange={e => setFormNotas({ notes: e.target.value })}
+                                        rows={4} 
+                                        placeholder="Cualquier observación adicional sobre la aplicación, comportamiento del paciente, tiempo de acción, etc."
+                                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
+                                    <button disabled={saving} onClick={() => saveSection(formNotas)}
+                                        className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition">
+                                        {saving ? 'Guardando…' : '✓ Guardar Notas'}
+                                    </button>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">{euthanasia.notes || 'Sin notas registradas.'}</p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

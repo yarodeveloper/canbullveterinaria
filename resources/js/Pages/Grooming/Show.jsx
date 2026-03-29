@@ -2,6 +2,16 @@ import { Head, Link, useForm, router } from '@inertiajs/react';
 import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
+const roleLabels = {
+    admin: 'Adm.',
+    vet: 'Vet.',
+    veterinarian: 'Vet.',
+    surgeon: 'Cirujano',
+    specialist: 'Esp.',
+    groomer: 'Estilista',
+    staff: 'Staff'
+};
+
 export default function Show({ auth, order, services }) {
     const { data, setData, put, post, processing } = useForm({
         arrival_condition: order.arrival_condition || '',
@@ -82,13 +92,13 @@ export default function Show({ auth, order, services }) {
                             )}
 
                             <div className="flex items-center gap-4 mb-8 pb-8 border-b border-gray-100 dark:border-gray-700">
-                                <div className="w-16 h-16 rounded-2xl bg-fuchsia-100 dark:bg-fuchsia-900/30 flex items-center justify-center text-3xl shadow-inner">
+                                <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 dark:bg-brand-primary/20 flex items-center justify-center text-3xl shadow-inner">
                                     🛁
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-1">Paciente</h3>
-                                    <Link href={route('pets.show', order.pet.id)} className="text-2xl font-black text-gray-900 dark:text-white leading-none hover:text-fuchsia-600 transition">{order.pet.name}</Link>
-                                    <p className="text-xs font-bold text-gray-500 uppercase mt-2">Atendió: {order.user ? order.user.name : 'N/A'}</p>
+                                    <Link href={route('pets.show', order.pet.id)} className="text-2xl font-black text-gray-900 dark:text-white leading-none hover:text-brand-primary transition">{order.pet.name}</Link>
+                                    <p className="text-xs font-bold text-gray-500 uppercase mt-2">Atendió: {order.user ? `${order.user.name} (${roleLabels[order.user.role] || order.user.role})` : 'N/A'}</p>
                                 </div>
                                 {canEdit && (
                                     <button 
@@ -104,10 +114,10 @@ export default function Show({ auth, order, services }) {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                                 <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-700">
-                                    <h3 className="text-xs font-black text-fuchsia-600 dark:text-fuchsia-400 uppercase tracking-widest mb-4">Condición de Llegada</h3>
+                                    <h3 className="text-xs font-black text-brand-primary dark:text-brand-primary/80 uppercase tracking-widest mb-4">Condición de Llegada</h3>
                                     {canEdit ? (
                                         <textarea
-                                            className="w-full bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-fuchsia-500 font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                                            className="w-full bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-brand-primary font-medium text-gray-700 dark:text-gray-300 transition-colors"
                                             rows="3"
                                             value={data.arrival_condition}
                                             onChange={e => setData('arrival_condition', e.target.value)}
@@ -119,13 +129,13 @@ export default function Show({ auth, order, services }) {
                                 
                                 <div>
                                     <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-xs font-black text-fuchsia-600 dark:text-fuchsia-400 uppercase tracking-widest">Servicios a Realizar</h3>
+                                        <h3 className="text-xs font-black text-brand-primary dark:text-brand-primary/80 uppercase tracking-widest">Servicios a Realizar</h3>
                                     </div>
                                     
                                     {canEdit && (
                                         <div className="flex flex-col sm:flex-row gap-2 mb-4">
                                             <select
-                                                className="flex-1 w-full bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:ring-fuchsia-500 font-bold text-gray-700 dark:text-gray-300 shadow-sm"
+                                                className="flex-1 w-full bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 shadow-sm"
                                                 value={selectedService}
                                                 onChange={e => setSelectedService(e.target.value)}
                                             >
@@ -176,17 +186,17 @@ export default function Show({ auth, order, services }) {
                                     <div className="mb-6">
                                         <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Observaciones de Salida del Estilista</label>
                                         <textarea
-                                            className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 mt-2 focus:ring-fuchsia-500 font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                                            className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 mt-2 focus:ring-brand-primary font-medium text-gray-700 dark:text-gray-300 transition-colors"
                                             rows="2"
                                             value={data.notes}
                                             onChange={e => setData('notes', e.target.value)}
                                             placeholder="El perrito se portó bien, se detectó una verruga, se le puso pañoleta roja..."
                                         />
                                     </div>
-                                    <div className="flex flex-col md:flex-row justify-between md:items-center bg-fuchsia-50 dark:bg-fuchsia-900/10 p-4 rounded-xl border border-fuchsia-100 dark:border-fuchsia-900/30 gap-4">
+                                    <div className="flex flex-col md:flex-row justify-between md:items-center bg-brand-primary/5 dark:bg-brand-primary/10 p-4 rounded-xl border border-brand-primary/20 dark:border-brand-primary/40 gap-4">
                                         <div>
-                                            <h4 className="text-fuchsia-700 dark:text-fuchsia-400 font-black uppercase tracking-widest text-xs mb-1">Finalizar Servicio</h4>
-                                            <p className="text-[10px] text-fuchsia-600/80 uppercase font-bold">Esto enviará los cargos directamente al POS para su cobro con el total actual.</p>
+                                            <h4 className="text-brand-primary dark:text-brand-primary/80 font-black uppercase tracking-widest text-xs mb-1">Finalizar Servicio</h4>
+                                            <p className="text-[10px] text-brand-primary/80 uppercase font-bold">Esto enviará los cargos directamente al POS para su cobro con el total actual.</p>
                                             <p className="text-[10px] text-red-500/80 uppercase font-bold mt-1">Asegúrate de haber "Guardado Cambios Parciales" si modificaste servicios.</p>
                                         </div>
                                         <button
@@ -197,7 +207,7 @@ export default function Show({ auth, order, services }) {
                                                 }
                                             }}
                                             disabled={processing}
-                                            className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white px-8 py-4 text-xs font-black uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-fuchsia-500/30 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                                            className="bg-brand-primary hover:bg-brand-primary/90 text-white px-8 py-4 text-xs font-black uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-brand-primary/20 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
                                         >
                                             {processing ? '...' : 'Completar y Cobrar'}
                                         </button>

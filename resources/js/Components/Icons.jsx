@@ -22,3 +22,9 @@ export const IconTrash = ({ className = "w-5 h-5" }) => (
         <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.34 6m-4.77 0L9 9m1.14-1.803a4.5 4.5 0 0 1 4.414 0l1.259.709m-7.658 0a4.5 4.5 0 0 1 4.414 0l1.259.709m.47 11.171h-8.58a2.25 2.25 0 0 1-2.247-2.118L2.98 8.72a.505.505 0 0 1 .47-.51h14.1c.25 0 .47.212.47.51l-1.01 11.063a2.25 2.25 0 0 1-2.247 2.118Z" />
     </svg>
 );
+
+export const IconPlay = ({ className = "w-5 h-5" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path fillRule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clipRule="evenodd" />
+    </svg>
+);

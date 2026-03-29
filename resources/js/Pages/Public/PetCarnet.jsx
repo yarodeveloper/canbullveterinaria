@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Head } from '@inertiajs/react';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function PetCarnet({ pet, clinic }) {
     const groupedRecords = pet.preventive_records.reduce((acc, record) => {
@@ -79,10 +80,11 @@ export default function PetCarnet({ pet, clinic }) {
                             </div>
                             <div className="flex flex-col items-center gap-3 w-full md:w-auto mt-6 md:mt-0 print:flex print:flex-col print:items-center">
                                 <div className="bg-white p-2 border-2 border-gray-100 rounded-2xl shadow-sm">
-                                    <img
-                                        src={`https://chart.googleapis.com/chart?chs=100x100&cht=qr&chl=${encodeURIComponent(window.location.href)}&choe=UTF-8`}
-                                        alt="QR Carnet"
-                                        className="w-20 h-20"
+                                    <QRCodeSVG
+                                        value={typeof window !== 'undefined' ? window.location.href : ''}
+                                        size={80}
+                                        level="M"
+                                        includeMargin={false}
                                     />
                                 </div>
                                 <button
@@ -208,11 +210,12 @@ export default function PetCarnet({ pet, clinic }) {
                     <p className="text-xs font-black uppercase tracking-[0.3em] text-gray-300 mb-10 italic">Validación Electrónica de Salud</p>
                     <div className="flex flex-col md:flex-row items-center justify-center gap-12">
                         <div className="relative p-4 bg-white rounded-3xl border-2 border-gray-50 shadow-inner">
-                            <img
-                                src={`https://chart.googleapis.com/chart?chs=180x180&cht=qr&chl=${encodeURIComponent(window.location.href)}&choe=UTF-8`}
-                                alt="QR Verificación"
-                                className="w-36 h-36"
-                            />
+                            <QRCodeSVG
+                                        value={typeof window !== 'undefined' ? window.location.href : ''}
+                                        size={144}
+                                        level="Q"
+                                        includeMargin={false}
+                                    />
                             <div className="absolute inset-0 border-4 border-indigo-600/5 rounded-3xl pointer-events-none"></div>
                         </div>
                         <div className="text-left space-y-4">

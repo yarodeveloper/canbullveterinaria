@@ -47,13 +47,16 @@ export default function Index({ auth, hospitalizations, filters }) {
             user={auth.user}
             header={
                 <div className="flex justify-between items-center">
-                    <h2 className="font-semibold text-xl text-slate-800 dark:text-slate-200 leading-tight">Zonas de Hospitalización</h2>
+                    <h2 className="font-extrabold text-xl text-slate-900 dark:text-white leading-tight flex items-center gap-2 uppercase tracking-tight">
+                        <span className="w-1.5 h-6 bg-brand-primary rounded-full"></span>
+                        Zonas de Hospitalización
+                    </h2>
                     {can('manage hospitalizations') && (
                         <Link
                             href={route('hospitalizations.create')}
-                            className="bg-brand-primary text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-primary-100"
+                            className="bg-brand-primary text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-brand-primary/20 flex items-center gap-2 active:scale-95"
                         >
-                            + Ingresar Paciente
+                            <span>+ Ingresar Paciente</span>
                         </Link>
                     )}
                 </div>
@@ -61,28 +64,29 @@ export default function Index({ auth, hospitalizations, filters }) {
         >
             <Head title="Hospitalización" />
 
-            <div className="py-12">
+            <div className="py-6 min-h-screen bg-slate-50/50 dark:bg-slate-900/20">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white dark:bg-[#1B2132] overflow-hidden shadow-sm sm:rounded-[2rem] border dark:border-gray-700">
+                    <div className="bg-white dark:bg-[#1B2132] overflow-hidden shadow-sm sm:rounded-[2rem] border dark:border-gray-700/50">
                         {/* Filtros */}
-                        <div className="p-6 border-b border-slate-200 dark:border-slate-700/50 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col md:flex-row gap-4 items-center justify-between">
+                        <div className="p-4 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50/50 dark:bg-gray-900/40 flex flex-col md:flex-row gap-4 items-center justify-between">
                             <div className="w-full md:w-1/2 relative group">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 group-focus-within:text-brand-primary transition-colors">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 opacity-50 group-focus-within:text-brand-primary transition-colors">
                                     🔍
                                 </span>
                                 <input
                                     type="text"
-                                    placeholder="Buscar paciente o motivo..."
+                                    placeholder="Buscar por paciente, motivo o veterinario..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full bg-white dark:bg-[#1B2132] border-slate-300 dark:border-slate-700 hover:border-brand-primary/50 focus:border-brand-primary focus:ring-brand-primary rounded-2xl pl-12 pr-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300 transition-all shadow-sm"
+                                    className="w-full bg-white dark:bg-[#1B2132] border-slate-200 dark:border-gray-700 hover:border-brand-primary/50 focus:border-brand-primary focus:ring-brand-primary rounded-xl pl-12 pr-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 transition-all shadow-inner"
                                 />
                             </div>
-                            <div className="w-full md:w-auto">
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <span className="hidden lg:block text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Filtrar por:</span>
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="w-full md:w-48 bg-white dark:bg-[#1B2132] border-slate-300 dark:border-slate-700 focus:border-brand-primary focus:ring-brand-primary rounded-2xl py-3 px-4 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm transition-all"
+                                    className="w-full md:w-48 bg-white dark:bg-[#1B2132] border-slate-200 dark:border-gray-700 focus:border-brand-primary focus:ring-brand-primary rounded-xl py-2.5 px-4 text-xs font-black text-slate-700 dark:text-slate-300 shadow-sm transition-all uppercase tracking-tight"
                                 >
                                     <option value="all">TODOS LOS ESTADOS</option>
                                     <option value="active">Activos</option>
@@ -96,50 +100,49 @@ export default function Index({ auth, hospitalizations, filters }) {
                         {/* Listado / Tabla compacta */}
                         <div className="p-0">
                             {hospitalizations.length > 0 ? (
-                                <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+                                <ul className="divide-y divide-gray-100 dark:divide-gray-800 text-slate-700 dark:text-slate-300">
                                     {hospitalizations.map((hospitalization) => (
-                                        <li key={hospitalization.id} className="group hover:bg-brand-primary transition-colors">
-                                            <Link href={route('hospitalizations.show', hospitalization.id)} className="block px-6 py-5">
+                                        <li key={hospitalization.id} className="group hover:bg-brand-primary transition-all duration-150">
+                                            <Link href={route('hospitalizations.show', hospitalization.id)} className="block px-5 py-2.5">
                                                 <div className="flex items-center justify-between">
-
                                                     {/* Info Paciente y Motivo */}
-                                                    <div className="flex items-center min-w-0 gap-5 flex-1">
-                                                        <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                                                    <div className="flex items-center min-w-0 gap-4 flex-1">
+                                                        <div className="flex-shrink-0 w-10 h-10 bg-slate-100 dark:bg-slate-800 group-hover:bg-white/20 rounded-xl flex items-center justify-center text-xl shadow-inner border dark:border-gray-700 transition-all group-hover:scale-110">
                                                             {hospitalization.pet.species === 'Canino' ? '🐕' : '🐈'}
                                                         </div>
                                                         <div className="min-w-0 flex-1">
-                                                            <div className="flex items-center gap-3">
-                                                                 <p className="text-base font-black text-slate-900 dark:text-white group-hover:text-white truncate">
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="text-sm font-black text-slate-900 dark:text-white group-hover:text-white truncate uppercase tracking-tight">
                                                                     {hospitalization.pet.name}
                                                                 </p>
-                                                                 <span className={`px-2.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-widest group-hover:bg-white group-hover:text-brand-primary group-hover:border-white ${getStatusStyle(hospitalization.status)}`}>
+                                                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-black border group-hover:bg-white group-hover:text-brand-primary group-hover:border-white transition-colors shadow-sm tracking-[0.1em] ${getStatusStyle(hospitalization.status)}`}>
                                                                     {getStatusLabel(hospitalization.status)}
                                                                 </span>
                                                             </div>
-                                                             <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 group-hover:text-white/80 font-bold uppercase tracking-wide">
-                                                                <span>{hospitalization.reason}</span>
-                                                                <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 group-hover:bg-white/30 rounded-full"></span>
-                                                                <span className="hidden sm:inline-flex items-center gap-1">
-                                                                    👨‍⚕️ {hospitalization.veterinarian?.name || 'No asignado'}
+                                                            <div className="flex items-center gap-3 mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 font-bold uppercase tracking-wide truncate max-w-xl italic">
+                                                                <span className="truncate">{hospitalization.reason}</span>
+                                                                <span className="hidden sm:inline-block w-1 h-1 bg-slate-300 group-hover:bg-white/30 rounded-full"></span>
+                                                                <span className="hidden sm:inline-flex items-center gap-1 font-black tracking-widest text-[9px] opacity-70">
+                                                                    👨‍⚕️ {hospitalization.veterinarian?.name || 'S/V'}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </div>
 
                                                     {/* Info Fecha y Acciones */}
-                                                    <div className="flex items-center gap-6 ml-4">
+                                                    <div className="flex items-center gap-5 ml-4">
                                                         <div className="text-right hidden sm:block">
-                                                             <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5">Ingresado</p>
-                                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-white">
-                                                                {format(new Date(hospitalization.admission_date), "d MMM, HH:mm", { locale: es })}
+                                                            <p className="text-[9px] font-black text-slate-400 group-hover:text-white/60 uppercase tracking-[0.2em] mb-0.5 whitespace-nowrap">Ingreso Clínico</p>
+                                                            <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 group-hover:text-white whitespace-nowrap">
+                                                                {format(new Date(hospitalization.admission_date), "d MMM • HH:mm", { locale: es }).toUpperCase()}
                                                             </p>
                                                         </div>
-                                                        <div className="hidden md:flex flex-shrink-0">
-                                                             <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-[#1B2132] border-2 border-slate-200 dark:border-slate-700/50 group-hover:border-white group-hover:bg-white/20 group-hover:text-white text-gray-300 transition-colors">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                                        <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white border border-white shadow-sm ring-1 ring-white/50">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                                                                     <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                                                                 </svg>
-                                                            </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>

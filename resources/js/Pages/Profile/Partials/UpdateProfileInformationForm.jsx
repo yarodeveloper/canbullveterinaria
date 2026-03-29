@@ -16,6 +16,7 @@ export default function UpdateProfileInformation({
         useForm({
             name: user.name,
             email: user.email,
+            professional_license: user.professional_license || '',
         });
 
     const submit = (e) => {
@@ -67,6 +68,22 @@ export default function UpdateProfileInformation({
                     />
 
                     <InputError className="mt-2" message={errors.email} />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="professional_license" value="Cédula Profesional (Opcional)" />
+
+                    <TextInput
+                        id="professional_license"
+                        type="text"
+                        className="mt-1 block w-full uppercase"
+                        value={data.professional_license}
+                        onChange={(e) => setData('professional_license', e.target.value)}
+                        autoComplete="off"
+                        placeholder="Ej. 1234567"
+                    />
+
+                    <InputError className="mt-2" message={errors.professional_license} />
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (

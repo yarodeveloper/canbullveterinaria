@@ -15,9 +15,13 @@ class ClientController extends Controller
         $branchId = Auth::user()->branch_id;
         $search = $request->input('search');
         
-        $clients = User::where('branch_id', $branchId)
+        $clients = User::query()
             ->where('role', 'client')
-            ->where('email', '!=', 'publico@general.com')
+            ->where(function($q) {
+                $q->where('email', '!=', 'publico@general.com')
+                  ->orWhereNull('email');
+            })
+            ->where('name', 'NOT LIKE', '%Sin Asignar%')
             ->when($search, function($query, $search) {
                 $query->where(function($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -45,7 +49,7 @@ class ClientController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'nullable|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'emergency_contact_name' => 'nullable|string|max:255',
@@ -73,15 +77,25 @@ class ClientController extends Controller
         $this->authorizeBranch($client);
 
         $branchId = Auth::user()->branch_id;
+        
         $documentTemplates = \App\Models\DocumentTemplate::where(function($q) use($branchId) {
                 $q->where('branch_id', $branchId)->orWhereNull('branch_id');
             })->where('is_active', true)->get();
 
+        $financialSummary = [
+            'pending_credit' => (float) \App\Models\Receipt::where('user_id', $client->id)->where('status', 'pending')->sum('total'),
+            'pending_receipts' => \App\Models\Receipt::where('user_id', $client->id)->where('status', 'pending')->get(),
+            'pending_charges' => \App\Models\PendingCharge::with(['pet', 'product'])->where('client_id', $client->id)->where('status', 'pending')->get(),
+            'last_payment_date' => \App\Models\Receipt::where('user_id', $client->id)->where('status', 'paid')->latest()->value('date'),
+            'total_historical' => (float) \App\Models\Receipt::where('user_id', $client->id)->where('status', 'paid')->sum('total'),
+        ];
+
         return Inertia::render('Clients/Show', [
             'client' => $client->load(['pets' => function($q) {
                 $q->withCount(['medicalRecords', 'appointments']);
-            }]),
-            'documentTemplates' => $documentTemplates
+            }, 'branch']),
+            'documentTemplates' => $documentTemplates,
+            'financialSummary' => $financialSummary
         ]);
     }
 
@@ -100,7 +114,7 @@ class ClientController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $client->id,
+            'email' => 'nullable|string|email|max:255|unique:users,email,' . $client->id,
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'emergency_contact_name' => 'nullable|string|max:255',
@@ -121,7 +135,16 @@ class ClientController extends Controller
             abort(403, 'Este cliente es del sistema y no puede ser modificado manualmente.');
         }
 
-        if ($user->branch_id !== Auth::user()->branch_id || $user->role !== 'client') {
+        $branchId = Auth::user()->branch_id;
+        
+        // Permitir ver clientes de otras sucursales si el usuario administrativo
+        // Pero restringir la EDICIÓN de datos básicos si fuera necesario (opcional)
+        // Por ahora, permitimos lectura global para soporte multi-sucursal.
+        if ($branchId && $user->branch_id && $user->branch_id !== $branchId) {
+            // Unrestricted read.
+        }
+
+        if ($user->role !== 'client') {
             abort(403);
         }
     }

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             SiteSettingSeeder::class,
             SiteSettingsSeeder::class,
             InitialDataSeeder::class,
+            UnassignedClientSeeder::class,
             PetBreedSeeder::class,
             InventorySeeder::class,
         ]);

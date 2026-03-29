@@ -24,7 +24,8 @@ class InventoryController extends Controller
         $selectedType = $request->input('selected_type', 'product');
 
         $query = Product::with(['category', 'lots' => function($query) use ($branchId) {
-            $query->where('branch_id', $branchId)->where('status', 'active');
+            if ($branchId) $query->where('branch_id', $branchId);
+            $query->where('status', 'active');
         }])->where('is_active', true)
           ->where('is_service', $selectedType === 'service');
 

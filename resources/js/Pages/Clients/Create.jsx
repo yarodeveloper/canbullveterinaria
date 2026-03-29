@@ -40,6 +40,7 @@ export default function Create({ auth }) {
                                         <label className="block text-sm font-medium">Nombre Completo *</label>
                                         <input
                                             type="text"
+                                            placeholder="Nombre del dueño"
                                             value={data.name}
                                             onChange={e => setData('name', e.target.value)}
                                             className="mt-1 block w-full rounded-md border-gray-300 focus:border-brand-primary focus:ring-brand-primary dark:bg-gray-900 dark:border-gray-700"
@@ -48,13 +49,13 @@ export default function Create({ auth }) {
                                         {errors.name && <div className="text-red-500 text-xs mt-1">{errors.name}</div>}
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium">Correo Electrónico *</label>
+                                        <label className="block text-sm font-medium">Correo Electrónico (Opcional)</label>
                                         <input
                                             type="email"
+                                            placeholder="ejemplo@correo.com"
                                             value={data.email}
                                             onChange={e => setData('email', e.target.value)}
                                             className="mt-1 block w-full rounded-md border-gray-300 focus:border-brand-primary focus:ring-brand-primary dark:bg-gray-900 dark:border-gray-700"
-                                            required
                                         />
                                         {errors.email && <div className="text-red-500 text-xs mt-1">{errors.email}</div>}
                                     </div>

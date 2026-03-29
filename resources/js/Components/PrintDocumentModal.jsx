@@ -21,7 +21,7 @@ export default function PrintDocumentModal({
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-            <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] w-full max-w-4xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border dark:border-gray-700">
                 <div className="p-8 border-b dark:border-gray-700 flex justify-between items-center bg-slate-50 dark:bg-gray-900/50 relative">
                     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-primary to-indigo-500"></div>
                     <div>
@@ -37,7 +37,7 @@ export default function PrintDocumentModal({
                     {children}
 
                     {documentTemplates.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-6">
                             {['surgery', 'hospitalization', 'euthanasia', 'general', 'witness', 'finance'].map(category => {
                                 const categoryTemplates = documentTemplates.filter(t => t.type === category);
                                 if (categoryTemplates.length === 0) return null;
@@ -67,7 +67,7 @@ export default function PrintDocumentModal({
                                 return (
                                     <div key={category} className="space-y-3">
                                         <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] ml-2">{getCategoryLabel(category)}</h4>
-                                        <div className="space-y-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                             {categoryTemplates.map(tmpl => (
                                                 <a
                                                     key={tmpl.id}
@@ -77,8 +77,8 @@ export default function PrintDocumentModal({
                                                     className="flex items-center gap-3 p-4 bg-white dark:bg-gray-900 border border-slate-100 dark:border-gray-700 rounded-2xl hover:border-brand-primary hover:shadow-lg hover:shadow-brand-primary/10 transition-all group active:scale-[0.98]"
                                                 >
                                                     <span className="text-xl group-hover:scale-110 transition-transform">{getCategoryIcon(category)}</span>
-                                                    <div className="flex-1 overflow-hidden">
-                                                        <p className="font-bold text-sm text-slate-700 dark:text-slate-200 truncate group-hover:text-brand-primary">{tmpl.title}</p>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-bold text-sm text-slate-700 dark:text-slate-200 group-hover:text-brand-primary truncate">{tmpl.title}</p>
                                                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Click para imprimir</p>
                                                     </div>
                                                     <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-gray-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -90,33 +90,6 @@ export default function PrintDocumentModal({
                                     </div>
                                 );
                             })}
-                            
-                            {/* Other templates */}
-                            {(() => {
-                                const otherTemplates = documentTemplates.filter(t => !['surgery', 'hospitalization', 'euthanasia', 'witness', 'finance', 'general'].includes(t.type));
-                                if (otherTemplates.length === 0) return null;
-                                return (
-                                    <div className="space-y-3">
-                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] ml-2">Otros Formatos</h4>
-                                        <div className="space-y-2">
-                                            {otherTemplates.map(tmpl => (
-                                                <a
-                                                    key={tmpl.id}
-                                                    href={getPrintUrl(tmpl)}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center gap-3 p-4 bg-white dark:bg-gray-900 border border-slate-100 dark:border-gray-700 rounded-2xl hover:border-brand-primary hover:shadow-lg hover:shadow-brand-primary/10 transition-all group"
-                                                >
-                                                    <span className="text-xl">📄</span>
-                                                    <div className="flex-1 overflow-hidden">
-                                                        <p className="font-bold text-sm text-slate-700 dark:text-slate-200 truncate group-hover:text-brand-primary">{tmpl.title}</p>
-                                                    </div>
-                                                </a>
-                                            ))}
-                                        </div>
-                                    </div>
-                                );
-                            })()}
                         </div>
                     ) : (
                         <div className="text-center py-12 bg-slate-50 dark:bg-gray-900/50 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-gray-700">

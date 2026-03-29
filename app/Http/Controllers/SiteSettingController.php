@@ -40,4 +40,34 @@ class SiteSettingController extends Controller
 
         return redirect()->back()->with('success', 'Configuración web actualizada correctamente.');
     }
+
+    public function updatePosPrinter(Request $request)
+    {
+        $request->validate([
+            'pos_printer_name' => 'required|string|max:255',
+            'pos_ticket_preview' => 'nullable|boolean',
+        ]);
+
+        SiteSetting::updateOrCreate(
+            ['key' => 'pos_printer_name'],
+            [
+                'value' => $request->pos_printer_name,
+                'type' => 'text',
+                'group' => 'finances',
+                'label' => 'Nombre de la Impresora de PDV (80mm)'
+            ]
+        );
+
+        SiteSetting::updateOrCreate(
+            ['key' => 'pos_ticket_preview'],
+            [
+                'value' => $request->pos_ticket_preview ? '1' : '0',
+                'type' => 'boolean',
+                'group' => 'finances',
+                'label' => 'Mostrar vista previa del ticket'
+            ]
+        );
+
+        return redirect()->back()->with('success', 'Configuración de impresora PDV actualizada.');
+    }
 }

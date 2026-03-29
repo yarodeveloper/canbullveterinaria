@@ -2,6 +2,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import MedicationsEditor from '@/Components/MedicationsEditor';
+import PendingChargesEditor from '@/Components/PendingChargesEditor';
 
 const REASONS = [
     'Enfermedad terminal / sin pronóstico favorable',
@@ -45,11 +47,17 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
         owner_present:       false,
         owner_authorization: '',
         consent_signed:      false,
+        owner_name_override: '',
         disposition:         '',
         cremation_provider:  '',
         notes:               '',
         folio:               '',
+        pending_charges:     [],
     });
+
+    const defaultAuthText = (petName, ownerName) => `Yo, en mi calidad de propietario/responsable de la mascota ${petName || '[PACIENTE]'}, autorizo de manera libre, voluntaria y consciente la realización del procedimiento de eutanasia humanitaria. He sido informado por el equipo médico sobre el estado clínico irreversible de mi mascota y entiendo que este acto tiene como fin evitar el sufrimiento innecesario. Acepto los términos y doy mi consentimiento para la disposición final del cuerpo según lo acordado.`;
+
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
 
     // Búsqueda de paciente
     useEffect(() => {
@@ -67,69 +75,15 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
 
     const selectPet = (pet) => {
         setSelectedPet(pet);
-        setData(d => ({ ...d, pet_id: pet.id, weight: pet.weight || d.weight }));
+        setData(d => ({ 
+            ...d, 
+            pet_id: pet.id, 
+            weight: pet.weight || d.weight,
+            owner_authorization: d.owner_authorization || defaultAuthText(pet.name, pet.owner?.name)
+        }));
         setPetSearch('');
         setShowPetDropdown(false);
     };
-
-    // Medicamentos
-    const addMedFromInventory = (product) => {
-        const newMed = {
-            id:            product.id,
-            name:          product.name,
-            unit:          product.unit,
-            is_controlled: product.is_controlled,
-            is_manual:     false,
-            concentration: '',
-            dose_mg_kg:    '',
-            total_dose:    '',
-            volume_ml:     '',
-            route:         'IV',
-            lot_number:    '',
-            notes:         '',
-        };
-        const updated = [...medications, newMed];
-        setMedications(updated);
-        setData('medications', updated);
-        setMedSearch('');
-    };
-
-    const addManualMed = () => {
-        const newMed = {
-            id:            null,
-            name:          '',
-            unit:          '',
-            is_controlled: true,
-            is_manual:     true,
-            concentration: '',
-            dose_mg_kg:    '',
-            total_dose:    '',
-            volume_ml:     '',
-            route:         'IV',
-            lot_number:    '',
-            notes:         '',
-        };
-        const updated = [...medications, newMed];
-        setMedications(updated);
-        setData('medications', updated);
-    };
-
-    const updateMed = (idx, field, value) => {
-        const updated = medications.map((m, i) => i === idx ? { ...m, [field]: value } : m);
-        setMedications(updated);
-        setData('medications', updated);
-    };
-
-    const removeMed = (idx) => {
-        const updated = medications.filter((_, i) => i !== idx);
-        setMedications(updated);
-        setData('medications', updated);
-    };
-
-    const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(medSearch.toLowerCase()) &&
-        !medications.find(m => m.id === p.id)
-    );
 
     const submit = (e) => {
         e.preventDefault();
@@ -145,7 +99,7 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
                     <form onSubmit={submit} className="space-y-6">
 
                         {/* Header */}
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                             <div className="px-8 py-4 bg-gradient-to-r from-purple-900 to-purple-700 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-2xl">🕊️</div>
@@ -168,18 +122,17 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
                             )}
 
                             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Selección de Paciente */}
-                                <div className="md:col-span-2">
+                                <div className="md:col-span-1">
                                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Paciente *</label>
                                     {selectedPet ? (
                                         <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-800 rounded-2xl">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center text-xl font-black text-purple-600">
+                                                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center text-xl font-black text-purple-600">
                                                     {selectedPet.species === 'Canino' ? '🐕' : '🐈'}
                                                 </div>
-                                                <div>
-                                                    <p className="font-black text-slate-800 dark:text-white">{selectedPet.name}</p>
-                                                    <p className="text-xs text-slate-500">{selectedPet.species} • {selectedPet.breed} • {selectedPet.owner?.name}</p>
+                                                <div className="min-w-0">
+                                                    <p className="font-black text-slate-800 dark:text-white truncate">{selectedPet.name}</p>
+                                                    <p className="text-[10px] text-slate-500 truncate">{selectedPet.species} • {selectedPet.breed}</p>
                                                 </div>
                                             </div>
                                             <button type="button" onClick={() => { setSelectedPet(null); setData('pet_id', ''); }} className="text-slate-400 hover:text-red-500 transition">
@@ -199,18 +152,27 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
                                                 <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-h-60 overflow-auto">
                                                     {petResults.map(p => (
                                                         <button key={p.id} type="button" onClick={() => selectPet(p)}
-                                                            className="w-full text-left px-4 py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center font-black text-slate-500 text-sm">{p.name?.charAt(0)}</div>
+                                                            className="w-full text-left px-4 py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition flex items-center gap-3 text-sm">
+                                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm ${p.owner?.name === '<< Sin Asignar >>' ? 'bg-orange-100 text-orange-600 border border-orange-200' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
+                                                                {p.name?.charAt(0)}
+                                                            </div>
                                                             <div>
-                                                                <p className="font-bold text-sm text-slate-800 dark:text-white">{p.name}</p>
-                                                                <p className="text-[10px] text-slate-400">{p.species} • {p.owner?.name}</p>
+                                                                <p className="font-bold text-sm text-slate-800 dark:text-white">
+                                                                    {p.name} 
+                                                                    {p.owner?.name === '<< Sin Asignar >>' ? (
+                                                                        <span className="text-[9px] bg-orange-500 text-white px-1.5 py-0.5 rounded ml-2 font-black uppercase tracking-tighter">SIN DUEÑO</span>
+                                                                    ) : (
+                                                                        <span className="text-[9px] text-slate-400 font-normal ml-2">{p.owner?.name}</span>
+                                                                    )}
+                                                                </p>
+                                                                <p className="text-[10px] text-slate-400">{p.species} • {p.breed}</p>
                                                             </div>
                                                         </button>
                                                     ))}
                                                 </div>
                                             )}
                                             <p className="mt-2 text-xs text-slate-400">
-                                                ¿El paciente no está registrado?{' '}
+                                                ¿No está registrado?{' '}
                                                 <Link
                                                     href={route('pets.create')}
                                                     className="text-purple-600 hover:text-purple-800 font-bold underline underline-offset-2"
@@ -222,6 +184,21 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
                                         </div>
                                     )}
                                     {errors.pet_id && <p className="text-red-500 text-xs mt-1">{errors.pet_id}</p>}
+                                </div>
+
+                                {/* Propietario / Firmante */}
+                                <div className="md:col-span-1">
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nombre del Propietario / Firmante</label>
+                                    <input type="text" value={data.owner_name_override} onChange={e => setData('owner_name_override', e.target.value)}
+                                        placeholder={selectedPet?.owner?.name || 'Nombre responsable'}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                                    <p className="mt-2 text-[9px] text-slate-400 italic">
+                                        {selectedPet?.owner?.name ? (
+                                            <>Registrado: <span className="font-bold">{selectedPet.owner.name}</span>. Déjalo vacío si firma la misma persona.</>
+                                        ) : (
+                                            "Escribe el nombre de la persona presente que autoriza el procedimiento."
+                                        )}
+                                    </p>
                                 </div>
 
                                 {/* Veterinario */}
@@ -296,113 +273,14 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
                             </div>
                         </div>
 
-                        {/* Medicamentos */}
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-8 space-y-5">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                    Medicamentos / Fármacos Empleados
-                                </h2>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <div className={`w-10 h-5 rounded-full transition-colors ${allowManual ? 'bg-purple-500' : 'bg-slate-200 dark:bg-slate-600'} relative`}
-                                        onClick={() => setAllowManual(!allowManual)}>
-                                        <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${allowManual ? 'translate-x-5' : ''}`}></div>
-                                    </div>
-                                    <span className="text-[10px] font-bold text-slate-500">Permitir entrada manual</span>
-                                </label>
-                            </div>
-
-                            {/* Buscador de inventario */}
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    value={medSearch}
-                                    onChange={e => setMedSearch(e.target.value)}
-                                    placeholder="Buscar medicamento del inventario..."
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                />
-                                {medSearch.length > 0 && filteredProducts.length > 0 && (
-                                    <div className="absolute z-40 w-full mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-h-48 overflow-auto">
-                                        {filteredProducts.map(p => (
-                                            <button key={p.id} type="button" onClick={() => addMedFromInventory(p)}
-                                                className="w-full text-left px-4 py-2.5 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition flex items-center gap-3 text-sm">
-                                                {p.is_controlled && <span className="text-[9px] bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded font-black uppercase">Controlado</span>}
-                                                <span className="font-semibold text-slate-800 dark:text-white">{p.name}</span>
-                                                <span className="text-slate-400 text-xs">{p.unit}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {allowManual && (
-                                <button type="button" onClick={addManualMed}
-                                    className="flex items-center gap-2 text-xs font-bold text-purple-600 hover:text-purple-800 transition">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
-                                    Agregar medicamento no registrado en inventario
-                                </button>
-                            )}
-
-                            {/* Tabla de medicamentos */}
-                            {medications.length > 0 && (
-                                <div className="space-y-3">
-                                    {medications.map((med, idx) => (
-                                        <div key={idx} className={`p-4 rounded-xl border-2 ${med.is_controlled ? 'border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20'}`}>
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center gap-2">
-                                                    {med.is_controlled && <span className="text-[9px] bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded font-black uppercase">⚠️ Controlado</span>}
-                                                    {med.is_manual ? (
-                                                        <input value={med.name} onChange={e => updateMed(idx, 'name', e.target.value)}
-                                                            placeholder="Nombre del medicamento"
-                                                            className="font-bold text-sm bg-transparent border-b border-slate-300 focus:outline-none focus:border-purple-500 text-slate-800 dark:text-white px-1" />
-                                                    ) : (
-                                                        <span className="font-bold text-sm text-slate-800 dark:text-white">{med.name}</span>
-                                                    )}
-                                                </div>
-                                                <button type="button" onClick={() => removeMed(idx)} className="text-slate-400 hover:text-red-500 transition">
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                                                </button>
-                                            </div>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
-                                                {[
-                                                    { field: 'concentration', label: 'Concentración',  placeholder: 'Ej: 390 mg/mL' },
-                                                    { field: 'dose_mg_kg',    label: 'Dosis (mg/kg)',  placeholder: 'Ej: 87' },
-                                                    { field: 'total_dose',    label: 'Dosis Total',   placeholder: 'Ej: 87 mg' },
-                                                    { field: 'volume_ml',     label: 'Volumen (mL)',  placeholder: 'Ej: 5.5' },
-                                                    { field: 'lot_number',    label: 'N° Lote',       placeholder: 'LOT-2024-001' },
-                                                ].map(f => (
-                                                    <div key={f.field}>
-                                                        <p className="text-[8px] font-black text-slate-400 uppercase mb-1">{f.label}</p>
-                                                        <input value={med[f.field]} onChange={e => updateMed(idx, f.field, e.target.value)}
-                                                            placeholder={f.placeholder}
-                                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500" />
-                                                    </div>
-                                                ))}
-                                                <div>
-                                                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Vía</p>
-                                                    <select value={med.route} onChange={e => updateMed(idx, 'route', e.target.value)}
-                                                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500">
-                                                        {['IV', 'IM', 'SC', 'PO', 'Intracardíaca', 'Otra'].map(r => <option key={r} value={r}>{r}</option>)}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div className="mt-2">
-                                                <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Notas / Observaciones</p>
-                                                <input value={med.notes} onChange={e => updateMed(idx, 'notes', e.target.value)}
-                                                    placeholder="Previa sedación, secuencia de aplicación, etc."
-                                                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500" />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {medications.length === 0 && (
-                                <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 text-xs">
-                                    Busca y agrega los medicamentos utilizados en el procedimiento
-                                </div>
-                            )}
-                        </div>
+                        <MedicationsEditor 
+                            title="Tratamiento Base O Fármacos Programados"
+                            medications={data.medications}
+                            onChange={(meds) => setData('medications', meds)}
+                            products={products}
+                            canManage={true}
+                            isAlwaysEditing={true}
+                        />
 
                         {/* Contexto familiar y destino del cuerpo */}
                         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-8 space-y-5">
@@ -458,10 +336,16 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
                                 </div>
                             </div>
 
+                            <div>
+                                <p className="text-[10px] text-slate-400 mb-2 italic">Asegúrate de que el nombre del firmante sea correcto para los documentos legales.</p>
+                            </div>
+
                             {/* Autorización del propietario */}
                             <div>
                                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Texto de Autorización / Declaración del Propietario</label>
-                                <textarea value={data.owner_authorization} onChange={e => setData('owner_authorization', e.target.value)}
+                                <textarea value={data.owner_authorization} onChange={e => {
+                                    setData('owner_authorization', e.target.value);
+                                }}
                                     rows={3} placeholder="Yo, [nombre], en pleno uso de mis facultades, autorizo el procedimiento de eutanasia de mi mascota [nombre]..."
                                     className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
                             </div>
@@ -475,19 +359,158 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
                                 className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
                         </div>
 
+                        {/* Enviar a Caja */}
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-8">
+                             <PendingChargesEditor 
+                                charges={data.pending_charges}
+                                products={products}
+                                onAddCharge={(p) => setData('pending_charges', [...data.pending_charges, p])}
+                                onRemoveCharge={(idx) => setData('pending_charges', data.pending_charges.filter((_, i) => i !== idx))}
+                                onUpdateCharge={(idx, field, value) => {
+                                    const newCharges = [...data.pending_charges];
+                                    newCharges[idx][field] = value;
+                                    setData('pending_charges', newCharges);
+                                }}
+                                cardBase="bg-transparent p-0 border-none shadow-none"
+                                headerTitle="text-lg font-black tracking-tight flex items-center gap-2 mb-4 text-purple-600"
+                            />
+                        </div>
+
                         {/* Botones de acción */}
                         <div className="flex items-center justify-between pb-6">
                             <Link href={route('euthanasias.index')} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition font-semibold">
                                 ← Cancelar
                             </Link>
-                            <button type="submit" disabled={processing || !data.pet_id}
-                                className="inline-flex items-center gap-2 bg-brand-primary text-white px-8 py-3 rounded-xl font-black text-sm shadow-lg shadow-purple-200 dark:shadow-none hover:opacity-90 transition disabled:opacity-50">
-                                {processing ? (
-                                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                                ) : '🕊️'}
-                                Registrar Procedimiento
-                            </button>
+
+                            <div className="flex items-center gap-3">
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowPreviewModal(true)}
+                                    disabled={!data.pet_id}
+                                    className="inline-flex items-center gap-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-6 py-3 rounded-xl font-black text-sm hover:bg-slate-300 dark:hover:bg-slate-600 transition disabled:opacity-50"
+                                >
+                                    👁️ Vista Previa
+                                </button>
+                                
+                                <button type="submit" disabled={processing || !data.pet_id}
+                                    className="inline-flex items-center gap-2 bg-purple-600 text-white px-8 py-3 rounded-xl font-black text-sm shadow-lg shadow-purple-200 dark:shadow-none hover:opacity-90 transition disabled:opacity-50">
+                                    {processing ? (
+                                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                    ) : '🕊️'}
+                                    Registrar Procedimiento
+                                </button>
+                            </div>
                         </div>
+
+                        {/* Modal de Vista Previa */}
+                        {showPreviewModal && (
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                                <div className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+                                    <div className="p-6 border-b dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+                                        <div>
+                                            <h3 className="font-black uppercase tracking-tight text-lg text-slate-900 dark:text-slate-100">Vista Previa del Registro</h3>
+                                            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Verifica los datos antes de guardar</p>
+                                        </div>
+                                        <button onClick={() => setShowPreviewModal(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition rounded-full p-1 hover:bg-slate-200 dark:hover:bg-slate-700">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div className="p-8 max-h-[70vh] overflow-y-auto space-y-6 text-sm">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Paciente</p>
+                                                <p className="font-bold text-slate-800 dark:text-slate-200">{selectedPet?.name}</p>
+                                            </div>
+                                            <div className="col-span-1">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Folio (Provisional)</p>
+                                                <p className="font-mono font-bold text-purple-600">{data.folio || '[AUTO-GENERADO]'}</p>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Autoriza / Firma</p>
+                                                <p className="font-bold text-slate-800 dark:text-slate-200">{data.owner_name_override || selectedPet?.owner?.name || '—'}</p>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Motivo</p>
+                                                <p className="font-bold text-slate-800 dark:text-slate-200">{data.reason}</p>
+                                            </div>
+                                            {data.reason_detail && (
+                                                <div className="col-span-2">
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Descripción Clínica</p>
+                                                    <p className="text-xs text-slate-600 dark:text-slate-400 italic line-clamp-3">{data.reason_detail}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Autorización del Propietario</p>
+                                            <p className="italic text-slate-600 dark:text-slate-400 leading-relaxed">"{data.owner_authorization}"</p>
+                                        </div>
+
+                                        {data.medications.length > 0 && (
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Medicamentos (Hoja Técnica)</p>
+                                                <div className="space-y-1">
+                                                    {data.medications.map((m, i) => (
+                                                        <div key={i} className="flex justify-between py-1 border-b dark:border-slate-700 last:border-0 text-xs text-slate-600 dark:text-slate-400">
+                                                            <span>• {m.name}</span>
+                                                            <span className="font-mono">{m.total_dose} {m.unit} ({m.route})</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Destino del Cuerpo</p>
+                                                <p className="font-bold text-slate-700 dark:text-slate-300">
+                                                    {DISPOSITION_OPTIONS.find(o => o.value === data.disposition)?.label || '—'}
+                                                    {data.cremation_provider && <span className="block text-[10px] text-slate-400 font-normal">Prov: {data.cremation_provider}</span>}
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Estatus Presencia/Firma</p>
+                                                <div className="flex gap-2">
+                                                    {data.owner_present && <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200 uppercase">PRESENTE</span>}
+                                                    {data.consent_signed && <span className="text-[9px] font-black bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200 uppercase">FIRMADO</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {data.notes && (
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Notas Finales</p>
+                                                <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800 p-3 rounded-xl">
+                                                    <p className="text-xs text-slate-600 dark:text-slate-400 italic">"{data.notes}"</p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="flex gap-4 pt-4 border-t dark:border-slate-700">
+                                            <div className="flex-1 text-center">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Hoja 1</p>
+                                                <p className="font-bold text-slate-500 uppercase text-[9px]">Técnica / Clínica</p>
+                                            </div>
+                                            <div className="flex-1 text-center border-l dark:border-slate-700">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Hoja 2</p>
+                                                <p className="font-bold text-emerald-500 uppercase text-[9px]">Propietario / Sin Meds</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="p-6 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
+                                        <button onClick={() => setShowPreviewModal(false)} className="flex-1 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition text-slate-600 dark:text-slate-300">
+                                            Cerrar
+                                        </button>
+                                        <button 
+                                            onClick={(e) => { setShowPreviewModal(false); submit(e); }}
+                                            className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-purple-700 transition shadow-lg shadow-purple-200 dark:shadow-none"
+                                        >
+                                            Confirmar y Guardar 🕊️
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </form>
                 </div>
             </div>

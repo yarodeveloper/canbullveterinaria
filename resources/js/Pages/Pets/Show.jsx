@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { QRCodeSVG } from 'qrcode.react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
-import { IconEye, IconPlus, IconEdit } from '@/Components/Icons';
+import { IconEye, IconPlus, IconEdit, IconPlay } from '@/Components/Icons';
 import PreventiveControl from './Partials/PreventiveControl';
 import PetAvatar from '@/Components/PetAvatar';
 import { BehaviorBadge } from '@/Components/BehaviorSelector';
 import PrintDocumentModal from '@/Components/PrintDocumentModal';
+
+const roleLabels = {
+    admin: 'Adm.',
+    vet: 'Vet.',
+    veterinarian: 'Vet.',
+    surgeon: 'Cirujano',
+    specialist: 'Esp.',
+    groomer: 'Estilista',
+    staff: 'Staff'
+};
 
 const TimelineItem = ({ event }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -32,9 +43,9 @@ const TimelineItem = ({ event }) => {
         dotColor = "bg-teal-500";
         title = `Ingreso a Hospitalización`;
     } else if (event.timeline_type === "grooming") {
-        badgeColor = "text-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-900/30 border-fuchsia-200 dark:border-fuchsia-800";
-        badgeType = "🛁 Estética";
-        dotColor = "bg-fuchsia-500";
+        badgeColor = "text-brand-primary bg-brand-primary/10 border-brand-primary/20 dark:bg-brand-primary/90 dark:text-white dark:border-brand-primary/50";
+        badgeType = "Estética";
+        dotColor = "bg-brand-primary";
         title = `Servicio de Estética / Grooming`;
     } else if (event.timeline_type === "lab") {
         dotColor = "bg-orange-500";
@@ -86,7 +97,7 @@ const TimelineItem = ({ event }) => {
                         </Link>
                     )}
                     {event.timeline_type === "grooming" && (
-                        <Link href={route("grooming-orders.show", event.id)} className="text-[10px] font-bold text-fuchsia-600 dark:text-fuchsia-400 uppercase tracking-widest flex items-center gap-1 transition hover:opacity-70">
+                        <Link href={route("grooming-orders.show", event.id)} className="text-[10px] font-bold text-brand-primary uppercase tracking-widest flex items-center gap-1 transition hover:opacity-70">
                             VER ORDEN
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-50" viewBox="0 0 20 20" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                         </Link>
@@ -119,7 +130,7 @@ const TimelineItem = ({ event }) => {
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Aplicador</p>
-                                <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.veterinarian?.name || "Desconocido"}</p>
+                                <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.veterinarian ? `${event.veterinarian.name} (${roleLabels[event.veterinarian.role] || event.veterinarian.role})` : "Desconocido"}</p>
                             </div>
                         </div>
                         {event.notes && (
@@ -223,6 +234,10 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
         allergies: pet.allergies || '',
         chronic_conditions: pet.chronic_conditions || '',
         notes: pet.notes || '',
+        color: pet.color || '',
+        microchip: pet.microchip || '',
+        dob: pet.dob || '',
+        weight: pet.weight || '',
         new_owner_user_id: '',
         new_owner_relation_type: 'Familiar',
         status: pet.status || 'active',
@@ -249,6 +264,38 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
         });
     };
 
+    const handleStartService = (apt) => {
+        router.patch(route('appointments.update', apt.id), { status: 'in-progress' }, {
+            onSuccess: () => {
+                let targetRoute = '';
+                let params = { pet_id: pet.id, appointment_id: apt.id };
+
+                switch (apt.type) {
+                    case 'consultation':
+                    case 'follow-up':
+                    case 'emergency':
+                        targetRoute = route('medical-records.create', pet.id);
+                        break;
+                    case 'surgery':
+                        targetRoute = route('surgeries.create', params);
+                        break;
+                    case 'grooming':
+                        targetRoute = route('grooming-orders.create', params);
+                        break;
+                    case 'hospitalization':
+                        targetRoute = route('hospitalizations.create', params);
+                        break;
+                    default:
+                        targetRoute = route('medical-records.create', pet.id);
+                }
+
+                if (targetRoute) {
+                    window.location.href = targetRoute;
+                }
+            }
+        });
+    };
+
     const handleLinkOwner = (e) => {
         e.preventDefault();
         router.post(route('pets.link-owner', pet.id), {
@@ -264,11 +311,11 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
         });
     };
 
-    const EditIcon = ({ onClick }) => (
+    const EditIcon = ({ onClick, className = "absolute top-4 right-4" }) => (
         <button
             onClick={onClick}
             type="button"
-            className="absolute top-4 right-4 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors z-20 block p-1"
+            className={`${className} text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors z-20 block p-1`}
             title="Editar Información"
         >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -314,10 +361,10 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                             <>
                                 <Link
                                     href={route('grooming-orders.create', { pet_id: pet.id })}
-                                    className="hidden md:inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm bg-white dark:bg-gray-900 text-fuchsia-600 hover:bg-fuchsia-600 hover:text-white border-2 border-fuchsia-100 dark:border-fuchsia-900/50 group"
+                                    className="hidden md:inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm bg-white dark:bg-gray-900 text-brand-primary hover:bg-brand-primary hover:text-white border-2 border-brand-primary/10 dark:border-brand-primary/40 group"
                                     title="Servicio de Estética / Grooming"
                                 >
-                                    <span className="mr-1.5 text-base grayscale group-hover:grayscale-0 transition-all opacity-80 group-hover:opacity-100">🛁</span> Estética
+                                    <img src="/icons/scissors-svgrepo-com.svg" className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Estética
                                 </Link>
                                 <Link
                                     href={route('euthanasias.create', { pet_id: pet.id })}
@@ -359,17 +406,68 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                             </div>
                                         )}
                                     </div>
-                                    <h3 className="text-2xl font-bold flex items-center gap-2">
-                                        {pet.name}
-                                        {pet.status === 'deceased' && <span className="text-red-500 text-xs" title="Paciente Fallecido">💔</span>}
-                                    </h3>
-                                    <p className="text-gray-500 font-medium">{pet.species} - {pet.breed || 'Mestizo'}</p>
-                                    {pet.status === 'deceased' && pet.death_date && (
-                                        <div className="mt-2 flex flex-col items-center">
-                                            <p className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest">Defunción: {new Date(pet.death_date).toLocaleDateString()}</p>
-                                            {pet.death_reason && <p className="text-[9px] text-gray-400 font-bold max-w-[200px] text-center italic mt-1 line-clamp-2" title={pet.death_reason}>"{pet.death_reason}"</p>}
-                                        </div>
-                                    )}
+                                    </div>
+                                    <div className="relative w-full text-center mt-2 group">
+                                        {editingState === 'basic' ? (
+                                            <form onSubmit={handleSave} className="space-y-4 animate-in fade-in slide-in-from-top-2 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase text-left mb-1">Nombre</label>
+                                                    <input type="text" value={data.name} onChange={e => setData('name', e.target.value)} className="w-full text-sm font-bold rounded-xl border-gray-200 dark:bg-gray-800 dark:border-gray-700" required />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <label className="block text-[9px] font-black text-gray-400 uppercase text-left mb-1">Especie</label>
+                                                        <select value={data.species} onChange={e => setData('species', e.target.value)} className="w-full text-xs rounded-xl border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                                                            <option value="Canino">Canino</option>
+                                                            <option value="Felino">Felino</option>
+                                                            <option value="Otros">Otros</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[9px] font-black text-gray-400 uppercase text-left mb-1">Género</label>
+                                                        <select value={data.gender} onChange={e => setData('gender', e.target.value)} className="w-full text-xs rounded-xl border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                                                            <option value="male">Macho</option>
+                                                            <option value="female">Hembra</option>
+                                                            <option value="unknown">Desconocido</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase text-left mb-1">Raza</label>
+                                                    <input type="text" value={data.breed} onChange={e => setData('breed', e.target.value)} className="w-full text-xs rounded-xl border-gray-200 dark:bg-gray-800 dark:border-gray-700" placeholder="Mestizo, Lab..." />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <label className="block text-[9px] font-black text-gray-400 uppercase text-left mb-1">Nacimiento</label>
+                                                        <input type="date" value={data.dob} onChange={e => setData('dob', e.target.value)} className="w-full text-xs rounded-xl border-gray-200 dark:bg-gray-800 dark:border-gray-700" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[9px] font-black text-gray-400 uppercase text-left mb-1">Peso (kg)</label>
+                                                        <input type="number" step="0.01" value={data.weight} onChange={e => setData('weight', e.target.value)} className="w-full text-xs font-bold rounded-xl border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-brand-primary" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button type="submit" disabled={processing} className="flex-1 bg-brand-primary text-white font-bold py-2 rounded-xl text-[10px] uppercase">Guardar</button>
+                                                    <button type="button" onClick={handleCancel} className="flex-1 bg-white dark:bg-gray-800 border dark:border-gray-700 text-gray-500 font-bold py-2 rounded-xl text-[10px] uppercase">X</button>
+                                                </div>
+                                            </form>
+                                        ) : (
+                                            <>
+                                                {pet.status !== 'deceased' && <EditIcon onClick={() => handleEdit('basic')} className="absolute top-0 right-0" />}
+                                                <h3 className="text-2xl font-bold flex items-center justify-center gap-2">
+                                                    {pet.name}
+                                                    {pet.status === 'deceased' && <span className="text-red-500 text-xs" title="Paciente Fallecido">💔</span>}
+                                                </h3>
+                                                <p className="text-gray-500 font-medium">{pet.species} - {pet.breed || 'Mestizo'}</p>
+                                                {pet.status === 'deceased' && pet.death_date && (
+                                                    <div className="mt-2 flex flex-col items-center">
+                                                        <p className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest">Defunción: {new Date(pet.death_date).toLocaleDateString()}</p>
+                                                        {pet.death_reason && <p className="text-[9px] text-gray-400 font-bold max-w-[200px] text-center italic mt-1 line-clamp-2" title={pet.death_reason}>"{pet.death_reason}"</p>}
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="mt-8 space-y-3">
@@ -407,15 +505,17 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                         )}
                                     </div>
                                 </div>
-                            </div>
 
                             <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 border dark:border-gray-700 relative group">
-                                <h3 className="text-sm font-bold uppercase text-gray-400 mb-4 tracking-widest">Hub Familiar</h3>
+                                <h3 className="text-sm font-bold uppercase text-gray-400 mb-4 tracking-widest flex justify-between items-center">
+                                    Hub Familiar
+                                    <EditIcon onClick={() => handleEdit('hub')} className="static" />
+                                </h3>
                                 <div className="space-y-4">
                                     {pet.owners.map(owner => (
                                         <div key={owner.id} className="flex items-center justify-between border-b dark:border-gray-700 pb-2">
-                                            <div>
-                                                <Link href={route('clients.show', owner.id)} className="text-sm font-bold text-brand-primary hover:underline block">
+                                            <div className="flex-1 overflow-hidden mr-2">
+                                                <Link href={route('clients.show', owner.id)} className="text-sm font-bold text-brand-primary hover:underline block truncate">
                                                     {owner.name}
                                                 </Link>
                                                 <div className="flex gap-1 mt-1 items-center">
@@ -509,10 +609,11 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                 </div>
                                 <h3 className="text-sm font-black uppercase tracking-widest mb-4">Carnet Público</h3>
                                 <div className="bg-white p-3 rounded-xl mb-4 inline-block">
-                                    <img
-                                        src={`https://chart.googleapis.com/chart?chs=100x100&cht=qr&chl=${encodeURIComponent(window.location.origin + '/carnet/' + pet.uuid)}&choe=UTF-8`}
-                                        alt="QR Link"
-                                        className="w-24 h-24"
+                                    <QRCodeSVG 
+                                        value={typeof window !== 'undefined' ? window.location.origin + '/carnet/' + pet.uuid : ''}
+                                        size={96}
+                                        level="H"
+                                        includeMargin={false}
                                     />
                                 </div>
                                 <p className="text-[10px] font-bold text-indigo-100 uppercase mb-4 leading-relaxed">
@@ -692,12 +793,23 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                                             <p className="text-[10px] text-gray-500 uppercase font-black">{app.type}</p>
                                                         </div>
                                                     </div>
-                                                    <span className={`px-2 py-0.5 text-[10px] font-black uppercase rounded-full border ${app.status === 'scheduled' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                                                        app.status === 'confirmed' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' :
-                                                            'bg-gray-50 text-gray-500 border-gray-200'
-                                                        }`}>
-                                                        {app.status}
-                                                    </span>
+                                                     <div className="flex items-center gap-2">
+                                                        <span className={`px-2 py-0.5 text-[10px] font-black uppercase rounded-full border ${app.status === 'scheduled' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                                                            app.status === 'confirmed' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' :
+                                                                'bg-gray-50 text-gray-500 border-gray-200'
+                                                            }`}>
+                                                            {app.status}
+                                                        </span>
+                                                        {(app.status === 'scheduled' || app.status === 'confirmed') && (
+                                                            <button
+                                                                onClick={() => handleStartService(app)}
+                                                                className="p-1 text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition"
+                                                                title="Iniciar Atención"
+                                                            >
+                                                                <IconPlay className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                     </div>
                                                 </div>
                                             ))}
                                         </div>

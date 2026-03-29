@@ -4,28 +4,46 @@ import { createContext, useContext, useState } from 'react';
 
 const DropDownContext = createContext();
 
-const Dropdown = ({ children }) => {
+const Dropdown = ({ children, trigger = 'click' }) => {
     const [open, setOpen] = useState(false);
 
     const toggleOpen = () => {
         setOpen((previousState) => !previousState);
     };
 
+    const handleMouseEnter = () => {
+        if (trigger === 'hover') {
+            setOpen(true);
+        }
+    };
+
+    const handleMouseLeave = () => {
+        if (trigger === 'hover') {
+            setOpen(false);
+        }
+    };
+
     return (
-        <DropDownContext.Provider value={{ open, setOpen, toggleOpen }}>
-            <div className="relative">{children}</div>
+        <DropDownContext.Provider value={{ open, setOpen, toggleOpen, trigger }}>
+            <div 
+                className="relative"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+            >
+                {children}
+            </div>
         </DropDownContext.Provider>
     );
 };
 
 const Trigger = ({ children }) => {
-    const { open, setOpen, toggleOpen } = useContext(DropDownContext);
+    const { open, setOpen, toggleOpen, trigger } = useContext(DropDownContext);
 
     return (
         <>
-            <div onClick={toggleOpen}>{children}</div>
+            <div onClick={() => trigger === 'click' && toggleOpen()}>{children}</div>
 
-            {open && (
+            {open && trigger === 'click' && (
                 <div
                     className="fixed inset-0 z-40"
                     onClick={() => setOpen(false)}
@@ -55,6 +73,10 @@ const Content = ({
 
     if (width === '48') {
         widthClasses = 'w-48';
+    } else if (width === '56') {
+        widthClasses = 'w-56';
+    } else if (width === '64') {
+        widthClasses = 'w-64';
     }
 
     return (
@@ -69,7 +91,7 @@ const Content = ({
                 leaveTo="opacity-0 scale-95"
             >
                 <div
-                    className={`absolute z-50 mt-2 rounded-md shadow-lg ${alignmentClasses} ${widthClasses}`}
+                    className={`absolute z-50 mt-0 pt-2 rounded-md shadow-lg ${alignmentClasses} ${widthClasses}`}
                     onClick={() => setOpen(false)}
                 >
                     <div

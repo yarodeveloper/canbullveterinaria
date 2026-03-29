@@ -7,6 +7,7 @@ import GlasgowScaleModal from '@/Components/GlasgowScaleModal';
 import PrintDocumentModal from '@/Components/PrintDocumentModal';
 
 import MedicationsEditor from '@/Components/MedicationsEditor';
+import PendingChargesEditor from '@/Components/PendingChargesEditor';
 
 const VITAL_RANGES = {
     Canino: {
@@ -93,6 +94,7 @@ export default function Show({ auth, hospitalization, templates, products = [] }
         urination: '',
         defecation: '',
         notes: '',
+        pending_charges: [],
     });
 
     const addMedTag = (tag) => {
@@ -292,11 +294,11 @@ export default function Show({ auth, hospitalization, templates, products = [] }
                                         <div>
                                             <div className="flex justify-between items-center mb-2 mt-1">
                                                 <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase">Escala Dolor (Glasgow)</label>
-                                                <button type="button" onClick={() => setShowGlasgowModal(true)} className="text-[9px] font-black uppercase bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-600 dark:text-fuchsia-400 px-2 py-1 flex items-center gap-1 rounded hover:opacity-80 transition cursor-pointer z-10">
+                                                <button type="button" onClick={() => setShowGlasgowModal(true)} className="text-[9px] font-black uppercase bg-brand-primary/10 dark:bg-brand-primary/30 text-brand-primary dark:text-brand-primary px-2 py-1 flex items-center gap-1 rounded hover:opacity-80 transition cursor-pointer z-10">
                                                     Calcular
                                                 </button>
                                             </div>
-                                            <input type="range" min="0" max={hospitalization.pet.species === 'Canino' ? 24 : 20} value={data.pain_score} onChange={e => setData('pain_score', e.target.value)} className="w-full accent-fuchsia-500" />
+                                            <input type="range" min="0" max={hospitalization.pet.species === 'Canino' ? 24 : 20} value={data.pain_score} onChange={e => setData('pain_score', e.target.value)} className="w-full accent-brand-primary" />
                                             <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-1">
                                                 <span>{data.pain_score} / {hospitalization.pet.species === 'Canino' ? 24 : 20}</span>
                                                 <span className={data.pain_score > (hospitalization.pet.species === 'Canino' ? 6 : 5) ? 'text-red-500 uppercase font-black' : 'text-emerald-500 uppercase font-black'}>
@@ -342,7 +344,9 @@ export default function Show({ auth, hospitalization, templates, products = [] }
                                         </div>
                                         <div className="text-right">
                                             <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase">Registrado por</p>
-                                            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">{m.recorder?.name}</p>
+                                            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                                                {m.recorder?.name} <span className="text-[10px] text-brand-primary opacity-70">({m.recorder?.role === 'admin' ? 'Administrador' : m.recorder?.role === 'vet' ? 'Médico Veterinario' : m.recorder?.role === 'groomer' ? 'Estilista' : m.recorder?.role === 'receptionist' ? 'Recepción' : m.recorder?.role || 'Personal'})</span>
+                                            </p>
                                         </div>
                                     </div>
 
@@ -394,6 +398,33 @@ export default function Show({ auth, hospitalization, templates, products = [] }
                             {hospitalization.monitorings.length === 0 && !showMonitoringForm && (
                                 <div className="p-12 text-center bg-slate-50 dark:bg-[#1B2132] border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-[2.5rem]">
                                     <p className="text-slate-500 dark:text-slate-400 italic">No hay registros de monitoreo aún. Inicie el primer registro de signos vitales.</p>
+                                </div>
+                            )}
+
+                            {/* Enviar a Caja (Cobros Pendientes) */}
+                            {canManage && hospitalization.status === 'active' && (
+                                <div className="mt-8 bg-white dark:bg-[#1B2132] p-8 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-700/50">
+                                    <PendingChargesEditor 
+                                        charges={data.pending_charges}
+                                        products={products}
+                                        onAddCharge={(p) => setData('pending_charges', [...data.pending_charges, p])}
+                                        onRemoveCharge={(idx) => setData('pending_charges', data.pending_charges.filter((_, i) => i !== idx))}
+                                        onUpdateCharge={(idx, field, value) => {
+                                            const newCharges = [...data.pending_charges];
+                                            newCharges[idx][field] = value;
+                                            setData('pending_charges', newCharges);
+                                        }}
+                                        onSave={() => {
+                                            router.patch(route('hospitalizations.update', hospitalization.id), { 
+                                                pending_charges: data.pending_charges 
+                                            }, {
+                                                onSuccess: () => setData('pending_charges', []),
+                                                preserveScroll: true
+                                            });
+                                        }}
+                                        allowSave={true}
+                                        saveLabel="Cargar a PDV"
+                                    />
                                 </div>
                             )}
                         </div>

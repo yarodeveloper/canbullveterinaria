@@ -23,12 +23,17 @@ class MedicalRecord extends Model
         'plan',
         'vital_signs',
         'physical_state',
+        'created_at',
+        'medications',
+        'applied_medications',
     ];
 
     protected $casts = [
         'vital_signs' => 'json',
         'anamnesis' => 'json',
         'physical_state' => 'json',
+        'medications' => 'json',
+        'applied_medications' => 'json',
     ];
 
     public function pet()

@@ -128,4 +128,12 @@
     .white-icon {
         filter: brightness(0) invert(1);
     }
+
+    @keyframes bounce-short {
+        0%, 100% { transform: translateY(-10%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+        50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+    }
+    .animate-bounce-short {
+        animation: bounce-short 1s ease-in-out infinite;
+    }
 }

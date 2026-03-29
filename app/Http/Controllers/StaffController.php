@@ -54,6 +54,7 @@ class StaffController extends Controller
             'role' => 'required|exists:roles,name',
             'branch_id' => 'required|exists:branches,id',
             'phone' => 'nullable|string|max:20',
+            'professional_license' => 'nullable|string|max:255',
         ]);
 
         $user = User::create([
@@ -63,6 +64,7 @@ class StaffController extends Controller
             'role' => $request->role,
             'branch_id' => $request->branch_id,
             'phone' => $request->phone,
+            'professional_license' => $request->professional_license,
         ]);
 
         $user->assignRole($request->role);
@@ -71,20 +73,20 @@ class StaffController extends Controller
             ->with('message', 'Miembro del personal creado correctamente.');
     }
 
-    public function edit(User $user)
+    public function edit(User $staff)
     {
         if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage settings')) {
             abort(403);
         }
 
         return Inertia::render('Settings/Staff/Edit', [
-            'member' => $user->load('roles'),
+            'member' => $staff->load('roles'),
             'roles' => Role::where('name', '!=', 'client')->get(),
             'branches' => Branch::all()
         ]);
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $staff)
     {
         if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage settings')) {
             abort(403);
@@ -92,44 +94,46 @@ class StaffController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|string|email|max:255|unique:users,email,' . $staff->id,
             'role' => 'required|exists:roles,name',
             'branch_id' => 'required|exists:branches,id',
             'phone' => 'nullable|string|max:20',
+            'professional_license' => 'nullable|string|max:255',
         ]);
 
-        $user->update([
+        $staff->update([
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->role,
             'branch_id' => $request->branch_id,
             'phone' => $request->phone,
+            'professional_license' => $request->professional_license,
         ]);
 
         if ($request->password) {
             $request->validate([
                 'password' => ['confirmed', Rules\Password::defaults()],
             ]);
-            $user->update(['password' => Hash::make($request->password)]);
+            $staff->update(['password' => Hash::make($request->password)]);
         }
 
-        $user->syncRoles([$request->role]);
+        $staff->syncRoles([$request->role]);
 
         return redirect()->route('staff.index')
             ->with('message', 'Información actualizada correctamente.');
     }
 
-    public function destroy(User $user)
+    public function destroy(User $staff)
     {
         if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage settings')) {
             abort(403);
         }
 
-        if ($user->id === auth()->id()) {
+        if ($staff->id === auth()->id()) {
             return redirect()->back()->with('error', 'No puedes eliminarte a ti mismo.');
         }
 
-        $user->delete();
+        $staff->delete();
 
         return redirect()->route('staff.index')
             ->with('message', 'Miembro eliminado correctamente.');

@@ -114,18 +114,28 @@ export default function Show({ auth, receipt }) {
 
                         {/* Totales */}
                         <div className="flex justify-end pt-8 border-t dark:border-gray-700">
-                            <div className="w-full max-w-xs space-y-4">
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="font-bold text-gray-400 uppercase tracking-widest">Subtotal</span>
-                                    <span className="font-black text-gray-700 dark:text-gray-300">${parseFloat(receipt.subtotal).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                            <div className="w-full flex justify-between gap-12">
+                                <div className="flex-1">
+                                    {receipt.notes && (
+                                        <div className="p-6 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl">
+                                            <p className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-2 px-1 leading-none">Observaciones / Nota Interna</p>
+                                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 italic">{receipt.notes}</p>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="font-bold text-gray-400 uppercase tracking-widest text-[10px]">Impuestos (16% IVA)</span>
-                                    <span className="font-black text-gray-700 dark:text-gray-300">${parseFloat(receipt.tax).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-                                </div>
-                                <div className="flex justify-between items-center py-6 px-6 bg-brand-primary text-white rounded-[1.5rem] shadow-xl shadow-primary-50">
-                                    <span className="text-xs font-black uppercase tracking-widest">Total Pagado</span>
-                                    <span className="text-2xl font-black">${parseFloat(receipt.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                <div className="w-full max-w-xs space-y-4">
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="font-bold text-gray-400 uppercase tracking-widest">Subtotal</span>
+                                        <span className="font-black text-gray-700 dark:text-gray-300">${parseFloat(receipt.subtotal).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="font-bold text-gray-400 uppercase tracking-widest text-[10px]">Impuestos</span>
+                                        <span className="font-black text-gray-700 dark:text-gray-300">${parseFloat(receipt.tax).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-6 px-6 bg-brand-primary text-white rounded-[1.5rem] shadow-xl shadow-primary-50">
+                                        <span className="text-xs font-black uppercase tracking-widest">Total Pagado</span>
+                                        <span className="text-2xl font-black">${parseFloat(receipt.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

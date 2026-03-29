@@ -2,6 +2,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import MedicationsEditor from '@/Components/MedicationsEditor';
+import PendingChargesEditor from '@/Components/PendingChargesEditor';
 import Modal from '@/Components/Modal';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
@@ -11,7 +13,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import PetAvatar from '@/Components/PetAvatar';
 import PetRegistrationForm from '@/Components/PetRegistrationForm';
 
-export default function Create({ auth, pet: initialPet, clients: initialClients }) {
+export default function Create({ auth, pet: initialPet, clients: initialClients, appointment_id, products = [] }) {
     const [selectedPet, setSelectedPet] = useState(initialPet);
     const [petSearch, setPetSearch] = useState('');
     const [petResults, setPetResults] = useState([]);
@@ -19,10 +21,13 @@ export default function Create({ auth, pet: initialPet, clients: initialClients 
     const [localClients, setLocalClients] = useState(initialClients);
 
     const { data, setData, post, processing, errors } = useForm({
+        appointment_id: appointment_id || '',
         pet_id: initialPet ? initialPet.id : '',
         reason: '',
         initial_weight: initialPet ? initialPet.weight : '',
         admission_date: new Date().toISOString().slice(0, 16),
+        medications: [],
+        pending_charges: [],
     });
 
     useEffect(() => {
@@ -68,7 +73,7 @@ export default function Create({ auth, pet: initialPet, clients: initialClients 
             <Head title="Iniciar Internamiento" />
 
             <div className="min-h-[calc(100vh-65px)] bg-slate-50 dark:bg-[#111822] flex items-center justify-center py-8 px-4 transition-colors">
-                <div className="w-full max-w-5xl bg-white dark:bg-[#1B2132] rounded-[1.5rem] shadow-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden font-sans">
+                <div className="w-full max-w-5xl bg-white dark:bg-[#1B2132] rounded-[1.5rem] shadow-2xl border border-slate-200 dark:border-slate-700/50 font-sans">
 
                     {/* Compact Header */}
                     <div className="px-8 py-3 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20">
@@ -231,6 +236,33 @@ export default function Create({ auth, pet: initialPet, clients: initialClients 
                                         ))}
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Medications Section (Full Width) */}
+                            <div className="lg:col-span-2 mt-4">
+                                <MedicationsEditor 
+                                    title="Tratamiento Base O Fármacos Programados"
+                                    medications={data.medications}
+                                    products={products}
+                                    canManage={true}
+                                    isAlwaysEditing={true}
+                                    onChange={(meds) => setData('medications', meds)}
+                                />
+                            </div>
+
+                            {/* Enviar a Caja */}
+                            <div className="lg:col-span-2">
+                                <PendingChargesEditor 
+                                    charges={data.pending_charges}
+                                    products={products}
+                                    onAddCharge={(p) => setData('pending_charges', [...data.pending_charges, p])}
+                                    onRemoveCharge={(idx) => setData('pending_charges', data.pending_charges.filter((_, i) => i !== idx))}
+                                    onUpdateCharge={(idx, field, value) => {
+                                        const newCharges = [...data.pending_charges];
+                                        newCharges[idx][field] = value;
+                                        setData('pending_charges', newCharges);
+                                    }}
+                                />
                             </div>
                         </div>
 

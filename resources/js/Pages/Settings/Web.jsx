@@ -35,16 +35,17 @@ export default function Web({ auth, settings }) {
     };
 
     // Group settings by group
-    const groupedSettings = data.settings.reduce((acc, s) => {
+    const rawGroupedSettings = data.settings.reduce((acc, s) => {
         if (!acc[s.group]) acc[s.group] = [];
         acc[s.group].push(s);
         return acc;
     }, {});
 
     const groupNames = {
-        business_profile: 'Perfil del Negocio y Colores',
-        system: 'Configuración del Sistema',
         hero: 'Sección Hero (Principal)',
+        business_profile: 'Perfil del Negocio y Colores',
+        finances: 'Finanzas e Impresión',
+        system: 'Configuración del Sistema',
         about: 'Sección: Sobre Nosotros',
         vaccines: 'Sección: Protocolo de Vacunas',
         services: 'Textos de Servicios',
@@ -52,6 +53,15 @@ export default function Web({ auth, settings }) {
         social: 'Redes Sociales',
         promos: 'Ofertas y Promociones',
     };
+
+    const orderedGroups = Object.keys(groupNames);
+    const groupedSettings = {};
+    orderedGroups.forEach(key => {
+        if (rawGroupedSettings[key]) groupedSettings[key] = rawGroupedSettings[key];
+    });
+    Object.keys(rawGroupedSettings).forEach(key => {
+        if (!groupedSettings[key]) groupedSettings[key] = rawGroupedSettings[key];
+    });
 
     return (
         <AuthenticatedLayout
@@ -126,9 +136,19 @@ export default function Web({ auth, settings }) {
                                                                 value={setting.value || ''}
                                                                 onChange={e => handleValueChange(globalIndex, e.target.value)}
                                                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 text-xs"
-                                                                placeholder="O ingresa una URL externa"
+                                                            placeholder="O ingresa una URL externa"
                                                             />
                                                         </div>
+                                                    ) : setting.key === 'system_theme' ? (
+                                                        <select
+                                                            value={setting.value || 'light'}
+                                                            onChange={e => handleValueChange(globalIndex, e.target.value)}
+                                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200"
+                                                        >
+                                                            <option value="light">Claro (Predeterminado)</option>
+                                                            <option value="dark">Oscuro</option>
+                                                            <option value="auto">Automático (Sistema)</option>
+                                                        </select>
                                                     ) : (
                                                         <input
                                                             type="text"

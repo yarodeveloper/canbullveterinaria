@@ -15,10 +15,21 @@ class AppointmentController extends Controller
     public function index(Request $request)
     {
         $branchId = Auth::user()->branch_id;
-        $date = $request->get('date', Carbon::today()->toDateString());
+        
+        // Date range for the list view (Points 5)
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
+        
+        // Single date for the calendar selection
+        $selectedDate = $request->get('date', Carbon::today()->toDateString());
         $vetId = $request->get('vet_id');
         
-        $query = Appointment::where('branch_id', $branchId)->whereDate('start_time', $date);
+        $query = Appointment::query()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->whereBetween('start_time', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay()
+            ]);
         
         if ($vetId) {
             $query->where('veterinarian_id', $vetId);
@@ -28,9 +39,10 @@ class AppointmentController extends Controller
             ->orderBy('start_time')
             ->get();
 
-        // Weekly/Monthly Volume for Calendar view
-        $month = Carbon::parse($date)->format('Y-m');
-        $monthQuery = Appointment::where('branch_id', $branchId)
+        // Monthly counts for Calendar view (based on selectedDate's month)
+        $month = Carbon::parse($selectedDate)->format('Y-m');
+        $monthQuery = Appointment::query()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->where('start_time', 'like', $month . '%');
 
         if ($vetId) {
@@ -41,15 +53,33 @@ class AppointmentController extends Controller
             ->groupBy('date')
             ->pluck('count', 'date');
 
-        $veterinarians = User::where('branch_id', $branchId)
-            ->whereIn('role', ['admin', 'veterinarian', 'surgeon', 'specialist', 'groomer'])
-            ->get(['id', 'name']);
+        $veterinarians = User::query()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->where(function($q) {
+                $q->whereHas('roles', function($r) {
+                    $r->whereIn('name', ['admin', 'veterinarian', 'surgeon', 'specialist', 'groomer']);
+                })->orWhereIn('role', ['admin', 'veterinarian']);
+            })
+            ->with(['roles', 'branch'])
+            ->get()
+            ->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'role' => $user->roles->first() ? $user->roles->first()->name : $user->role
+                ];
+            });
 
-        $pets = Pet::where('branch_id', $branchId)->with('owner')->get();
+        $pets = Pet::query()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->with('owner')
+            ->get();
 
         return Inertia::render('Appointments/Index', [
             'appointments' => $appointments,
-            'selectedDate' => $date,
+            'selectedDate' => $selectedDate,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
             'selectedVet' => $vetId,
             'monthlyCounts' => $monthlyCounts,
             'veterinarians' => $veterinarians,
@@ -61,10 +91,22 @@ class AppointmentController extends Controller
     {
         $branchId = Auth::user()->branch_id;
         
-        $pets = Pet::where('branch_id', $branchId)->with('owner')->get();
+        $pets = Pet::query()->with(['owner', 'branch'])->limit(100)->get();
         $veterinarians = User::where('branch_id', $branchId)
-            ->whereIn('role', ['admin', 'veterinarian', 'surgeon', 'specialist', 'groomer'])
-            ->get(['id', 'name']);
+            ->where(function($q) {
+                $q->whereHas('roles', function($r) {
+                    $r->whereIn('name', ['admin', 'veterinarian', 'surgeon', 'specialist', 'groomer']);
+                })->orWhereIn('role', ['admin', 'veterinarian']);
+            })
+            ->with('roles')
+            ->get()
+            ->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'role' => $user->roles->first() ? $user->roles->first()->name : $user->role
+                ];
+            });
 
         return Inertia::render('Appointments/Create', [
             'pets' => $pets,
@@ -88,7 +130,7 @@ class AppointmentController extends Controller
         $appointment = new Appointment($validated);
         $appointment->user_id = $pet->user_id; // Primary owner
         $appointment->branch_id = Auth::user()->branch_id;
-        $appointment->end_time = Carbon::parse($validated['start_time'])->addMinutes($validated['duration']);
+        $appointment->end_time = Carbon::parse($validated['start_time'])->addMinutes((int)$validated['duration']);
         $appointment->status = 'scheduled';
         $appointment->save();
 
@@ -139,6 +181,6 @@ class AppointmentController extends Controller
         $appointment->delete();
 
         return redirect()->route('appointments.index')
-            ->with('message', 'Cita eliminada.');
+            ->with('message', 'Cita eliminada correctamente.');
     }
 }

@@ -36,10 +36,12 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => $request->user() ? $request->user()->getAllPermissions()->pluck('name') : [],
             ],
             'settings' => \App\Models\SiteSetting::all()->pluck('value', 'key'),
+            'branches' => $request->user() && $request->user()->role === 'admin' ? \App\Models\Branch::where('is_active', true)->get() : [],
             'flash' => [
                 'message' => $request->session()->get('message'),
                 'error' => $request->session()->get('error'),
                 'print_movement_id' => $request->session()->get('print_movement_id'),
+                'print_receipt_id' => $request->session()->get('print_receipt_id'),
             ],
         ];
     }

@@ -35,6 +35,12 @@ export default function QuickGuide({ auth }) {
             icon: '👨‍⚕️'
         },
         { 
+            tag: '{veterinarian_cedula}', 
+            description: 'Cédula profesional del médico', 
+            example: '1234567',
+            icon: '🎓'
+        },
+        { 
             tag: '{date}', 
             description: 'Fecha actual del sistema', 
             example: '15 de Marzo, 2026',
@@ -92,7 +98,7 @@ export default function QuickGuide({ auth }) {
 
                     {/* Header Section */}
                     <div className="bg-white dark:bg-[#1B2132] rounded-[2.5rem] p-8 mb-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-200 dark:border-slate-700/50 relative overflow-hidden text-center">
-                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-primary via-fuchsia-500 to-indigo-500"></div>
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-primary via-brand-primary to-indigo-500"></div>
                         <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
                             Automatiza tus Documentos Legales
                         </h1>

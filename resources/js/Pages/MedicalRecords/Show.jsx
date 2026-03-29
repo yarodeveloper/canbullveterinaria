@@ -1,6 +1,17 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import React from 'react';
+import MedicationsEditor from '@/Components/MedicationsEditor';
+
+const roleLabels = {
+    admin: 'Adm.',
+    vet: 'Vet.',
+    veterinarian: 'Vet.',
+    surgeon: 'Cirujano',
+    specialist: 'Esp.',
+    groomer: 'Estilista',
+    staff: 'Staff'
+};
 
 const formatDate = (dateString) => {
     if (!dateString) return "Desconocida";
@@ -60,14 +71,28 @@ export default function Show({ auth, record, templates = [] }) {
                                 <h2 className="font-extrabold text-2xl text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                                     Historial de Consulta #{record.id}
                                 </h2>
-                                <p className="text-[10px] text-fuchsia-400 font-bold uppercase tracking-widest mt-1">Realizada el {new Date(record.created_at).toLocaleString('es-ES')}</p>
+                                <p className="text-[10px] text-brand-primary font-bold uppercase tracking-widest mt-1">Realizada el {new Date(record.created_at).toLocaleString('es-ES')}</p>
                             </div>
                         </div>
 
-                        <button onClick={() => window.print()} className="px-6 py-3 bg-white hover:bg-slate-200 text-slate-900 rounded-xl font-bold uppercase text-[10px] tracking-widest shadow-lg shadow-white/10 transition-all active:scale-95 items-center justify-center gap-2 border border-slate-400 flex print:hidden">
-                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                            Imprimir
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <a 
+                                href={route('medical-records.prescription.print', record.id)} 
+                                target="_blank"
+                                className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg shadow-sky-600/20 transition-all flex items-center gap-2 print:hidden"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                Imprimir Receta
+                            </a>
+                            <a 
+                                href={route('medical-records.report.print', record.id)} 
+                                target="_blank"
+                                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2 print:hidden"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 17v-2m3 2v-4m3 2v-6m-8-2h.01M3 21h18M3 7h18M5 11h14M5 15h14M11 3H9a2 2 0 00-2 2v2M15 3h2a2 2 0 012 2v2"></path></svg>
+                                Reporte Historial
+                            </a>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
@@ -112,9 +137,9 @@ export default function Show({ auth, record, templates = [] }) {
 
                             {/* Documentos Legales */}
                             <div className={cardBase}>
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/10 rounded-bl-full blur-2xl"></div>
-                                <h3 className={`${headerTitle} text-fuchsia-400`}>
-                                    <span className="text-fuchsia-400">📄</span> Documentos Legales
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 rounded-bl-full blur-2xl"></div>
+                                <h3 className={`${headerTitle} text-brand-primary`}>
+                                    <span className="text-brand-primary">📄</span> Documentos Legales
                                 </h3>
                                 <div className="space-y-3 mt-4 relative z-10">
                                     {templates.length > 0 ? (
@@ -124,9 +149,9 @@ export default function Show({ auth, record, templates = [] }) {
                                                 href={route('medical-records.consent.print', { medicalRecord: record.id, template: template.id })}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex items-center gap-3 p-3 bg-slate-100 dark:bg-slate-900/50 hover:bg-fuchsia-500/5 hover:border-fuchsia-500/50 border border-slate-300 dark:border-slate-800 rounded-xl transition group print:hidden"
+                                                className="flex items-center gap-3 p-3 bg-slate-100 dark:bg-slate-900/50 hover:bg-brand-primary/5 hover:border-brand-primary/50 border border-slate-300 dark:border-slate-800 rounded-xl transition group print:hidden"
                                             >
-                                                <div className="w-8 h-8 rounded-lg bg-fuchsia-500/10 flex items-center justify-center text-fuchsia-400 group-hover:bg-fuchsia-500 group-hover:text-white transition-colors">
+                                                <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-colors">
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -148,7 +173,7 @@ export default function Show({ auth, record, templates = [] }) {
                                     <span className="text-amber-500">👨‍⚕️</span> Médico Responsable
                                 </h3>
                                 <div className="mt-4 relative z-10">
-                                    <h4 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Dr. {veterinarian?.name || ''}</h4>
+                                    <h4 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Dr. {veterinarian ? `${veterinarian.name} (${roleLabels[veterinarian.role] || veterinarian.role})` : ''}</h4>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest font-bold">Ced: {veterinarian?.professional_id || 'N/A'}</p>
                                 </div>
                             </div>
@@ -216,7 +241,7 @@ export default function Show({ auth, record, templates = [] }) {
                             {/* Anamnesis / Información Histórica */}
                             <div className={`${cardBase} grid grid-cols-1 lg:grid-cols-2 gap-6`}>
                                 <div>
-                                    <label className="block text-xs font-black text-fuchsia-400 uppercase tracking-widest mb-3">
+                                    <label className="block text-xs font-black text-brand-primary uppercase tracking-widest mb-3">
                                         Motivo de la Consulta
                                     </label>
                                     <p className="text-slate-800 dark:text-slate-200 text-sm bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-800 p-4 rounded-xl leading-relaxed">
@@ -229,12 +254,12 @@ export default function Show({ auth, record, templates = [] }) {
                                             <div className="bg-slate-100 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-300 dark:border-slate-800">
                                                 <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Vacunas</p>
                                                 <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{anamnesis.vaccine_history || '--'}</p>
-                                                {anamnesis.vaccine_date && <p className="text-[9px] text-fuchsia-400 mt-1">{formatDate(anamnesis.vaccine_date)}</p>}
+                                                {anamnesis.vaccine_date && <p className="text-[9px] text-brand-primary mt-1">{formatDate(anamnesis.vaccine_date)}</p>}
                                             </div>
                                             <div className="bg-slate-100 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-300 dark:border-slate-800">
                                                 <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Desparasitación</p>
                                                 <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{anamnesis.deworming_history || '--'}</p>
-                                                {anamnesis.deworming_date && <p className="text-[9px] text-fuchsia-400 mt-1">{formatDate(anamnesis.deworming_date)}</p>}
+                                                {anamnesis.deworming_date && <p className="text-[9px] text-brand-primary mt-1">{formatDate(anamnesis.deworming_date)}</p>}
                                             </div>
                                             <div className="col-span-2 bg-slate-100 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-300 dark:border-slate-800">
                                                 <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Dieta Actual</p>
@@ -245,7 +270,7 @@ export default function Show({ auth, record, templates = [] }) {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <label className="block text-xs font-black text-fuchsia-400 uppercase tracking-widest mb-2">
+                                    <label className="block text-xs font-black text-brand-primary uppercase tracking-widest mb-2">
                                         Anamnesis Rápida
                                     </label>
                                     <div className="grid grid-cols-2 gap-3">
@@ -262,7 +287,7 @@ export default function Show({ auth, record, templates = [] }) {
                                         ].map((item, i) => (
                                             <div key={i} className="bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-800 p-2.5 rounded-lg flex items-center justify-between">
                                                 <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">{item.label}</span>
-                                                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${item.value === 'Normal' || item.value === 'Ausente' || item.value === 'Alerta' ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300' : 'bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30'}`}>
+                                                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${item.value === 'Normal' || item.value === 'Ausente' || item.value === 'Alerta' ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300' : 'bg-brand-primary/20 text-brand-primary border border-brand-primary/30'}`}>
                                                     {item.value || '--'}
                                                 </span>
                                             </div>
@@ -290,7 +315,6 @@ export default function Show({ auth, record, templates = [] }) {
                                     { id: 'S', title: 'Subjetivo', key: 'subjective', color: 'indigo' },
                                     { id: 'O', title: 'Objetivo', key: 'objective', color: 'emerald' },
                                     { id: 'A', title: 'Análisis (Evaluación)', key: 'assessment', color: 'amber' },
-                                    { id: 'P', title: 'Plan (Receta)', key: 'plan', color: 'rose' },
                                 ].map(section => (
                                     <div key={section.id} className={`p-6 rounded-xl border border-${section.color}-500/20 bg-slate-100 dark:bg-slate-900/30 relative overflow-hidden`}>
                                         <div className={`absolute top-0 right-0 p-6 text-[100px] font-black opacity-[0.03] text-${section.color}-500 leading-none pointer-events-none drop-shadow-lg`}>
@@ -306,6 +330,58 @@ export default function Show({ auth, record, templates = [] }) {
                                         </div>
                                     </div>
                                 ))}
+
+                                {/* Special Plan Section with Medications Display */}
+                                <div className="p-6 rounded-xl border border-rose-500/20 bg-slate-100 dark:bg-slate-900/30 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-6 text-[100px] font-black opacity-[0.03] text-rose-500 leading-none pointer-events-none drop-shadow-lg">P</div>
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 relative z-10">
+                                        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-rose-400 flex items-center gap-3">
+                                            <span className="w-6 h-6 rounded bg-rose-500/20 flex flex-col items-center justify-center text-rose-500 ring-1 ring-rose-500/50">P</span>
+                                            Plan (Receta)
+                                        </h3>
+                                        
+                                        <div className="flex items-center gap-2">
+                                            <a href={route('medical-records.prescription.print', record.id)} target="_blank" className="px-3 py-1 bg-brand-primary/10 text-brand-primary text-[9px] font-black uppercase tracking-widest rounded-lg border border-brand-primary/20 hover:bg-brand-primary hover:text-white transition shadow-sm">
+                                                🖨️ Imprimir Receta
+                                            </a>
+                                            <a href={route('medical-records.report.print', record.id)} target="_blank" className="px-3 py-1 bg-slate-200 dark:bg-slate-800 text-slate-500 text-[9px] font-black uppercase tracking-widest rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-300 dark:hover:bg-slate-700 transition shadow-sm">
+                                                📄 Reporte Historial
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    {/* Fármacos Estructurados */}
+                                    {record.medications && record.medications.length > 0 && (
+                                        <div className="relative z-20 mb-6 pl-9 ml-3 space-y-3">
+                                            <p className="text-[10px] font-black text-rose-400/80 uppercase tracking-widest italic mb-2">Rx / Prescripción:</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                {record.medications.map((m, i) => (
+                                                    <div key={`m-view-${i}`} className="bg-white dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                                                        <div className="absolute top-0 right-0 w-16 h-16 bg-rose-500/5 rounded-bl-full"></div>
+                                                        <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase leading-tight mb-1">{m.name}</p>
+                                                        <p className="text-[10px] text-brand-primary font-bold uppercase tracking-tighter">
+                                                            {m.dosage || '—'} • {m.frequency || '—'} • {m.duration || '—'}
+                                                        </p>
+                                                        {m.notes && <p className="text-[10px] text-slate-500 font-medium italic mt-1 border-t border-slate-100 dark:border-slate-800 pt-1">Nota: {m.notes}</p>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium whitespace-pre-wrap text-[15px] relative z-10 pl-9 border-l-2 border-slate-200 dark:border-slate-700/50 ml-3 min-h-[60px]">
+                                        {record.plan || <span className="text-slate-500 italic">Sin observaciones documentadas.</span>}
+                                    </div>
+                                </div>
+
+                                {/* TRATAMIENTO BASE O FÁRMACOS PROGRAMADOS (APLICADOS EN CLÍNICA) */}
+                                {record.applied_medications && record.applied_medications.length > 0 && (
+                                    <MedicationsEditor 
+                                        title="Tratamiento Base O Fármacos Programados"
+                                        medications={record.applied_medications}
+                                        canManage={false}
+                                    />
+                                )}
                             </div>
 
                             {/* Evidencias Adjuntas */}

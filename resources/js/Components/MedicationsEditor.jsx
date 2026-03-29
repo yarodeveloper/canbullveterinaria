@@ -27,35 +27,69 @@ function EditSectionBtn({ onClick, active }) {
     );
 }
 
-export default function MedicationsEditor({ medications = [], onSave, products = [], canManage = false, title = "Medicamentos Empleados", iconColor = "bg-amber-500" }) {
-    const [isEditing, setIsEditing] = useState(false);
+export default function MedicationsEditor({ 
+    medications = [], 
+    onSave, 
+    onChange,
+    products = [], 
+    canManage = false, 
+    title = "Tratamiento Base O Fármacos Programados", 
+    iconColor = "bg-amber-500",
+    isAlwaysEditing = false
+}) {
+    const [isEditing, setIsEditing] = useState(isAlwaysEditing);
     const [saving, setSaving] = useState(false);
-    const [editMeds, setEditMeds] = useState(medications.map(m => ({ ...m })));
+    const [editMeds, setEditMeds] = useState((medications || []).map(m => ({ ...m })));
     const [medSearch, setMedSearch] = useState('');
     const [allowManual, setAllowManual] = useState(false);
 
-    const filteredProducts = medSearch.length > 1
-        ? products.filter(p =>
-            p.name.toLowerCase().includes(medSearch.toLowerCase()) &&
-            !editMeds.find(m => m.id === p.id)
-          )
+    // Synchronize local editMeds with incoming medications if not editing
+    React.useEffect(() => {
+        if (!isEditing && !isAlwaysEditing) {
+            setEditMeds((medications || []).map(m => ({ ...m })));
+        }
+    }, [medications]);
+
+    // Update parent if onChange is provided
+    const triggerChange = (updated) => {
+        if (onChange) {
+            onChange(updated);
+        }
+    };
+
+    const normalize = (str) => (str || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+    const filteredProducts = medSearch.length > 0
+        ? products.filter(p => {
+            const normalizedName = normalize(p?.name);
+            const normalizedQuery = normalize(medSearch);
+            return normalizedName.includes(normalizedQuery) && !editMeds.find(m => m.id === p.id);
+          }).slice(0, 10)
         : [];
 
     const addMedFromInventory = (p) => {
-        setEditMeds(prev => [...prev, { id: p.id, name: p.name, unit: p.unit, is_controlled: p.is_controlled, is_manual: false, concentration: '', dose_mg_kg: '', total_dose: '', volume_ml: '', route: 'IV', lot_number: '', notes: '' }]);
+        const updated = [...editMeds, { id: p.id, name: p.name, unit: p.unit, is_controlled: p.is_controlled, is_manual: false, concentration: '', dose_mg_kg: '', total_dose: '', volume_ml: '', route: 'IV', lot_number: '', notes: '' }];
+        setEditMeds(updated);
         setMedSearch('');
+        triggerChange(updated);
     };
 
     const addManualMed = () => {
-        setEditMeds(prev => [...prev, { id: null, name: '', unit: '', is_controlled: false, is_manual: true, concentration: '', dose_mg_kg: '', total_dose: '', volume_ml: '', route: 'IV', lot_number: '', notes: '' }]);
+        const updated = [...editMeds, { id: null, name: '', unit: '', is_controlled: false, is_manual: true, concentration: '', dose_mg_kg: '', total_dose: '', volume_ml: '', route: 'IV', lot_number: '', notes: '' }];
+        setEditMeds(updated);
+        triggerChange(updated);
     };
 
     const updateMed = (idx, field, value) => {
-        setEditMeds(prev => prev.map((m, i) => i === idx ? { ...m, [field]: value } : m));
+        const updated = editMeds.map((m, i) => i === idx ? { ...m, [field]: value } : m);
+        setEditMeds(updated);
+        triggerChange(updated);
     };
 
     const removeMed = (idx) => {
-        setEditMeds(prev => prev.filter((_, i) => i !== idx));
+        const updated = editMeds.filter((_, i) => i !== idx);
+        setEditMeds(updated);
+        triggerChange(updated);
     };
 
     const handleSave = async () => {
@@ -94,7 +128,7 @@ export default function MedicationsEditor({ medications = [], onSave, products =
                                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                             />
                             {filteredProducts.length > 0 && (
-                                <div className="absolute z-40 w-full mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-h-44 overflow-auto">
+                                <div className="absolute z-40 w-full mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-h-80 overflow-auto">
                                     {filteredProducts.map(p => (
                                         <button key={p.id} type="button" onClick={() => addMedFromInventory(p)}
                                             className="w-full text-left px-4 py-2.5 hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 transition flex items-center gap-3 text-sm">

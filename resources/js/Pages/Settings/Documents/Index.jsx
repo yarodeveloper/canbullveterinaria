@@ -200,6 +200,7 @@ export default function Index({ auth, templates }) {
                                                 { tag: '{client_address}', label: 'Dirección' },
                                                 { tag: '{client_id}', label: 'ID/RFC' },
                                                 { tag: '{veterinarian_name}', label: 'Veterinario' },
+                                                { tag: '{veterinarian_cedula}', label: 'Cédula Vet.' },
                                                 { tag: '{branch_name}', label: 'Sucursal' },
                                                 { tag: '{date}', label: 'Fecha' },
                                                 { tag: '{time}', label: 'Hora' },

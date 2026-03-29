@@ -38,10 +38,15 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/breeds/search', [\App\Http\Controllers\PetBreedController::class, 'search'])->name('breeds.search');
     Route::resource('breeds', \App\Http\Controllers\PetBreedController::class);
+    Route::get('/medical-records', [\App\Http\Controllers\MedicalRecordController::class, 'index'])->name('medical-records.index');
     Route::get('/pets/{pet}/medical-records/create', [\App\Http\Controllers\MedicalRecordController::class, 'create'])->name('medical-records.create');
     Route::post('/pets/{pet}/medical-records', [\App\Http\Controllers\MedicalRecordController::class, 'store'])->name('medical-records.store');
+    Route::get('/medical-records/{medicalRecord}/edit', [\App\Http\Controllers\MedicalRecordController::class, 'edit'])->name('medical-records.edit');
     Route::get('/medical-records/{medicalRecord}', [\App\Http\Controllers\MedicalRecordController::class, 'show'])->name('medical-records.show');
+    Route::put('/medical-records/{medicalRecord}', [\App\Http\Controllers\MedicalRecordController::class, 'update'])->name('medical-records.update');
     Route::get('/medical-records/{medicalRecord}/print/{template}', [\App\Http\Controllers\MedicalRecordController::class, 'printConsent'])->name('medical-records.consent.print');
+    Route::get('/medical-records/{medicalRecord}/prescription', [\App\Http\Controllers\MedicalRecordController::class, 'printPrescription'])->name('medical-records.prescription.print');
+    Route::get('/medical-records/{medicalRecord}/report', [\App\Http\Controllers\MedicalRecordController::class, 'printReport'])->name('medical-records.report.print');
 
     Route::get('/consents', [ConsentController::class, 'index'])->name('consents.index');
     Route::get('/pets/{pet}/consents/create', [ConsentController::class, 'create'])->name('consents.create');
@@ -49,6 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/consents/{consent}', [ConsentController::class, 'show'])->name('consents.show');
 
     // Grooming Orders
+    Route::get('/grooming-orders', [GroomingOrderController::class, 'index'])->name('grooming-orders.index');
     Route::get('/grooming-orders/create', [GroomingOrderController::class, 'create'])->name('grooming-orders.create');
     Route::post('/grooming-orders', [GroomingOrderController::class, 'store'])->name('grooming-orders.store');
     Route::get('/grooming-orders/{groomingOrder}', [GroomingOrderController::class, 'show'])->name('grooming-orders.show');
@@ -122,10 +128,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/cash-register/{cashRegister}/print', [\App\Http\Controllers\CashRegisterController::class, 'print'])->name('cash-register.print');
 
     Route::resource('receipts', \App\Http\Controllers\ReceiptController::class);
+    Route::get('/receipts/{receipt}/print', [\App\Http\Controllers\ReceiptController::class, 'print'])->name('receipts.print');
     Route::get('/cash', [\App\Http\Controllers\CashController::class, 'index'])->name('cash.index');
     Route::post('/cash', [\App\Http\Controllers\CashController::class, 'store'])->name('cash.store');
     Route::get('/cash/{cashMovement}/print', [\App\Http\Controllers\CashController::class, 'print'])->name('cash.print');
+    Route::post('/settings/pos-printer', [\App\Http\Controllers\SiteSettingController::class, 'updatePosPrinter'])->name('settings.pos-printer.update');
+    Route::post('/settings/branch-switcher', [\App\Http\Controllers\BranchSwitcherController::class, 'update'])->name('settings.branch-switcher.update');
+    // Sucursales
+    Route::resource('branches', \App\Http\Controllers\BranchController::class);
+
     // Personal y Usuarios
+    // Reportes Analíticos
+    Route::get('/reports/sales-by-employee', [\App\Http\Controllers\ReportController::class, 'salesByEmployee'])->name('reports.sales-by-employee');
+    Route::get('/reports/patients-attended', [\App\Http\Controllers\ReportController::class, 'patientsAttended'])->name('reports.patients-attended');
+    Route::get('/reports/stock-by-branch', [\App\Http\Controllers\ReportController::class, 'stockByBranch'])->name('reports.stock-by-branch');
+
     Route::resource('staff', \App\Http\Controllers\StaffController::class);
     Route::resource('roles', \App\Http\Controllers\RoleController::class);
 

@@ -1,3 +1,10 @@
+@php
+    $settings = \App\Models\SiteSetting::all()->pluck('value', 'key');
+    $logoUrl = $settings['site_logo'] ?? null;
+    $primaryColor = $settings['primary_color'] ?? '#84329B';
+    $secondaryColor = $settings['secondary_color'] ?? '#EC4899';
+    $siteName = $settings['site_name'] ?? 'CanBull';
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -25,7 +32,7 @@
 
         .no-print {
             display: block; width: 100%; padding: 10px;
-            background: #7e22ce; color: white; text-align: center;
+            background: {{ $primaryColor }}; color: white; text-align: center;
             font-weight: 900; text-transform: uppercase; border: none;
             border-radius: 6px; cursor: pointer; margin-bottom: 12px;
             font-family: inherit; font-size: 10px;
@@ -38,19 +45,19 @@
         }
 
         /* Header */
-        .header-section { margin-bottom: 12px; border-bottom: 2px solid #7e22ce; padding-bottom: 8px; }
+        .header-section { margin-bottom: 12px; border-bottom: 2px solid {{ $primaryColor }}; padding-bottom: 8px; }
         .header-flex { display: flex; justify-content: space-between; align-items: flex-start; }
         .report-title { text-align: right; }
         .report-title h1 { font-size: 14px; font-weight: 900; color: #111827; margin: 0; text-transform: uppercase; }
-        .report-title p { font-size: 8px; font-weight: 700; color: #7e22ce; text-transform: uppercase; margin-top: 1px; }
+        .report-title p { font-size: 8px; font-weight: 700; color: {{ $primaryColor }}; text-transform: uppercase; margin-top: 1px; }
 
         /* Sections */
         .section { margin-bottom: 10px; }
         .section-header {
-            background: #fdf4ff; padding: 3px 8px; border-radius: 4px;
+            background: {{ $primaryColor }}10; padding: 3px 8px; border-radius: 4px;
             font-size: 8px; font-weight: 900; text-transform: uppercase;
-            letter-spacing: 0.05em; color: #7e22ce; margin-bottom: 5px;
-            border-left: 3px solid #7e22ce;
+            letter-spacing: 0.05em; color: {{ $primaryColor }}; margin-bottom: 5px;
+            border-left: 3px solid {{ $primaryColor }};
         }
 
         /* Info Boxes */
@@ -106,20 +113,18 @@
 <body>
     <button onclick="window.print()" class="no-print">🖨️ Imprimir Protocolo Quirúrgico Completo</button>
 
-    @php
-        $settings = \App\Models\SiteSetting::all()->pluck('value', 'key');
-        $logoUrl = $settings['site_logo'] ?? null;
-    @endphp
-
     <div class="header-section">
         <div class="header-flex">
             <div>
                 @if($logoUrl)
                     <img src="{{ Str::startsWith($logoUrl, 'http') ? $logoUrl : asset($logoUrl) }}" style="max-height: 45px;" alt="Logo">
                 @else
-                    <div style="font-size: 18px; font-weight: 900; color: #7e22ce;">CanBull</div>
-                @endif
-                <p style="font-size: 7px; color: #6b7280; font-weight: 700;">{{ $surgery->branch?->name }} | Protocolo Quirúrgico Oficial</p>
+                @php
+                    $branch = $surgery->branch ?? $surgery->pet?->branch ?? null;
+                    $branchName = $branch->name ?? $siteName;
+                @endphp
+                <div style="font-size: 18px; font-weight: 900; color: {{ $primaryColor }}; text-transform: uppercase;">{{ $branchName }}</div>
+                <p style="font-size: 7px; color: #6b7280; font-weight: 700;">{{ $branch->address ?? '' }} | TEL: {{ $branch->phone ?? '' }}</p>
             </div>
             <div class="report-title">
                 <h1>PROTOCOLO DE CIRUGÍA</h1>
@@ -259,7 +264,7 @@
     </div>
 
     <div class="footer">
-        Este documento constituye el protocolo oficial de cirugía de la Clínica Veterinaria CanBull. 
+        Este documento constituye el protocolo oficial de cirugía de {{ $surgery->branch?->name ?? $siteName }}. 
         Generado el {{ date('d/m/Y H:i') }}. Copia fiel del expediente electrónico.
     </div>
 </body>

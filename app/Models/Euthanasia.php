@@ -25,6 +25,7 @@ class Euthanasia extends Model
         'owner_present',
         'owner_authorization',
         'consent_signed',
+        'owner_name_override',
         'disposition',
         'cremation_provider',
         'notes',

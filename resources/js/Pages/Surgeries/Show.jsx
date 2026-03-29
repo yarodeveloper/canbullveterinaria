@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import PrintDocumentModal from '@/Components/PrintDocumentModal';
 import MedicationsEditor from '@/Components/MedicationsEditor';
+import PendingChargesEditor from '@/Components/PendingChargesEditor';
 
 const VITAL_RANGES = {
     Canino: {
@@ -73,6 +74,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
         asa_classification: surgery.asa_classification || '',
         branch_id: surgery.branch_id || ''
     });
+    const [pendingCharges, setPendingCharges] = useState([]);
 
     const EditIcon = ({ onClick }) => (
         <button
@@ -102,6 +104,9 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
     const updateSurgery = (data) => {
         router.patch(route('surgeries.update', surgery.id), data, {
             preserveScroll: true,
+            onSuccess: () => {
+                if (data.pending_charges) setPendingCharges([]);
+            }
         });
     };
 
@@ -202,14 +207,22 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                                         <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Cirujano</label>
                                                         <select value={teamData.veterinarian_id} onChange={e => setTeamData({ ...teamData, veterinarian_id: e.target.value })} className="w-full text-sm rounded-xl py-2 px-3 border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-brand-primary focus:border-brand-primary">
                                                             <option value="">Selecciona cirujano...</option>
-                                                            {veterinarians?.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                                                            {veterinarians?.map(v => (
+                                                                <option key={v.id} value={v.id}>
+                                                                    {v.name} {v.role ? `(${v.role === 'admin' ? 'Administrador' : (v.role === 'vet' ? 'Médico Veterinario' : (v.role === 'groomer' ? 'Estilista' : v.role))})` : ''}
+                                                                </option>
+                                                            ))}
                                                         </select>
                                                     </div>
                                                     <div>
                                                         <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1">Anestesiólogo</label>
                                                         <select value={teamData.anesthesiologist_id} onChange={e => setTeamData({ ...teamData, anesthesiologist_id: e.target.value })} className="w-full text-sm rounded-xl py-2 px-3 border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-brand-primary focus:border-brand-primary">
                                                             <option value="">Selecciona anestesiólogo...</option>
-                                                            {veterinarians?.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                                                            {veterinarians?.map(v => (
+                                                                <option key={v.id} value={v.id}>
+                                                                    {v.name} {v.role ? `(${v.role === 'admin' ? 'Administrador' : (v.role === 'vet' ? 'Médico Veterinario' : (v.role === 'groomer' ? 'Estilista' : v.role))})` : ''}
+                                                                </option>
+                                                            ))}
                                                         </select>
                                                     </div>
                                                     <div className="grid grid-cols-2 gap-4">
@@ -526,6 +539,22 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                                 title="Fármacos Intra-Operatorios (Anestesia / Fluidos...)"
                                                 iconColor="bg-amber-500"
                                             />
+
+                                            <div className="pt-6 border-t dark:border-gray-700">
+                                                <PendingChargesEditor 
+                                                    charges={pendingCharges}
+                                                    onAddCharge={(charge) => setPendingCharges([...pendingCharges, charge])}
+                                                    onRemoveCharge={(index) => setPendingCharges(pendingCharges.filter((_, i) => i !== index))}
+                                                    onUpdateCharge={(index, data) => {
+                                                        const newCharges = [...pendingCharges];
+                                                        newCharges[index] = { ...newCharges[index], ...data };
+                                                        setPendingCharges(newCharges);
+                                                    }}
+                                                    products={products}
+                                                    allowSave={true}
+                                                    onSave={() => updateSurgery({ pending_charges: pendingCharges })}
+                                                />
+                                            </div>
                                         </div>
                                     )}
 

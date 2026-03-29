@@ -1,3 +1,10 @@
+@php
+    $settings = \App\Models\SiteSetting::all()->pluck('value', 'key');
+    $logoUrl = $settings['site_logo'] ?? null;
+    $primaryColor = $settings['primary_color'] ?? '#84329B';
+    $secondaryColor = $settings['secondary_color'] ?? '#EC4899';
+    $siteName = $settings['site_name'] ?? 'CanBull';
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -25,7 +32,7 @@
 
         .no-print {
             display: block; width: 100%; padding: 10px;
-            background: #2563eb; color: white; text-align: center;
+            background: {{ $primaryColor }}; color: white; text-align: center;
             font-weight: 900; text-transform: uppercase; border: none;
             border-radius: 8px; cursor: pointer; margin-bottom: 15px;
             font-family: inherit; font-size: 11px;
@@ -38,9 +45,9 @@
         }
 
         /* Header */
-        .header-section { margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
+        .header-section { margin-bottom: 15px; border-bottom: 2px solid {{ $primaryColor }}; padding-bottom: 10px; }
         .header-flex { display: flex; justify-content: space-between; align-items: center; }
-        .clinic-name { font-size: 20px; font-weight: 900; color: #2563eb; }
+        .clinic-name { font-size: 20px; font-weight: 900; color: {{ $primaryColor }}; }
         .report-title { text-align: right; }
         .report-title h1 { font-size: 16px; font-weight: 900; color: #111827; margin: 0; }
         .report-title p { font-size: 8px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-top: 2px; }
@@ -51,7 +58,7 @@
             background: #f3f4f6; padding: 4px 10px; border-radius: 4px;
             font-size: 8px; font-weight: 900; text-transform: uppercase;
             letter-spacing: 0.05em; color: #374151; margin-bottom: 6px;
-            border-left: 3px solid #2563eb;
+            border-left: 3px solid {{ $primaryColor }};
         }
 
         /* Grid */
@@ -77,7 +84,7 @@
 
         /* Kardex Specific */
         .kardex-table td { font-size: 8px; }
-        .vital-tag { font-weight: 700; color: #2563eb; }
+        .vital-tag { font-weight: 700; color: {{ $primaryColor }}; }
 
         /* Summary box */
         .summary-box {
@@ -96,25 +103,28 @@
 <body>
     <button onclick="window.print()" class="no-print">🖨️ Imprimir / Guardar Reporte Clínico</button>
 
-    @php
-        $settings = \App\Models\SiteSetting::all()->pluck('value', 'key');
-        $logoUrl = $settings['site_logo'] ?? null;
-    @endphp
-
     <div class="header-section">
         <div class="header-flex">
-            <div>
+            <div style="display: flex; align-items: center; gap: 15px;">
                 @if($logoUrl)
                     <img src="{{ Str::startsWith($logoUrl, 'http') ? $logoUrl : asset($logoUrl) }}" style="max-height: 50px;" alt="Logo">
                 @else
-                    <div class="clinic-name">CanBull</div>
+                    <div style="background: {{ $primaryColor }}; padding: 8px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <img src="{{ asset('icons/pet-svgrepo-com.svg') }}" style="max-height: 30px; filter: brightness(0) invert(1);">
+                    </div>
                 @endif
-                <p style="font-size: 8px; color: #6b7280; font-weight: 700;">{{ $hospitalization->branch?->name }} | {{ $hospitalization->branch?->address }}</p>
+                <div>
+                    @php
+                        $branch = $hospitalization->branch ?? $hospitalization->pet?->branch ?? null;
+                    @endphp
+                    <h2 class="clinic-name" style="color: {{ $primaryColor }}; text-transform: uppercase;">{{ $branch->name ?? $siteName }}</h2>
+                    <p style="font-size: 8px; color: #6b7280; font-weight: 700;">{{ $branch->address ?? '' }} | TEL: {{ $branch->phone ?? '' }}</p>
+                </div>
             </div>
             <div class="report-title">
                 <h1>REPORTE DE HOSPITALIZACIÓN</h1>
-                <p>Expendiente Clínico de Internamiento</p>
-                <p style="color: #2563eb;">Ingreso: {{ $hospitalization->admission_date->format('d/m/Y H:i') }}</p>
+                <p>Expediente Clínico de Internamiento</p>
+                <p style="color: {{ $primaryColor }}; font-weight: 900;">Ingreso: {{ $hospitalization->admission_date->format('d/m/Y H:i') }}</p>
             </div>
         </div>
     </div>
@@ -240,7 +250,7 @@
                                 <strong>Ment:</strong> {{ $m->mental_state ?? '--' }}
                             </td>
                             <td style="text-align: center;">
-                                <div style="font-weight: 900; font-size: 11px; color: {{ $m->pain_score > 5 ? '#dc2626' : '#2563eb' }};">
+                                <div style="font-weight: 900; font-size: 11px; color: {{ $m->pain_score > 5 ? '#dc2626' : '#84329B' }};">
                                     {{ $m->pain_score ?? '0' }}/10
                                 </div>
                             </td>
@@ -287,7 +297,7 @@
     </div>
 
     <div class="footer">
-        Generado automáticamente por el Sistema de Gestión Clínica CanBull el {{ date('d/m/Y H:i') }}. 
+        Generado automáticamente por el Sistema de Gestión Clínica {{ $hospitalization->branch?->name ?? $siteName }} el {{ date('d/m/Y H:i') }}. 
         Este documento es un resumen oficial del expediente de internamiento y tiene validez clínica.
     </div>
 </body>

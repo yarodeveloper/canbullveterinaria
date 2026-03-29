@@ -59,129 +59,135 @@ export default function CashRegisterIndex({ auth, activeRegister, currentStats, 
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight uppercase tracking-widest">Apertura y Cierre de Caja</h2>}
+            header={<h2 className="font-extrabold text-xl text-slate-900 dark:text-white leading-tight uppercase tracking-tight">Turno de Caja y Finanzas</h2>}
         >
             <Head title="Turno de Caja" />
 
-            <div className="py-12">
+            <div className="py-6 min-h-screen bg-slate-50/50 dark:bg-slate-900/20">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
                     {/* Tarjeta Principal */}
                     {!activeRegister ? (
-                        <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border dark:border-gray-700 shadow-xl p-8 flex flex-col md:flex-row items-center gap-8">
-                            <div className="w-32 h-32 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-5xl">
+                        <div className="bg-white dark:bg-[#1B2132] rounded-[2rem] border dark:border-gray-700 shadow-xl p-6 flex flex-col md:flex-row items-center gap-6">
+                            <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
                                 🔒
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-2">Caja Cerrada</h3>
-                                <p className="text-sm font-bold text-gray-400 mb-6">Inicia tu turno registrando el fondo de cambio en caja.</p>
+                                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-1">Caja Cerrada</h3>
+                                <p className="text-xs font-bold text-slate-500 mb-4">Inicia tu turno registrando el fondo de cambio en caja.</p>
 
                                 <form onSubmit={handleOpenSubmit} className="flex gap-4 items-start">
                                     <div className="flex-1 max-w-sm">
                                         <div className="relative">
-                                            <span className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                                            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-black">$</span>
                                             <input
                                                 type="number"
                                                 step="0.01"
                                                 value={openData.opening_amount}
                                                 onChange={e => setOpenData('opening_amount', e.target.value)}
-                                                placeholder="Fondo inicial ej. 500"
-                                                className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 pl-12 pr-6 focus:ring-2 focus:ring-brand-primary font-black text-lg"
+                                                placeholder="Ej. 500.00"
+                                                className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-brand-primary font-black text-base shadow-inner"
                                             />
                                         </div>
-                                        {openErrors.opening_amount && <span className="text-red-500 text-xs font-bold mt-1 block px-2">{openErrors.opening_amount}</span>}
-                                        {openErrors.error && <span className="text-red-500 text-xs font-bold mt-1 block px-2">{openErrors.error}</span>}
+                                        {openErrors.opening_amount && <span className="text-red-500 text-[10px] font-bold mt-1 block px-2 italic">{openErrors.opening_amount}</span>}
+                                        {openErrors.error && <span className="text-red-500 text-[10px] font-bold mt-1 block px-2 italic">{openErrors.error}</span>}
                                     </div>
                                     <button
                                         type="submit"
                                         disabled={processingOpen}
-                                        className="bg-brand-primary text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition"
+                                        className="bg-brand-primary text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:shadow-brand-primary/20 transition active:scale-95 disabled:opacity-50"
                                     >
-                                        Abrir Turno
+                                        Abrir Caja
                                     </button>
                                 </form>
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-[2.5rem] border border-emerald-100 dark:border-emerald-800 shadow-xl p-8">
-                            <div className="flex flex-col md:flex-row gap-8 items-start">
+                        <div className="bg-emerald-50/50 dark:bg-emerald-900/10 rounded-[2rem] border border-emerald-100 dark:border-emerald-800/50 shadow-xl p-6">
+                            <div className="flex flex-col md:flex-row gap-6 items-start">
                                 <div className="flex-1">
-                                    <div className="flex items-center gap-4 mb-6">
-                                        <div className="w-16 h-16 bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="w-12 h-12 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-xl shadow-lg shadow-emerald-500/20">
                                             🔓
                                         </div>
                                         <div>
-                                            <h3 className="text-2xl font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-tight">Turno Activo</h3>
-                                            <p className="text-xs font-black text-emerald-600/60 uppercase tracking-widest">Abierto por: {activeRegister.opened_by.name}</p>
+                                            <h3 className="text-lg font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-tight">Turno Activo</h3>
+                                            <p className="text-[10px] font-black text-emerald-600/60 uppercase tracking-widest italic">Por {activeRegister.opened_by.name} • {new Date(activeRegister.opened_at).toLocaleTimeString()}</p>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4 mb-6">
-                                        <div className="bg-white/50 dark:bg-gray-800/50 rounded-2xl p-4">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Fondo Inicial</p>
-                                            <p className="text-2xl font-black text-gray-900 dark:text-white">${parseFloat(activeRegister.opening_amount).toLocaleString()}</p>
+                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                        <div className="bg-white/80 dark:bg-gray-800/50 rounded-xl p-3 border border-emerald-100/50 dark:border-emerald-800/30">
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Fondo Inicial</p>
+                                            <p className="text-xl font-black text-gray-900 dark:text-white tracking-tighter">${parseFloat(activeRegister.opening_amount).toFixed(2)}</p>
                                         </div>
-                                        <div className="bg-white/50 dark:bg-gray-800/50 rounded-2xl p-4">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Debería haber</p>
-                                            <p className="text-2xl font-black text-brand-primary">${currentStats ? parseFloat(currentStats.expected_amount).toLocaleString() : '0'}</p>
+                                        <div className="bg-white/80 dark:bg-gray-800/50 rounded-xl p-3 border border-emerald-100/50 dark:border-emerald-800/30">
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Efectivo Previsto</p>
+                                            <p className="text-xl font-black text-brand-primary tracking-tighter">${currentStats ? parseFloat(currentStats.expected_amount).toFixed(2) : '0.00'}</p>
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col md:flex-row gap-4 text-xs font-bold text-gray-500 mb-6">
-                                        <div className="bg-white/50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700 flex-1">
-                                            <p className="text-[9px] uppercase tracking-widest mb-1 text-gray-400">Total Entradas <span className="text-emerald-500">+${currentStats ? parseFloat(currentStats.incomes + currentStats.receipts_total).toLocaleString() : '0'}</span></p>
-                                            <p>📦 Prods: <span className="text-emerald-600">${currentStats?.product_sales ? parseFloat(currentStats.product_sales).toLocaleString() : '0'}</span></p>
-                                            <p>✨ Servs: <span className="text-emerald-600">${currentStats?.service_sales ? parseFloat(currentStats.service_sales).toLocaleString() : '0'}</span></p>
-                                            {currentStats?.incomes > 0 && <p>💵 Extras: <span className="text-emerald-600">${parseFloat(currentStats.incomes).toLocaleString()}</span></p>}
+                                    <div className="flex flex-col md:flex-row gap-4 text-[11px] font-bold text-gray-600 mb-4">
+                                        <div className="bg-white/60 dark:bg-gray-800/40 p-3 rounded-xl border border-emerald-50 dark:border-emerald-900/40 flex-1">
+                                            <p className="text-[9px] uppercase tracking-[0.1em] mb-2 text-emerald-600 font-black">Resumen de Ventas</p>
+                                            <div className="space-y-1.5">
+                                                <p className="flex justify-between">📦 Productos: <span className="font-black text-slate-800 dark:text-white">${currentStats?.product_sales ? parseFloat(currentStats.product_sales).toFixed(2) : '0.00'}</span></p>
+                                                <p className="flex justify-between">✨ Servicios: <span className="font-black text-slate-800 dark:text-white">${currentStats?.service_sales ? parseFloat(currentStats.service_sales).toFixed(2) : '0.00'}</span></p>
+                                                {currentStats?.incomes > 0 && <p className="flex justify-between">💵 Extras: <span className="font-black text-emerald-600">+${parseFloat(currentStats.incomes).toFixed(2)}</span></p>}
+                                            </div>
                                         </div>
-                                        <div className="bg-white/50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700 flex-1">
-                                            <p className="text-[9px] uppercase tracking-widest mb-1 text-gray-400">Total Salidas / Retiros</p>
-                                            <p className="text-lg text-red-500">-${currentStats ? parseFloat(currentStats.expenses).toLocaleString() : '0'}</p>
+                                        <div className="bg-white/60 dark:bg-gray-800/40 p-3 rounded-xl border border-emerald-50 dark:border-emerald-900/40 flex-1">
+                                            <p className="text-[9px] uppercase tracking-[0.1em] mb-2 text-red-500 font-black">Salidas / Retiros</p>
+                                            <p className="text-2xl font-black text-red-500 tracking-tighter">-${currentStats ? parseFloat(currentStats.expenses).toFixed(2) : '0.00'}</p>
                                         </div>
                                     </div>
 
                                     <button
                                         onClick={() => setShowWithdrawalModal(true)}
-                                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition shadow-sm border border-amber-200"
+                                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition shadow-sm border border-amber-200 flex items-center gap-2"
                                     >
-                                        💸 Realizar Retiro Justificado
+                                        💸 Registrar Retiro
                                     </button>
                                 </div>
 
-                                <div className="w-full md:w-96 bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm">
-                                    <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight mb-4">Corte de Caja (Cierre)</h4>
+                                <div className="w-full md:w-80 bg-white dark:bg-[#1B2132] p-6 rounded-[1.5rem] shadow-sm border border-slate-100 dark:border-gray-700">
+                                    <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <span className="w-1.5 h-4 bg-brand-primary rounded-full"></span>
+                                        Cierre de Turno
+                                    </h4>
                                     <form onSubmit={handleCloseSubmit}>
                                         <div className="mb-4">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mx-2 mb-1">¿Cuánto contaste en efectivo?</p>
-                                            <div className="relative">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mx-1 mb-1.5 italic">Contabilizado en Efectivo</p>
+                                            <div className="relative group">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black">$</span>
                                                 <input
                                                     type="number"
                                                     step="0.01"
                                                     value={closeData.closing_amount}
                                                     onChange={e => setCloseData('closing_amount', e.target.value)}
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl py-3 pl-8 pr-4 focus:ring-2 focus:ring-brand-primary font-black"
+                                                    className="w-full bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-gray-700 rounded-xl py-2.5 pl-9 pr-4 focus:ring-2 focus:ring-brand-primary font-black text-base shadow-inner text-brand-primary"
                                                 />
                                             </div>
-                                            {closeErrors.closing_amount && <span className="text-red-500 text-[10px] font-bold mt-1 block px-2">{closeErrors.closing_amount}</span>}
+                                            {closeErrors.closing_amount && <span className="text-red-500 text-[9px] font-bold mt-1 block px-2 italic">{closeErrors.closing_amount}</span>}
                                         </div>
                                         <div className="mb-4">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mx-2 mb-1">Notas (opcional)</p>
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mx-1 mb-1.5 italic">Notas de Cierre</p>
                                             <textarea
                                                 value={closeData.notes}
                                                 onChange={e => setCloseData('notes', e.target.value)}
-                                                className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-xl py-2 px-4 focus:ring-2 focus:ring-brand-primary font-bold text-xs"
+                                                className="w-full bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-gray-700 rounded-xl py-2 px-3 focus:ring-2 focus:ring-brand-primary font-bold text-[10px]"
                                                 rows="2"
+                                                placeholder="Ej. Dejo $500 como fondo..."
                                             ></textarea>
                                         </div>
                                         <button
                                             type="submit"
                                             disabled={processingClose}
-                                            className="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition"
+                                            className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg active:scale-95 disabled:opacity-50"
                                         >
-                                            Realizar Cierre Z
+                                            {processingClose ? 'Un momento...' : 'Realizar Cierre Z'}
                                         </button>
-                                        {closeErrors.error && <span className="text-red-500 text-[10px] font-bold mt-2 text-center block">{closeErrors.error}</span>}
+                                        {closeErrors.error && <span className="text-red-500 text-[9px] font-bold mt-2 text-center block px-2 italic">{closeErrors.error}</span>}
                                     </form>
                                 </div>
                             </div>
@@ -191,66 +197,70 @@ export default function CashRegisterIndex({ auth, activeRegister, currentStats, 
 
 
                     {/* Historial */}
-                    <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border dark:border-gray-700 shadow-xl overflow-hidden mt-8">
-                        <div className="p-6 border-b dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/40">
-                            <h3 className="font-black text-gray-900 dark:text-white uppercase tracking-tight">Historial de Turnos</h3>
+                    <div className="bg-white dark:bg-[#1B2132] rounded-[2rem] border dark:border-gray-700 shadow-xl overflow-hidden mt-6">
+                        <div className="p-4 sm:p-5 border-b dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/40">
+                            <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                                <span className="w-1.5 h-3 bg-slate-300 dark:bg-slate-600 rounded-full"></span>
+                                Historial de Turnos
+                            </h3>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead>
-                                    <tr className="bg-gray-50 dark:bg-gray-900/40 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b dark:border-gray-700">
-                                        <th className="px-6 py-3">Apertura</th>
-                                        <th className="px-6 py-3">Cierre</th>
-                                        <th className="px-6 py-3">Usuario Apertura</th>
-                                        <th className="px-6 py-3">Fondo Ini.</th>
-                                        <th className="px-6 py-3">Debería Haber</th>
-                                        <th className="px-6 py-3">Físico Contado</th>
-                                        <th className="px-6 py-3">Descuadre</th>
-                                        <th className="px-6 py-3 text-right">Acciones</th>
+                                    <tr className="bg-slate-50 dark:bg-gray-900/40 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b dark:border-gray-700">
+                                        <th className="px-5 py-3">Apertura</th>
+                                        <th className="px-5 py-3">Cierre</th>
+                                        <th className="px-5 py-3">Usuario</th>
+                                        <th className="px-5 py-3 text-right">Fondo Ini.</th>
+                                        <th className="px-5 py-3 text-right">Teórico</th>
+                                        <th className="px-5 py-3 text-right">Físico</th>
+                                        <th className="px-5 py-3 text-center">Descuadre</th>
+                                        <th className="px-5 py-3 text-right">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y dark:divide-gray-700">
+                                <tbody className="divide-y divide-slate-100 dark:divide-gray-700/50">
                                     {history.data.length > 0 ? history.data.map(reg => {
                                         const expected = parseFloat(reg.expected_amount);
                                         const physical = parseFloat(reg.closing_amount);
                                         const diff = physical - expected;
                                         return (
-                                            <tr key={reg.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors">
-                                                <td className="px-6 py-3 text-xs font-bold text-gray-500">
-                                                    {new Date(reg.opened_at).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}
+                                            <tr key={reg.id} className="hover:bg-slate-50 dark:hover:bg-gray-900/30 transition-colors group">
+                                                <td className="px-5 py-2 text-[10px] font-bold text-slate-500 whitespace-nowrap">
+                                                    {new Date(reg.opened_at).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }).toUpperCase()}
                                                 </td>
-                                                <td className="px-6 py-3 text-xs font-bold text-gray-500">
-                                                    {new Date(reg.closed_at).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}
+                                                <td className="px-5 py-2 text-[10px] font-bold text-slate-500 whitespace-nowrap">
+                                                    {new Date(reg.closed_at).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }).toUpperCase()}
                                                 </td>
-                                                <td className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-300">
+                                                <td className="px-5 py-2 text-[10px] font-black uppercase tracking-tight text-slate-600 dark:text-slate-300">
                                                     {reg.opened_by.name}
                                                 </td>
-                                                <td className="px-6 py-3 text-sm font-black text-gray-900 dark:text-white">
+                                                <td className="px-5 py-2 text-xs font-black text-slate-900 dark:text-white text-right">
                                                     ${parseFloat(reg.opening_amount).toFixed(2)}
                                                 </td>
-                                                <td className="px-6 py-3 text-sm font-black text-gray-900 dark:text-white">
+                                                <td className="px-5 py-2 text-xs font-black text-slate-900 dark:text-white text-right">
                                                     ${expected.toFixed(2)}
                                                 </td>
-                                                <td className="px-6 py-3 text-sm font-black text-brand-primary">
+                                                <td className="px-5 py-2 text-xs font-black text-brand-primary text-right">
                                                     ${physical.toFixed(2)}
                                                 </td>
-                                                <td className="px-6 py-3">
+                                                <td className="px-5 py-2 text-center">
                                                     {diff === 0 ? (
-                                                        <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">
-                                                            Exacto
+                                                        <span className="text-emerald-600 text-[9px] font-black uppercase tracking-tighter">
+                                                            OK
                                                         </span>
                                                     ) : (
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${diff > 0 ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'}`}>
+                                                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${diff > 0 ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}`}>
                                                             {diff > 0 ? '+' : '-'}${Math.abs(diff).toFixed(2)}
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="px-6 py-3 text-right">
+                                                <td className="px-5 py-2 text-right">
                                                     <Link
                                                         href={route('cash-register.print', reg.id)}
-                                                        className="text-[10px] font-black uppercase tracking-widest text-brand-primary hover:underline hover:text-brand-secondary inline-flex items-center gap-1"
+                                                        className="bg-white dark:bg-gray-800 p-1 rounded-md border border-slate-200 dark:border-gray-700 text-slate-400 hover:text-brand-primary transition-colors inline-flex items-center gap-1 shadow-sm"
+                                                        title="Imprimir PDF"
                                                     >
-                                                        🖨️ Imprimir
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                                                     </Link>
                                                 </td>
                                             </tr>

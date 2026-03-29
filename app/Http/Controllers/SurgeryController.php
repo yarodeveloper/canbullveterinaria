@@ -21,7 +21,14 @@ class SurgeryController extends Controller
 
         $branchId = Auth::user()->branch_id;
         
-        $query = Surgery::where('branch_id', $branchId)->with(['pet', 'leadSurgeon']);
+        // Ver las cirugías de todas las sucursales (admin) o solo de la actual?
+        // El usuario quiere ver/buscar clientes globales.
+        $query = Surgery::with(['pet', 'leadSurgeon']);
+        
+        // Si no hay búsqueda, mostramos por defecto las de la sucursal actual
+        if (!$request->filled('search') && $branchId) {
+            $query->where('branch_id', $branchId);
+        }
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -61,15 +68,25 @@ class SurgeryController extends Controller
             ->whereIn('role', ['admin', 'veterinarian'])
             ->get();
         
-        $clients = User::where('branch_id', $branchId)
-            ->where('role', 'client')
+        $clients = User::where('role', 'client')
+            ->where('email', '!=', 'publico@general.com')
+            ->where('name', 'NOT LIKE', '%Sin Asignar%')
+            ->limit(100)
             ->get(['id', 'name']);
+
+        $products = \App\Models\Product::where('is_active', true)
+            ->where('is_service', false)
+            ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
+            ->orderBy('name')
+            ->get(['id', 'name', 'unit', 'is_controlled', 'price']);
 
         return Inertia::render('Surgeries/Create', [
             'pet' => $pet,
             'veterinarians' => $veterinarians,
             'clients' => $clients,
-            'selectedPetId' => $request->pet_id
+            'selectedPetId' => $request->pet_id,
+            'appointment_id' => $request->appointment_id,
+            'products' => $products
         ]);
     }
 
@@ -80,6 +97,7 @@ class SurgeryController extends Controller
         }
 
         $validated = $request->validate([
+            'appointment_id' => 'nullable|exists:appointments,id',
             'pet_id' => 'required|exists:pets,id',
             'veterinarian_id' => 'required|exists:users,id',
             'anesthesiologist_id' => 'nullable|exists:users,id',
@@ -87,6 +105,13 @@ class SurgeryController extends Controller
             'scheduled_at' => 'required|date',
             'asa_classification' => 'nullable|string',
             'pre_op_notes' => 'nullable|string',
+            'pre_operative_medications' => 'nullable|array',
+            'intra_operative_medications' => 'nullable|array',
+            'post_operative_medications' => 'nullable|array',
+            'pending_charges' => 'nullable|array',
+            'pending_charges.*.product_id' => 'required|exists:products,id',
+            'pending_charges.*.quantity' => 'required|numeric|min:0.01',
+            'pending_charges.*.notes' => 'nullable|string',
         ]);
 
         $pet = Pet::findOrFail($validated['pet_id']);
@@ -116,6 +141,37 @@ class SurgeryController extends Controller
         ];
 
         $surgery = Surgery::create($validated);
+
+        if (!empty($validated['appointment_id'])) {
+            \App\Models\Appointment::where('id', $validated['appointment_id'])->update(['status' => 'completed']);
+        }
+
+        // Handle Pending Charges (Send to Cash Register)
+        if (!empty($validated['pending_charges'])) {
+            // Find the robust owner ID
+            $ownerId = $pet->user_id;
+            if (!$ownerId && $pet->owners()->exists()) {
+                $ownerId = $pet->owners()->first()->id;
+            }
+            
+            // Fallback to "Público en General" if no owner found
+            if (!$ownerId) {
+                $ownerId = \App\Models\User::where('email', 'publico@general.com')->value('id');
+            }
+
+            foreach ($validated['pending_charges'] as $charge) {
+                \App\Models\PendingCharge::create([
+                    'branch_id' => $surgery->branch_id,
+                    'client_id' => $ownerId,
+                    'pet_id' => $pet->id,
+                    'product_id' => $charge['product_id'],
+                    'quantity' => $charge['quantity'],
+                    'assigned_user_id' => Auth::id(),
+                    'status' => 'pending',
+                    'notes' => $charge['notes'] ?? null,
+                ]);
+            }
+        }
 
         return redirect()->route('surgeries.show', $surgery->id)
             ->with('message', 'Cirugía programada correctamente.');
@@ -179,9 +235,40 @@ class SurgeryController extends Controller
             'pre_operative_medications' => 'nullable|array',
             'intra_operative_medications' => 'nullable|array',
             'post_operative_medications' => 'nullable|array',
+            'pending_charges' => 'nullable|array',
+            'pending_charges.*.product_id' => 'required|exists:products,id',
+            'pending_charges.*.quantity' => 'required|numeric|min:0.01',
+            'pending_charges.*.notes' => 'nullable|string',
         ]);
 
         $surgery->update($validated);
+
+        // Handle Pending Charges (Send to Cash Register)
+        if (!empty($validated['pending_charges'])) {
+            // Find the robust owner ID
+            $ownerId = $surgery->pet->user_id;
+            if (!$ownerId && $surgery->pet->owners()->exists()) {
+                $ownerId = $surgery->pet->owners()->first()->id;
+            }
+            
+            // Fallback to "Público en General" if no owner found
+            if (!$ownerId) {
+                $ownerId = \App\Models\User::where('email', 'publico@general.com')->value('id');
+            }
+
+            foreach ($validated['pending_charges'] as $charge) {
+                \App\Models\PendingCharge::create([
+                    'branch_id' => $surgery->branch_id,
+                    'client_id' => $ownerId,
+                    'pet_id' => $surgery->pet_id,
+                    'product_id' => $charge['product_id'],
+                    'quantity' => $charge['quantity'],
+                    'assigned_user_id' => Auth::id(),
+                    'status' => 'pending',
+                    'notes' => $charge['notes'] ?? null,
+                ]);
+            }
+        }
 
         return redirect()->back()->with('message', 'Registro de cirugía actualizado.');
     }

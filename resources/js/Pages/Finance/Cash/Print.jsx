@@ -48,7 +48,12 @@ export default function Print({ auth, movement }) {
                     `}} />
 
                     <div className="bg-white dark:bg-gray-800 rounded-[3rem] border dark:border-gray-700 shadow-2xl p-12 print:shadow-none print:border-none print:p-0 text-center">
-                        <h1 className="text-3xl font-black text-brand-primary tracking-tighter mb-1 italic">CANBULL</h1>
+                        <h1 className="text-3xl font-black text-brand-primary tracking-tighter mb-1 italic uppercase">
+                            {movement.branch?.name || 'CANBULL'}
+                        </h1>
+                        <div className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2 italic">
+                            {movement.branch?.address} | TEL: {movement.branch?.phone}
+                        </div>
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6">Comprobante de Caja</p>
 
                         <div className="border-t-2 border-b-2 border-dashed border-gray-300 dark:border-gray-600 py-6 mb-8 text-left">

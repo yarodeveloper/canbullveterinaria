@@ -39,11 +39,19 @@ export default function PetRegistrationForm({ initialClients, onSuccess, onCance
         microchip: pet?.microchip || '',
         weight: pet?.weight || '',
         notes: pet?.notes || '',
-        user_id: pet?.user_id || '',
+        user_id: pet?.user_id || (localClients.find(c => c.name === '<< Sin Asignar >>')?.id || ''),
         is_aggressive: !!pet?.is_aggressive,
         allergies: pet?.allergies || '',
         chronic_conditions: pet?.chronic_conditions || '',
     });
+
+    // Auto-select Sin Asignar if list changes and nothing selected
+    useEffect(() => {
+        if (!data.user_id && localClients.length > 0) {
+            const unassigned = localClients.find(c => c.name === '<< Sin Asignar >>');
+            if (unassigned) setData('user_id', unassigned.id);
+        }
+    }, [localClients]);
 
     const [photoPreview, setPhotoPreview] = useState(pet?.photo_path ? `/storage/${pet.photo_path}` : null);
 
@@ -504,14 +512,13 @@ export default function PetRegistrationForm({ initialClients, onSuccess, onCance
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="client_email_modal" value="Correo Electrónico *" />
+                            <InputLabel htmlFor="client_email_modal" value="Correo Electrónico (Opcional)" />
                             <TextInput
                                 id="client_email_modal"
                                 type="email"
                                 value={clientForm.email}
                                 onChange={e => setClientForm({ ...clientForm, email: e.target.value })}
                                 className="mt-1 block w-full"
-                                required
                             />
                             <InputError message={clientErrors.email} className="mt-2" />
                         </div>

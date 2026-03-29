@@ -15,6 +15,69 @@ use Illuminate\Support\Facades\DB;
 
 class GroomingOrderController extends Controller
 {
+    public function index(Request $request)
+    {
+        $branchId = Auth::user()->branch_id;
+        $query = GroomingOrder::with(['pet.owner', 'user']);
+        
+        // Ver las de la sucursal por defecto, pero permitir búsqueda global
+        if (!$request->filled('search') && $branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->whereHas('pet', function($petQ) use ($search) {
+                    $petQ->where('name', 'like', "%{$search}%")
+                         ->orWhereHas('owner', function($ownerQ) use ($search) {
+                             $ownerQ->where('name', 'like', "%{$search}%");
+                         });
+                })
+                ->orWhere('folio', 'like', "%{$search}%")
+                ->orWhere('notes', 'like', "%{$search}%");
+            });
+        }
+
+        $groomingOrders = $query->latest()->paginate(15);
+
+        // Pre-load data for create modal
+        // Datos globales para facilitar atención cruzada
+        $clients = \App\Models\User::where('role', 'client')
+            ->where('email', '!=', 'publico@general.com')
+            ->where('name', 'NOT LIKE', '%Sin Asignar%')
+            ->get(['id', 'name', 'phone']);
+
+        $pets = Pet::query()
+            ->with(['owner', 'branch'])
+            ->limit(100)
+            ->get(['id', 'name', 'user_id', 'breed', 'species', 'branch_id']);
+
+        $groomers = User::where('branch_id', $branchId)
+            ->where(function ($q) {
+                $q->whereHas('roles', function($r) {
+                    $r->whereIn('name', ['admin', 'veterinarian', 'groomer', 'staff']);
+                })->orWhereIn('role', ['admin', 'veterinarian', 'groomer', 'staff']);
+            })
+            ->with('roles')
+            ->get()
+            ->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'role' => $user->roles->first() ? $user->roles->first()->name : $user->role
+                ];
+            });
+
+        return Inertia::render('Grooming/Index', [
+            'groomingOrders' => $groomingOrders,
+            'clients' => $clients,
+            'pets' => $pets,
+            'groomers' => $groomers,
+            'filters' => $request->only(['search'])
+        ]);
+    }
+
     public function create(Request $request)
     {
         $pet = Pet::with(['owner'])->findOrFail($request->pet_id);
@@ -36,19 +99,31 @@ class GroomingOrderController extends Controller
         }
 
         $groomers = User::whereHas('roles', function($q) {
-            $q->where('name', 'admin')->orWhere('name', 'veterinarian')->orWhere('name', 'groomer')->orWhere('name', 'staff');
-        })->orWhere('role', 'admin')->get(); // fallback based on existing logic. Using all staff for simplicity.
+            $q->whereIn('name', ['admin', 'veterinarian', 'groomer', 'staff']);
+        })->orWhereIn('role', ['admin', 'veterinarian', 'groomer', 'staff'])
+        ->with('roles')
+        ->get()
+        ->map(function($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'role' => $user->roles->first() ? $user->roles->first()->name : $user->role
+            ];
+        });
 
         return Inertia::render('Grooming/Create', [
             'pet' => $pet,
             'services' => $services,
-            'groomers' => $groomers
+            'groomers' => $groomers,
+            'appointment_id' => $request->appointment_id,
+            'prefill' => $request->only(['groomer_id', 'time'])
         ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'appointment_id' => 'nullable|exists:appointments,id',
             'pet_id' => 'required|exists:pets,id',
             'client_id' => 'required|exists:users,id',
             'user_id' => 'nullable|exists:users,id',
@@ -70,6 +145,10 @@ class GroomingOrderController extends Controller
                 'notes' => $validated['notes'],
             ]);
 
+            if (!empty($validated['appointment_id'])) {
+                \App\Models\Appointment::where('id', $validated['appointment_id'])->update(['status' => 'completed']);
+            }
+
             foreach ($validated['items'] as $item) {
                 $product = Product::find($item['product_id']);
                 GroomingOrderItem::create([
@@ -78,6 +157,18 @@ class GroomingOrderController extends Controller
                     'concept' => $product->name,
                     'unit_price' => $product->price,
                     'quantity' => $item['quantity'],
+                ]);
+
+                // Create POS Pending Charge
+                \App\Models\PendingCharge::create([
+                    'branch_id' => $order->branch_id,
+                    'client_id' => $order->client_id,
+                    'pet_id' => $order->pet_id,
+                    'product_id' => $product->id,
+                    'quantity' => $item['quantity'],
+                    'assigned_user_id' => $order->user_id,
+                    'status' => 'pending',
+                    'notes' => 'Estética: ' . ($validated['notes'] ?? '')
                 ]);
             }
         });

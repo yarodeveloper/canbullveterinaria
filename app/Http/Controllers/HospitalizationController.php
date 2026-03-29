@@ -19,8 +19,13 @@ class HospitalizationController extends Controller
             abort(403);
         }
 
-        $query = Hospitalization::with(['pet', 'veterinarian'])
-            ->where('branch_id', Auth::user()->branch_id);
+        $branchId = Auth::user()->branch_id;
+        $query = Hospitalization::with(['pet', 'veterinarian']);
+        
+        // Por defecto ver sucursal actual, pero permitir búsqueda global
+        if (!$request->filled('search') && $branchId) {
+            $query->where('branch_id', $branchId);
+        }
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -56,13 +61,23 @@ class HospitalizationController extends Controller
         }
 
         $branchId = Auth::user()->branch_id;
-        $clients = \App\Models\User::where('branch_id', $branchId)
-            ->where('role', 'client')
+        $clients = \App\Models\User::where('role', 'client')
+            ->where('email', '!=', 'publico@general.com')
+            ->where('name', 'NOT LIKE', '%Sin Asignar%')
+            ->limit(100)
             ->get(['id', 'name']);
+
+        $products = \App\Models\Product::where('is_active', true)
+            ->where('is_service', false)
+            ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
+            ->orderBy('name')
+            ->get(['id', 'name', 'unit', 'is_controlled', 'price']);
 
         return Inertia::render('Hospitalizations/Create', [
             'pet' => $pet,
             'clients' => $clients,
+            'products' => $products,
+            'appointment_id' => $request->appointment_id
         ]);
     }
 
@@ -73,19 +88,56 @@ class HospitalizationController extends Controller
         }
 
         $validated = $request->validate([
+            'appointment_id' => 'nullable|exists:appointments,id',
             'pet_id' => 'required|exists:pets,id',
             'reason' => 'required|string',
             'initial_weight' => 'nullable|numeric',
             'admission_date' => 'required|date',
+            'medications' => 'nullable|array',
+            'pending_charges' => 'nullable|array',
+            'pending_charges.*.product_id' => 'required|exists:products,id',
+            'pending_charges.*.quantity' => 'required|numeric|min:0.01',
+            'pending_charges.*.notes' => 'nullable|string',
         ]);
 
         $pet = Pet::findOrFail($validated['pet_id']);
 
         $hospitalization = new Hospitalization($validated);
         $hospitalization->user_id = Auth::id();
-        $hospitalization->branch_id = Auth::user()->branch_id;
+        $hospitalization->branch_id = Auth::user()->branch_id ?? $pet->branch_id;
         $hospitalization->status = 'active';
         $hospitalization->save();
+
+        if (!empty($validated['appointment_id'])) {
+            \App\Models\Appointment::where('id', $validated['appointment_id'])->update(['status' => 'completed']);
+        }
+
+        // Handle Pending Charges (Send to Cash Register)
+        if (!empty($validated['pending_charges'])) {
+            // Find the robust owner ID
+            $ownerId = $pet->user_id;
+            if (!$ownerId && $pet->owners()->exists()) {
+                $ownerId = $pet->owners()->first()->id;
+            }
+            
+            // Fallback to "Público en General" if no owner found
+            if (!$ownerId) {
+                $ownerId = \App\Models\User::where('email', 'publico@general.com')->value('id');
+            }
+
+            foreach ($validated['pending_charges'] as $charge) {
+                \App\Models\PendingCharge::create([
+                    'branch_id' => $hospitalization->branch_id,
+                    'client_id' => $ownerId,
+                    'pet_id' => $pet->id,
+                    'product_id' => $charge['product_id'],
+                    'quantity' => $charge['quantity'],
+                    'assigned_user_id' => Auth::id(),
+                    'status' => 'pending',
+                    'notes' => $charge['notes'] ?? null,
+                ]);
+            }
+        }
 
         return redirect()->route('hospitalizations.show', $hospitalization->id)
             ->with('message', 'Hospitalización iniciada correctamente.');
@@ -184,6 +236,10 @@ class HospitalizationController extends Controller
             'discharge_notes' => 'nullable|string',
             'discharge_date' => 'nullable|date',
             'medications' => 'nullable|array',
+            'pending_charges' => 'nullable|array',
+            'pending_charges.*.product_id' => 'required|exists:products,id',
+            'pending_charges.*.quantity' => 'required|numeric|min:0.01',
+            'pending_charges.*.notes' => 'nullable|string',
         ]);
 
         if (isset($validated['status']) && $validated['status'] !== 'active' && !$hospitalization->discharge_date) {
@@ -191,6 +247,29 @@ class HospitalizationController extends Controller
         }
 
         $hospitalization->update($validated);
+
+        // Handle Pending Charges (Send to Cash Register)
+        if (!empty($validated['pending_charges'])) {
+            $pet = $hospitalization->pet;
+            // Find the robust owner ID
+            $ownerId = $pet->user_id;
+            if (!$ownerId && $pet->owners()->exists()) {
+                $ownerId = $pet->owners()->first()->id;
+            }
+
+            foreach ($validated['pending_charges'] as $charge) {
+                \App\Models\PendingCharge::create([
+                    'branch_id' => $hospitalization->branch_id,
+                    'client_id' => $ownerId,
+                    'pet_id' => $pet->id,
+                    'product_id' => $charge['product_id'],
+                    'quantity' => $charge['quantity'],
+                    'assigned_user_id' => Auth::id(),
+                    'status' => 'pending',
+                    'notes' => $charge['notes'] ?? null,
+                ]);
+            }
+        }
 
         // Sync with Pet status if status changed
         if (isset($validated['status'])) {

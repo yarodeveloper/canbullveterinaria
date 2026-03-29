@@ -37,93 +37,111 @@ export default function Index({ auth, movements, todayTotal }) {
             user={auth.user}
             header={
                 <div className="flex justify-between items-center">
-                    <h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Egresos y Entradas Extraordinarias</h2>
+                    <h2 className="font-extrabold text-xl text-slate-900 dark:text-white leading-tight flex items-center gap-2 uppercase tracking-tight">
+                        <span className="w-1.5 h-6 bg-brand-primary rounded-full"></span>
+                        Egresos y Caja Menor
+                    </h2>
                     <button
                         onClick={() => setShowMovementModal(true)}
-                        className="bg-brand-primary text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-primary-50"
+                        className="bg-brand-primary text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-brand-primary/20 active:scale-95 flex items-center gap-2"
                     >
-                        + Registrar Egreso / Ingreso
+                        <span>+ Reg. Movimiento</span>
                     </button>
                 </div>
             }
         >
-            <Head title="Caja" />
+            <Head title="Caja Menor" />
 
-            <div className="py-12">
+            <div className="py-6 min-h-screen bg-slate-50/50 dark:bg-slate-900/20">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="bg-brand-primary rounded-[2.5rem] p-10 text-white shadow-2xl shadow-primary-100">
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-2 opacity-60">Balance Egresos/Extras del Turno</p>
-                            <h3 className="text-4xl font-black tracking-tighter">${parseFloat(todayTotal).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</h3>
-                            <div className="mt-6 flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full animate-pulse ${todayTotal !== 0 ? 'bg-white' : 'bg-gray-300'}`}></span>
-                                <span className="text-[9px] font-bold uppercase tracking-widest">Turno Activo</span>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-brand-primary rounded-[1.5rem] px-5 py-3.5 text-white shadow-lg shadow-brand-primary/20 flex flex-row items-center justify-between border-b-2 border-brand-secondary">
+                            <div>
+                                <p className="text-[8.5px] font-black uppercase tracking-[0.2em] mb-0.5 opacity-80 italic">Balance Turno Acum.</p>
+                                <h3 className="text-xl font-black tracking-tighter">${parseFloat(todayTotal).toFixed(2)}</h3>
+                            </div>
+                            <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center text-base">
+                                📊
                             </div>
                         </div>
 
-                        <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border dark:border-gray-700 p-10 shadow-xl">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2">Entradas Hoy</p>
-                            <h3 className="text-3xl font-black text-emerald-500 tracking-tighter">+$0.00</h3>
+                        <div className="bg-white dark:bg-[#1B2132] rounded-[1.5rem] border dark:border-gray-700/50 px-5 py-3.5 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[8.5px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5 italic">Entradas Extras Hoy</p>
+                                <h3 className="text-lg font-black text-emerald-600 tracking-tighter">+$0.00</h3>
+                            </div>
+                            <div className="w-8 h-8 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl flex items-center justify-center text-sm">
+                                📈
+                            </div>
                         </div>
 
-                        <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border dark:border-gray-700 p-10 shadow-xl">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2">Salidas Hoy</p>
-                            <h3 className="text-3xl font-black text-red-500 tracking-tighter">-$0.00</h3>
+                        <div className="bg-white dark:bg-[#1B2132] rounded-[1.5rem] border dark:border-gray-700/50 px-5 py-3.5 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[8.5px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5 italic">Salidas / Gastos Hoy</p>
+                                <h3 className="text-lg font-black text-red-500 tracking-tighter">-$0.00</h3>
+                            </div>
+                            <div className="w-8 h-8 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-xl flex items-center justify-center text-sm">
+                                📉
+                            </div>
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-[2.5rem] border dark:border-gray-700">
-                        <div className="p-8">
-                            <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">Historial de Operaciones</h4>
+                    <div className="bg-white dark:bg-[#1B2132] overflow-hidden shadow-sm sm:rounded-[2rem] border dark:border-gray-700/50 mt-8">
+                        <div className="p-0">
+                            <div className="p-5 border-b dark:border-gray-700/50 bg-slate-50/50 dark:bg-gray-900/30 flex justify-between items-center">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Registro Central de Operaciones</h4>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase px-3 py-1 bg-white dark:bg-slate-800 rounded-lg shadow-sm border dark:border-gray-700">Muestra: {movements.data.length} movs</span>
+                            </div>
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left border-separate border-spacing-y-4">
+                                <table className="w-full text-left">
                                     <thead>
-                                        <tr className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                                            <th className="px-6 py-2">Fecha y Hora</th>
-                                            <th className="px-6 py-2">Operador</th>
-                                            <th className="px-6 py-2">Descripción</th>
-                                            <th className="px-6 py-2">Método</th>
-                                            <th className="px-6 py-2 text-right">Monto</th>
-                                            <th className="px-6 py-2 text-right">Acciones</th>
+                                        <tr className="bg-slate-50 dark:bg-gray-900/20 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] border-b dark:border-gray-700">
+                                            <th className="px-6 py-3">Fecha / Hora</th>
+                                            <th className="px-6 py-3">Responsable</th>
+                                            <th className="px-6 py-3">Concepto / Referencia</th>
+                                            <th className="px-6 py-3">Método</th>
+                                            <th className="px-6 py-3 text-right">Importe</th>
+                                            <th className="px-6 py-3 text-right">PDF</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="divide-y divide-slate-50 dark:divide-gray-800">
                                         {movements.data.map((m) => (
-                                            <tr key={m.id} className="group bg-white dark:bg-gray-900/40 rounded-3xl border border-gray-100 dark:border-gray-800">
-                                                <td className="px-6 py-5 rounded-l-3xl">
-                                                    <p className="text-xs font-bold text-gray-500">
-                                                        {format(new Date(m.created_at), "dd/MM/yyyy HH:mm", { locale: es })}
+                                            <tr key={m.id} className="group hover:bg-brand-primary/5 dark:hover:bg-brand-primary/10 transition-colors">
+                                                <td className="px-6 py-3">
+                                                    <p className="text-[10px] font-bold text-slate-500 uppercase">
+                                                        {format(new Date(m.created_at), "dd MMM yyyy • HH:mm", { locale: es })}
                                                     </p>
                                                 </td>
-                                                <td className="px-6 py-5 text-sm font-black uppercase text-gray-700 dark:text-gray-300">
+                                                <td className="px-6 py-3 text-[11px] font-black uppercase text-slate-700 dark:text-slate-300 tracking-tight">
                                                     {m.user.name}
                                                 </td>
-                                                <td className="px-6 py-5">
+                                                <td className="px-6 py-3">
                                                     <div className="flex items-center gap-3">
-                                                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${m.type === 'in' || m.type === 'opening' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'
+                                                        <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black shadow-sm ${m.type === 'in' || m.type === 'opening' ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-red-100 text-red-600 border border-red-200'
                                                             }`}>
                                                             {m.type === 'in' || m.type === 'opening' ? '↓' : '↑'}
                                                         </span>
                                                         <div>
-                                                            <p className="text-sm font-bold text-gray-700 dark:text-gray-200">{m.description}</p>
-                                                            {m.receipt && <p className="text-[9px] font-black text-brand-primary uppercase">Recibo #{m.receipt.receipt_number}</p>}
+                                                            <p className="text-[11px] font-black text-slate-800 dark:text-gray-200 uppercase tracking-tight leading-tight">{m.description}</p>
+                                                            {m.receipt && <p className="text-[9px] font-black text-brand-primary uppercase mt-0.5">Recibo #{m.receipt.receipt_number}</p>}
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-5 uppercase text-[10px] font-black text-gray-400 tracking-widest">
+                                                <td className="px-6 py-3 uppercase text-[9px] font-black text-slate-400 tracking-widest italic">
                                                     {m.method}
                                                 </td>
-                                                <td className={`px-6 py-5 text-right text-lg font-black ${m.type === 'in' || m.type === 'opening' ? 'text-emerald-500' : 'text-red-500'
+                                                <td className={`px-6 py-3 text-right text-sm font-black tracking-tighter ${m.type === 'in' || m.type === 'opening' ? 'text-emerald-600' : 'text-red-500'
                                                     }`}>
-                                                    {m.type === 'in' || m.type === 'opening' ? '+' : '-'}${parseFloat(m.amount).toLocaleString()}
+                                                    {m.type === 'in' || m.type === 'opening' ? '+' : '-'}${parseFloat(m.amount).toFixed(2)}
                                                 </td>
-                                                <td className="px-6 py-5 text-right rounded-r-3xl">
+                                                <td className="px-6 py-3 text-right">
                                                     <Link
                                                         href={route('cash.print', m.id)}
-                                                        className="text-[10px] font-black uppercase tracking-widest text-brand-primary hover:underline hover:text-brand-secondary inline-flex items-center gap-1"
+                                                        className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-gray-700 text-slate-400 hover:text-brand-primary transition-all flex items-center justify-center shadow-sm"
+                                                        title="Imprimir Comprobante"
                                                     >
-                                                        🖨️
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                                                     </Link>
                                                 </td>
                                             </tr>

@@ -48,13 +48,12 @@ export default function Edit({ auth, client }) {
                                         {errors.name && <div className="text-red-500 text-xs mt-1">{errors.name}</div>}
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium dark:text-gray-300">Correo Electrónico *</label>
+                                        <label className="block text-sm font-medium dark:text-gray-300">Correo Electrónico (Opcional)</label>
                                         <input
                                             type="email"
                                             value={data.email}
                                             onChange={e => setData('email', e.target.value)}
                                             className="mt-1 block w-full rounded-md border-gray-300 focus:border-brand-primary focus:ring-brand-primary dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-                                            required
                                         />
                                         {errors.email && <div className="text-red-500 text-xs mt-1">{errors.email}</div>}
                                     </div>

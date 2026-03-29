@@ -18,10 +18,14 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'site_favicon', 'value' => '/favicon.ico', 'type' => 'image', 'group' => 'business_profile', 'label' => 'Favicon'],
 
             // HERO
+            ['key' => 'hero_badge', 'value' => 'Medicina Veterinaria de Vanguardia', 'type' => 'text', 'group' => 'hero', 'label' => 'Insignia Superior (Badge)'],
             ['key' => 'hero_title', 'value' => 'Cuidado Médico de Excelencia para tu Mejor Amigo', 'type' => 'text', 'group' => 'hero', 'label' => 'Título Hero'],
             ['key' => 'hero_subtitle', 'value' => 'Especialistas en bienestar animal con hospitalización de vanguardia y estética canina profesional.', 'type' => 'textarea', 'group' => 'hero', 'label' => 'Subtítulo Hero'],
             ['key' => 'hero_image', 'value' => '/img/hero-vet.webp', 'type' => 'image', 'group' => 'hero', 'label' => 'Imagen Hero'],
             
+            // SERVICIOS (TÍTULOS PRINCIPALES)
+            ['key' => 'services_title', 'value' => 'Nuestros Servicios', 'type' => 'text', 'group' => 'services', 'label' => 'Título Principal de Servicios'],
+            ['key' => 'services_subtitle', 'value' => 'Equipamiento de vanguardia y especialistas apasionados por el bienestar.', 'type' => 'textarea', 'group' => 'services', 'label' => 'Subtítulo de Servicios'],
             // CONTACTO
             ['key' => 'contact_phone', 'value' => '+52 123 456 7890', 'type' => 'text', 'group' => 'contact', 'label' => 'Teléfono'],
             ['key' => 'contact_whatsapp', 'value' => '521234567890', 'type' => 'text', 'group' => 'contact', 'label' => 'WhatsApp'],
@@ -30,11 +34,16 @@ class SiteSettingSeeder extends Seeder
             
             // SERVICIOS
             ['key' => 'service_grooming_desc', 'value' => 'Estética profesional con productos dermatológicos y estilistas certificados.', 'type' => 'textarea', 'group' => 'services', 'label' => 'Estética Canina'],
-            ['key' => 'service_hosp_desc', 'value' => 'Monitoreo 24/7 con equipamiento de última generación para casos críticos.', 'type' => 'textarea', 'group' => 'services', 'label' => 'Hospitalización'],
-            ['key' => 'service_checkup_desc', 'value' => 'Revisiones preventivas integrales para una vida larga y saludable.', 'type' => 'textarea', 'group' => 'services', 'label' => 'Revisión General'],
+            ['key' => 'service_hosp_desc', 'value' => 'Monitoreo 24/7 con equipamiento de última generación para casos críticos.', 'type' => 'textarea', 'group' => 'services', 'label' => 'Desc. Hospitalización'],
+            ['key' => 'service_checkup_desc', 'value' => 'Revisiones preventivas integrales para una vida larga y saludable.', 'type' => 'textarea', 'group' => 'services', 'label' => 'Desc. Revisión General'],
+
+            // POR QUÉ ELEGIRNOS
+            ['key' => 'why_us_title', 'value' => '¿Por Qué Elegir Canbull?', 'type' => 'text', 'group' => 'about', 'label' => 'Título General "¿Por Qué Elegirnos?"'],
+            ['key' => 'why_us_desc', 'value' => 'Nos apasiona brindarle a tu mascota y a ti una experiencia con la más alta excelencia médica y humana.', 'type' => 'textarea', 'group' => 'about', 'label' => 'Descripción General'],
+            ['key' => 'why_us_bg_image', 'value' => 'https://images.unsplash.com/photo-1576201836106-db1758fd1c97?auto=format&fit=crop&q=80&w=2000', 'type' => 'image', 'group' => 'about', 'label' => 'Fondo "¿Por Qué Elegirnos?"'],
 
             // SOBRE NOSOTROS
-            ['key' => 'about_title', 'value' => 'Sobre Nosotros', 'type' => 'text', 'group' => 'about', 'label' => 'Título'],
+            ['key' => 'about_title', 'value' => 'Sobre Nosotros', 'type' => 'text', 'group' => 'about', 'label' => 'Título Sobre Nosotros'],
             ['key' => 'about_description', 'value' => 'Canbull te entiende y lo atiende. Tu nuevo aliado confiable que acompaña a tu familia en el cuidado de tus mascotas. Servicios de calidad con personal capacitado.', 'type' => 'textarea', 'group' => 'about', 'label' => 'Descripción Principal'],
             ['key' => 'about_box1_title', 'value' => 'Cariño', 'type' => 'text', 'group' => 'about', 'label' => 'Título Caja 1'],
             ['key' => 'about_box1_desc', 'value' => 'Tratamos a cada mascota con amor.', 'type' => 'text', 'group' => 'about', 'label' => 'Desc. Caja 1'],
@@ -52,6 +61,10 @@ class SiteSettingSeeder extends Seeder
             // REDES Y MAPAS
             ['key' => 'social_facebook', 'value' => 'https://www.facebook.com/profile.php?id=100057574212916', 'type' => 'text', 'group' => 'social', 'label' => 'Facebook URL'],
             ['key' => 'social_instagram', 'value' => 'https://www.instagram.com/canbullvet', 'type' => 'text', 'group' => 'social', 'label' => 'Instagram URL'],
+            ['key' => 'social_tiktok', 'value' => '', 'type' => 'text', 'group' => 'social', 'label' => 'TikTok URL'],
+            ['key' => 'social_youtube', 'value' => '', 'type' => 'text', 'group' => 'social', 'label' => 'YouTube URL'],
+            ['key' => 'social_twitter', 'value' => '', 'type' => 'text', 'group' => 'social', 'label' => 'X (Twitter) URL'],
+
             ['key' => 'contact_schedule', 'value' => "Lunes a Sábado: 9:00 am - 9:00 pm \nDomingo: 9:00 am - 5:00 pm", 'type' => 'textarea', 'group' => 'contact', 'label' => 'Horario'],
             ['key' => 'contact_maps_url', 'value' => 'https://www.google.com/maps?q=Can+Bull+Cl%C3%ADnica+Veterinaria,+Rosario+Sabinal,+Ter%C3%A1n,+29057+Tuxtla+Guti%C3%A9rrez,+Chis', 'type' => 'text', 'group' => 'contact', 'label' => 'Google Maps Ubicación URL'],
             ['key' => 'contact_maps_iframe', 'value' => 'https://maps.google.com/maps?width=100%25&height=600&hl=en&q=Can%20Bull%20Cl%C3%ADnica%20Veterinaria,%20Tuxtla%20Guti%C3%A9rrez,%20Chiapas,+Mexico&t=&z=16&ie=UTF8&iwloc=B&output=embed', 'type' => 'text', 'group' => 'contact', 'label' => 'Google Maps iFrame Embed URL'],

@@ -1,8 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import Modal from '@/Components/Modal';
+import MedicationsEditor from '@/Components/MedicationsEditor';
+import PendingChargesEditor from '@/Components/PendingChargesEditor';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
@@ -11,7 +12,15 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import PetAvatar from '@/Components/PetAvatar';
 import PetRegistrationForm from '@/Components/PetRegistrationForm';
 
-export default function Create({ auth, pet: initialPet, veterinarians, clients: initialClients, selectedPetId }) {
+const roleLabels = {
+    admin: 'Adm.',
+    veterinarian: 'Vet.',
+    surgeon: 'Cirujano',
+    specialist: 'Esp.',
+    groomer: 'Estilista'
+};
+
+export default function Create({ auth, pet: initialPet, veterinarians, clients: initialClients, selectedPetId, appointment_id, products = [] }) {
     const [selectedPet, setSelectedPet] = useState(initialPet);
     const [petSearch, setPetSearch] = useState('');
     const [petResults, setPetResults] = useState([]);
@@ -19,6 +28,7 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
     const [localClients, setLocalClients] = useState(initialClients);
 
     const { data, setData, post, processing, errors } = useForm({
+        appointment_id: appointment_id || '',
         pet_id: selectedPetId || initialPet?.id || '',
         veterinarian_id: '',
         anesthesiologist_id: '',
@@ -26,6 +36,10 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
         scheduled_at: '',
         asa_classification: 'I',
         pre_op_notes: '',
+        pre_operative_medications: [],
+        intra_operative_medications: [],
+        post_operative_medications: [],
+        pending_charges: []
     });
 
     useEffect(() => {
@@ -62,7 +76,7 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
             <Head title="Programar Cirugía" />
 
             <div className="min-h-[calc(100vh-65px)] bg-slate-50 dark:bg-[#111822] flex items-center justify-center py-8 px-4 transition-colors">
-                <div className="w-full max-w-5xl bg-white dark:bg-[#1B2132] rounded-[1.5rem] shadow-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden font-sans">
+                <div className="w-full max-w-5xl bg-white dark:bg-[#1B2132] rounded-[1.5rem] shadow-2xl border border-slate-200 dark:border-slate-700/50 font-sans">
                     
                     {/* Compact Header */}
                     <div className="px-8 py-3 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20">
@@ -220,7 +234,7 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
                                         >
                                             <option value="">Seleccionar...</option>
                                             {veterinarians.map(vet => (
-                                                <option key={vet.id} value={vet.id}>{vet.name}</option>
+                                                <option key={vet.id} value={vet.id}>{vet.name} ({roleLabels[vet.role] || vet.role})</option>
                                             ))}
                                         </select>
                                         {errors.veterinarian_id && <div className="text-red-500 text-[10px] font-black uppercase mt-1 ml-1">{errors.veterinarian_id}</div>}
@@ -235,7 +249,7 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
                                         >
                                             <option value="">No asignado</option>
                                             {veterinarians.map(vet => (
-                                                <option key={vet.id} value={vet.id}>{vet.name}</option>
+                                                <option key={vet.id} value={vet.id}>{vet.name} ({roleLabels[vet.role] || vet.role})</option>
                                             ))}
                                         </select>
                                     </div>
@@ -251,6 +265,40 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
                                         className="w-full bg-slate-50 dark:bg-gray-900 border-slate-200 dark:border-gray-700 rounded-2xl py-3 px-5 focus:ring-brand-primary focus:border-brand-primary transition-all font-medium text-sm text-slate-900 dark:text-white resize-none"
                                     ></textarea>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Medications Section (Full Width) - Added for standardization */}
+                        <div className="mt-8 space-y-6">
+                            <div className="bg-slate-50/50 dark:bg-slate-900/20 p-6 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-brand-primary rounded-full"></span>
+                                    Planificación Farmacológica (Programación Clínica)
+                                </h4>
+                                
+                                <MedicationsEditor 
+                                    title="Tratamiento Base O Fármacos Programados (Pre-Op)"
+                                    medications={data.pre_operative_medications}
+                                    products={products}
+                                    canManage={true}
+                                    isAlwaysEditing={true}
+                                    onChange={(meds) => setData('pre_operative_medications', meds)}
+                                />
+                            </div>
+
+                            {/* Enviar a Caja */}
+                            <div className="bg-white dark:bg-slate-800/50 p-6 rounded-3xl border border-dashed border-emerald-300 dark:border-emerald-700/50">
+                                <PendingChargesEditor 
+                                    charges={data.pending_charges}
+                                    products={products}
+                                    onAddCharge={(p) => setData('pending_charges', [...data.pending_charges, p])}
+                                    onRemoveCharge={(idx) => setData('pending_charges', data.pending_charges.filter((_, i) => i !== idx))}
+                                    onUpdateCharge={(idx, field, value) => {
+                                        const newCharges = [...data.pending_charges];
+                                        newCharges[idx][field] = value;
+                                        setData('pending_charges', newCharges);
+                                    }}
+                                />
                             </div>
                         </div>
 
