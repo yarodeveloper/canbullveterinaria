@@ -843,12 +843,6 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                             + Subir
                                         </button>
                                         <Link
-                                            href={route('consents.create', [pet.id, { type: 'surgery' }])}
-                                            className="text-[10px] font-bold bg-white dark:bg-gray-800 border dark:border-gray-600 hover:text-indigo-600 px-3 py-1.5 rounded flex items-center uppercase tracking-widest text-gray-700 dark:text-gray-300 shadow-sm transition"
-                                        >
-                                            + Cx
-                                        </Link>
-                                        <Link
                                             href={route('consents.create', [pet.id, { type: 'euthanasia' }])}
                                             className="text-[10px] font-bold bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded flex items-center uppercase tracking-widest shadow-sm transition"
                                         >

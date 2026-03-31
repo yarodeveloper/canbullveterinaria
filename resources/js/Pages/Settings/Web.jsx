@@ -52,6 +52,7 @@ export default function Web({ auth, settings }) {
         contact: 'Información de Contacto',
         social: 'Redes Sociales',
         promos: 'Ofertas y Promociones',
+        footer: 'Pie de Página (Footer)',
     };
 
     const orderedGroups = Object.keys(groupNames);

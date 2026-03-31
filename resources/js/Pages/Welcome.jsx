@@ -50,20 +50,20 @@ export default function Welcome({ auth, settings }) {
                                 )}
                             </div>
 
-                            <div className="hidden md:flex items-center space-x-10">
-                                <a href="#servicios" className="text-sm font-bold text-gray-600 dark:text-gray-400 hover:text-brand-primary transition">Servicios</a>
-                                <a href="#contacto" className="text-sm font-bold text-gray-600 dark:text-gray-400 hover:text-brand-primary transition">Contacto</a>
+                            <div className="flex items-center space-x-4 md:space-x-10">
+                                <a href="#servicios" className="text-xs md:text-sm font-bold text-gray-600 dark:text-gray-400 hover:text-brand-primary transition">Servicios</a>
+                                <a href="#contacto" className="text-xs md:text-sm font-bold text-gray-600 dark:text-gray-400 hover:text-brand-primary transition">Contacto</a>
                                 {auth.user ? (
                                     <Link
                                         href={route('dashboard')}
-                                        className="text-sm font-bold text-gray-600 dark:text-gray-400 hover:text-brand-primary transition"
+                                        className="text-xs md:text-sm font-bold text-gray-600 dark:text-gray-400 hover:text-brand-primary transition"
                                     >
                                         Ir al Panel
                                     </Link>
                                 ) : (
                                     <Link
                                         href={route('login')}
-                                        className="text-sm font-bold text-gray-400 dark:text-gray-500 hover:text-brand-primary transition"
+                                        className="text-xs md:text-sm font-bold text-gray-400 dark:text-gray-500 hover:text-brand-primary transition"
                                     >
                                         Acceso
                                     </Link>
@@ -395,10 +395,9 @@ export default function Welcome({ auth, settings }) {
                                     rel="noreferrer"
                                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 bg-brand-primary text-white px-6 py-4 rounded-2xl shadow-xl font-bold flex flex-col items-center gap-2 hover:scale-105 transition"
                                 >
-                                    <div className="bg-white rounded-full p-2 mb-1 shadow-md">
+                                    <div className="bg-white rounded-full p-2 shadow-md">
                                         <svg className="w-5 h-5 text-brand-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
                                     </div>
-                                    Canbull Veterinaria
                                 </a>
                                 <iframe 
                                     src={getSetting('contact_maps_iframe', 'https://maps.google.com/maps?width=100%25&height=600&hl=en&q=Can%20Bull%20Cl%C3%ADnica%20Veterinaria,%20Tuxtla%20Guti%C3%A9rrez,%20Chiapas,+Mexico&t=&z=16&ie=UTF8&iwloc=B&output=embed')}
@@ -421,7 +420,7 @@ export default function Welcome({ auth, settings }) {
                              <img src="/icons/pet-svgrepo-com.svg" className="w-10 h-10" alt="Pet Icon" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-3xl font-black tracking-tighter text-white">CANBULL</span>
+                            <span className="text-3xl font-black tracking-tighter text-white">{getSetting('footer_title', 'CANBULL')}</span>
                             <span className="text-xs font-bold tracking-[0.4em] text-white/50 uppercase">Centro Veterinario Integral</span>
                         </div>
                     </div>
@@ -457,7 +456,7 @@ export default function Welcome({ auth, settings }) {
                             </a>
                         )}
                     </div>
-                    <p className="text-sm font-bold text-white/40">&copy; {new Date().getFullYear()} Centro Veterinario Canbull. Un espacio dedicado a la vida.</p>
+                    <p className="text-sm font-bold text-white/40">&copy; {new Date().getFullYear()} {getSetting('footer_copyright', 'Centro Veterinario Canbull. Un espacio dedicado a la vida.')}</p>
                 </footer>
             </div>
         </ThemeProvider>

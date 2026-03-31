@@ -546,7 +546,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
 
             {/* Modales mantenidos igual por consistencia y funcionalidad */}
             {showSettingsModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm print:hidden">
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm print:hidden">
                     <div className="bg-white dark:bg-[#1A2131] rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-[#2A3347]">
                         <div className="p-6 border-b border-gray-100 dark:border-[#2A3347] flex justify-between items-center bg-gray-50 dark:bg-[#111623]/50">
                             <h3 className="text-lg font-black uppercase text-gray-800 dark:text-white leading-none">Ajustes del Punto de Venta</h3>
@@ -580,7 +580,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
             )}
             
             {showWithdrawalModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm print:hidden">
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm print:hidden">
                     <div className="bg-white dark:bg-[#1A2131] rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-[#2A3347]">
                         <div className="p-6 border-b border-gray-100 dark:border-[#2A3347] flex justify-between items-center bg-gray-50 dark:bg-[#111623]/50">
                             <h3 className="text-lg font-black uppercase text-gray-800 dark:text-white">Retirar Efectivo</h3>
@@ -602,7 +602,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
             )}
 
             {showCloseModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm print:hidden">
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm print:hidden">
                     <div className="bg-white dark:bg-[#1A2131] rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-[#2A3347]">
                         <div className="p-6 border-b border-gray-100 dark:border-[#2A3347] flex justify-between items-center bg-red-50 dark:bg-red-500/10">
                             <h3 className="text-lg font-black uppercase text-gray-900 dark:text-white leading-none">Cierre de Caja</h3>
@@ -624,7 +624,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
             )}
 
             {showInventoryModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-md print:hidden">
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-md print:hidden">
                     <div className="bg-white dark:bg-[#1A2131] rounded-[2.5rem] w-full max-w-2xl border border-gray-200 dark:border-[#2A3347] overflow-hidden flex flex-col max-h-[80vh] shadow-2xl">
                         <div className="p-6 border-b border-gray-100 dark:border-[#2A3347] flex justify-between items-center bg-gray-50 dark:bg-[#111623]/50 shrink-0">
                             <h3 className="text-lg font-black text-gray-800 dark:text-white uppercase leading-none">📦 Stock de Almacén</h3>
