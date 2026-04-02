@@ -366,8 +366,8 @@ export default function Index({ auth, products, categories, filters }) {
                                         <option value="bulto">Bulto / Saco</option>
                                         <option value="ml">Mililitros (ML)</option>
                                         <option value="gramo">Gramos (G)</option>
-                                        <option value="KILO (KG)">Kilo (KG)</option>
-                                        <option value="LITRO (LT)">Litro (LT)</option>
+                                        <option value="kg">Kilo (KG)</option>
+                                        <option value="lt">Litro (LT)</option>
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
