@@ -87,6 +87,7 @@ export default function Index({ auth, products, categories, filters }) {
     const openCreateModal = () => {
         setEditingProduct(null);
         reset();
+        setData('is_service', selectedType === 'service');
         setShowCreateModal(true);
     };
 
@@ -309,8 +310,160 @@ export default function Index({ auth, products, categories, filters }) {
                 </div>
             </div>
 
-            {/* Modal de Creación simplification (Keeping functionality as is but updating aesthetics) */}
-            {/* Modal styling would be similar to Audit.jsx Modals */}
+            {/* Modal de Creación / Edición */}
+            {showCreateModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-[#1B2132] rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden border dark:border-slate-700">
+                        <div className="p-8 border-b dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-gray-900/40">
+                            <h3 className="text-xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
+                                {editingProduct ? 'Editar Artículo' : 'Nuevo Artículo al Catálogo'}
+                            </h3>
+                            <button onClick={() => setShowCreateModal(false)} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-50 hover:text-red-500 text-slate-400 font-black text-2xl transition-all">×</button>
+                        </div>
+                        <form onSubmit={submitProduct} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Nombre Comercial</label>
+                                    <input
+                                        type="text"
+                                        value={data.name}
+                                        onChange={e => setData('name', e.target.value)}
+                                        className="w-full bg-slate-50 dark:bg-slate-900/40 border-none rounded-2xl py-3 px-6 focus:ring-2 focus:ring-brand-primary font-black text-sm uppercase tracking-tight shadow-inner"
+                                        required
+                                        placeholder="Ej: Amoxicilina 500mg"
+                                    />
+                                    {errors.name && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.name}</p>}
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Categoría</label>
+                                    <select
+                                        value={data.product_category_id}
+                                        onChange={e => setData('product_category_id', e.target.value)}
+                                        className="w-full bg-slate-50 dark:bg-slate-900/40 border-none rounded-2xl py-3 px-6 focus:ring-2 focus:ring-brand-primary font-bold text-xs shadow-inner uppercase tracking-tight"
+                                        required
+                                    >
+                                        <option value="" disabled>Seleccionar...</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name.toUpperCase()}</option>
+                                        ))}
+                                    </select>
+                                    {errors.product_category_id && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.product_category_id}</p>}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Unidad de Medida</label>
+                                    <select
+                                        value={data.unit}
+                                        onChange={e => setData('unit', e.target.value)}
+                                        className="w-full bg-slate-50 dark:bg-slate-900/40 border-none rounded-2xl py-3 px-6 focus:ring-2 focus:ring-brand-primary font-black text-xs shadow-inner uppercase tracking-tight"
+                                        required
+                                    >
+                                        <option value="pieza">Pieza (PZA)</option>
+                                        <option value="frasco">Frasco</option>
+                                        <option value="caja">Caja</option>
+                                        <option value="bulto">Bulto / Saco</option>
+                                        <option value="ml">Mililitros (ML)</option>
+                                        <option value="gramo">Gramos (G)</option>
+                                        <option value="KILO (KG)">Kilo (KG)</option>
+                                        <option value="LITRO (LT)">Litro (LT)</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Precio al Público</label>
+                                    <div className="relative">
+                                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={data.price}
+                                            onChange={e => setData('price', e.target.value)}
+                                            className="w-full bg-slate-50 dark:bg-slate-900/40 border-none rounded-2xl py-3 pl-10 pr-6 focus:ring-2 focus:ring-brand-primary font-black text-sm shadow-inner"
+                                            required
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                    {errors.price && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.price}</p>}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="space-y-1.5 text-left">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">SKU / Clave</label>
+                                    <input
+                                        type="text"
+                                        value={data.sku}
+                                        onChange={e => setData('sku', e.target.value)}
+                                        className="w-full bg-slate-50 dark:bg-slate-900/40 border-none rounded-2xl py-3 px-6 focus:ring-2 focus:ring-brand-primary font-bold text-xs shadow-inner"
+                                        placeholder="Opcional"
+                                    />
+                                    {errors.sku && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.sku}</p>}
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Mín. Stock</label>
+                                    <input
+                                        type="number"
+                                        value={data.min_stock}
+                                        onChange={e => setData('min_stock', e.target.value)}
+                                        className="w-full bg-slate-50 dark:bg-slate-900/40 border-none rounded-2xl py-3 px-6 focus:ring-2 focus:ring-brand-primary font-black text-xs text-center shadow-inner"
+                                        required
+                                    />
+                                    {errors.min_stock && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.min_stock}</p>}
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">IVA (%)</label>
+                                    <input
+                                        type="number"
+                                        value={data.tax_iva}
+                                        onChange={e => setData('tax_iva', e.target.value)}
+                                        className="w-full bg-slate-50 dark:bg-slate-900/40 border-none rounded-2xl py-3 px-6 focus:ring-2 focus:ring-brand-primary font-bold text-xs text-center shadow-inner"
+                                        required
+                                    />
+                                    {errors.tax_iva && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.tax_iva}</p>}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-4">
+                                <label className="flex-1 flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-900/40 border dark:border-slate-700/50 rounded-2xl cursor-pointer hover:bg-slate-100 transition shadow-inner">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.is_controlled}
+                                        onChange={e => setData('is_controlled', e.target.checked)}
+                                        className="w-5 h-5 text-brand-primary rounded focus:ring-brand-primary"
+                                    />
+                                    <div className="leading-tight text-left">
+                                        <p className="text-[10px] font-black uppercase text-slate-800 dark:text-slate-200">Controlado</p>
+                                        <p className="text-[8px] font-bold text-slate-400 uppercase italic">Requiere receta</p>
+                                    </div>
+                                </label>
+                                <label className="flex-1 flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-900/40 border dark:border-slate-700/50 rounded-2xl cursor-pointer hover:bg-slate-100 transition shadow-inner">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.is_service}
+                                        onChange={e => setData('is_service', e.target.checked)}
+                                        className="w-5 h-5 text-brand-primary rounded focus:ring-brand-primary"
+                                    />
+                                    <div className="leading-tight text-left">
+                                        <p className="text-[10px] font-black uppercase text-slate-800 dark:text-slate-200">Es Servicio</p>
+                                        <p className="text-[8px] font-bold text-slate-400 uppercase italic">No descuenta stock</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div className="pt-6">
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                                >
+                                    {processing ? 'Guardando Artículo...' : editingProduct ? 'Actualizar Artículo' : 'Registrar en Catálogo'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }

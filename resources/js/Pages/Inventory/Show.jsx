@@ -490,6 +490,8 @@ export default function Show({ auth, product, transactions, categories }) {
                                         <option value="bulto">Bulto / Saco</option>
                                         <option value="ml">Mililitros (ML)</option>
                                         <option value="gramo">Gramos (G)</option>
+                                        <option value="KILO (KG)">Kilo (KG)</option>
+                                        <option value="LITRO (LT)">Litro (LT)</option>
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
