@@ -114,6 +114,18 @@ export default function Show({ auth, product, transactions, categories }) {
                         </h2>
                     </div>
                     <div className="flex gap-3">
+                        {auth.user?.role === 'admin' && (
+                            <button
+                                onClick={() => {
+                                    if (confirm('¿Estás seguro de eliminar este artículo del catálogo? Esta acción no romperá ventas pasadas, pero el producto ya no aparecerá en el inventario activo ni PDV.')) {
+                                        router.delete(route('inventory.destroy', product.id));
+                                    }
+                                }}
+                                className="bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition flex items-center gap-2 border border-red-100 dark:border-red-500/20 active:scale-95 shadow-sm"
+                            >
+                                <span>🗑️ Dar de Baja</span>
+                            </button>
+                        )}
                         <button
                             onClick={() => setShowLotModal(true)}
                             className="bg-brand-primary text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-brand-primary/20 flex items-center gap-2 active:scale-95"

@@ -72,6 +72,10 @@ export default function Index({ auth, products, categories, filters }) {
         return divisor > 0 ? (f / divisor).toFixed(2) : f.toFixed(2);
     };
 
+    const handleTaxChange = (key, value) => {
+        setData(key, value);
+    };
+
     const submitProduct = (e) => {
         e.preventDefault();
         if (editingProduct) {
@@ -472,11 +476,29 @@ export default function Index({ auth, products, categories, filters }) {
                                 </label>
                             </div>
 
-                            <div className="pt-6">
+                            <div className="pt-6 flex gap-3">
+                                {editingProduct && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (confirm('¿Estás seguro de eliminar este registro? Esta acción mantendrá historial de ventas pero ya no aparecerá en el catálogo activo.')) {
+                                                router.delete(route('inventory.destroy', editingProduct.id), {
+                                                    onSuccess: () => {
+                                                        setShowCreateModal(false);
+                                                        setEditingProduct(null);
+                                                    }
+                                                });
+                                            }
+                                        }}
+                                        className="px-6 bg-red-100 hover:bg-red-200 text-red-600 py-5 rounded-2xl font-black uppercase tracking-widest transition-all active:scale-95 border border-red-200"
+                                    >
+                                        🗑️
+                                    </button>
+                                )}
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                                    className="flex-1 bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
                                 >
                                     {processing ? 'Guardando Artículo...' : editingProduct ? 'Actualizar Artículo' : 'Registrar en Catálogo'}
                                 </button>

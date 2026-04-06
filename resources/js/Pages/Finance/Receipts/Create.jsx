@@ -566,7 +566,18 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                             </ul>
                                         </div>
                                     )}
-                                    <button type="button" onClick={submit} disabled={processing || data.items.length === 0 || !data.user_id || (data.payment_method === 'mixed' && (!data.mixed_cash_amount || isNaN(total) || Number(data.mixed_cash_amount) >= total))} className="w-full bg-purple-600 hover:bg-purple-500 text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] shadow-lg shadow-purple-500/10 active:scale-[98%] transition-all border-b-4 border-purple-800 disabled:grayscale disabled:opacity-30">
+                                    <button 
+                                        type="button" 
+                                        onClick={submit} 
+                                        disabled={
+                                            processing || 
+                                            data.items.length === 0 || 
+                                            !data.user_id || 
+                                            (data.payment_method === 'cash' && (!receivedAmount || parseFloat(receivedAmount) < total)) ||
+                                            (data.payment_method === 'mixed' && (!data.mixed_cash_amount || isNaN(total) || parseFloat(data.mixed_cash_amount) >= total))
+                                        } 
+                                        className="w-full bg-purple-600 hover:bg-purple-500 text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] shadow-lg shadow-purple-500/10 active:scale-[98%] transition-all border-b-4 border-purple-800 disabled:grayscale disabled:opacity-30"
+                                    >
                                         {processing ? 'CARGANDO...' : 'CONFIRMAR VENTA'}
                                     </button>
                                 </div>
