@@ -197,7 +197,7 @@ export default function Show({ auth, hospitalization, templates, products = [] }
                                         preserveScroll: true 
                                     });
                                 }}
-                                products={products}
+                                products={products.filter(p => !p.is_service)}
                                 canManage={canManage && hospitalization.status === 'active'}
                                 title="Tratamiento Base O Fármacos Programados"
                                 iconColor="bg-amber-500"

@@ -75,10 +75,9 @@ class SurgeryController extends Controller
             ->get(['id', 'name']);
 
         $products = \App\Models\Product::where('is_active', true)
-            ->where('is_service', false)
             ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
             ->orderBy('name')
-            ->get(['id', 'name', 'unit', 'is_controlled', 'price']);
+            ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service']);
 
         return Inertia::render('Surgeries/Create', [
             'pet' => $pet,
@@ -198,10 +197,9 @@ class SurgeryController extends Controller
             ->get();
         $branches = \App\Models\Branch::all();
         $products = \App\Models\Product::where('is_active', true)
-            ->where('is_service', false)
             ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
             ->orderBy('name')
-            ->get(['id', 'name', 'unit', 'is_controlled', 'price']);
+            ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service']);
 
         return Inertia::render('Surgeries/Show', [
             'surgery' => $surgery,

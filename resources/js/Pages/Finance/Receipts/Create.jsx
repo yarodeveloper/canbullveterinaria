@@ -218,11 +218,36 @@ export default function Create({ auth, clients, products, pets, selectedClientId
     const removeItem = (index) => setData('items', data.items.filter((_, i) => i !== index));
     const emptyCart = () => setData('items', []);
 
-    const subtotal = Math.round(data.items.reduce((acc, item) => acc + (Number(item.quantity || 0) * Number(item.unit_price || 0)), 0) * 100) / 100;
-    const taxIvaAmount = data.items.reduce((acc, item) => acc + (Number(item.quantity || 0) * Number(item.unit_price || 0) * (Number(item.tax_iva || 0) / 100)), 0);
-    const taxIepsAmount = data.items.reduce((acc, item) => acc + (Number(item.quantity || 0) * Number(item.unit_price || 0) * (Number(item.tax_ieps || 0) / 100)), 0);
-    const tax = Math.round(((taxIvaAmount || 0) + (taxIepsAmount || 0)) * 100) / 100;
-    const total = Math.round(((subtotal || 0) + (tax || 0)) * 100) / 100;
+    const totals = useMemo(() => {
+        return data.items.reduce((acc, item) => {
+            const qty = Number(item.quantity || 0);
+            const lineFinal = qty * Number(item.unit_price || 0);
+            
+            const ivaP = Number(item.tax_iva || 0) / 100;
+            const iepsP = Number(item.tax_ieps || 0) / 100;
+
+            // Desglose inverso
+            const divisor = (1 + iepsP) * (1 + ivaP);
+            const lineBase = divisor > 0 ? lineFinal / divisor : lineFinal;
+            const lineIeps = lineBase * iepsP;
+            const lineIva = (lineBase + lineIeps) * ivaP;
+
+            return {
+                subtotal: acc.subtotal + lineBase,
+                iva: acc.iva + lineIva,
+                ieps: acc.ieps + lineIeps,
+                total: acc.total + lineFinal
+            };
+        }, { subtotal: 0, iva: 0, ieps: 0, total: 0 });
+    }, [data.items]);
+
+    const subtotal = Math.round(totals.subtotal * 100) / 100;
+    const taxTotals = { 
+        iva: Math.round(totals.iva * 100) / 100, 
+        ieps: Math.round(totals.ieps * 100) / 100 
+    };
+    const tax = Math.round((taxTotals.iva + taxTotals.ieps) * 100) / 100;
+    const total = Math.round(totals.total * 100) / 100;
 
     const submit = (e) => {
         e.preventDefault();
@@ -407,8 +432,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                                     <span className="font-black w-7 text-center text-gray-900 dark:text-white">{item.quantity}</span>
                                                     <button type="button" onClick={() => updateQuantity(idx, 1)} className="w-7 h-7 rounded-lg border text-gray-400 hover:border-purple-500 hover:text-purple-600 transition-colors">+</button>
                                                 </div>
-                                                <div className="w-32 text-right text-gray-500 text-sm font-medium">${parseFloat(item.unit_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</div>
-                                                <div className="w-32 text-right font-black text-gray-900 dark:text-white text-base">${((item.quantity * item.unit_price) * (1 + (item.tax_iva + item.tax_ieps) / 100)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</div>
+                                                <div className="w-32 text-right font-black text-gray-900 dark:text-white text-base">${(item.quantity * item.unit_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</div>
                                                 <div className="w-12 text-right"><button type="button" onClick={() => removeItem(idx)} className="text-gray-200 hover:text-red-500 transition-colors">✖</button></div>
                                             </div>
                                         ))}
@@ -432,15 +456,23 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                             {/* Resumen Total: Dos Columnas */}
                             <div className="bg-gradient-to-br from-purple-700 to-indigo-900 rounded-[2rem] p-6 shadow-2xl border border-white/10 shrink-0">
                                 <div className="grid grid-cols-2 gap-4 items-center">
-                                    <div className="space-y-2 border-r border-white/10 pr-4">
+                                    <div className="space-y-1.5 border-r border-white/10 pr-4">
                                         <div className="flex justify-between items-center text-white/70">
                                             <span className="text-[9px] font-black uppercase tracking-widest">Subtotal</span>
                                             <span className="text-xs font-bold">${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                                         </div>
-                                        <div className="flex justify-between items-center text-white/70">
-                                            <span className="text-[9px] font-black uppercase tracking-widest">Impuestos</span>
-                                            <span className="text-xs font-bold">${tax.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-                                        </div>
+                                        {taxTotals.ieps > 0 && (
+                                            <div className="flex justify-between items-center text-white/70">
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-[#A78BFA]">IEPS</span>
+                                                <span className="text-xs font-bold font-mono">${taxTotals.ieps.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                            </div>
+                                        )}
+                                        {taxTotals.iva > 0 && (
+                                            <div className="flex justify-between items-center text-white/70">
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">IVA</span>
+                                                <span className="text-xs font-bold font-mono">${taxTotals.iva.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex flex-col items-center">
                                         <span className="text-[9px] font-black uppercase text-white/60 tracking-[0.2em] mb-1">Total a Liquidar</span>

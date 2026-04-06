@@ -82,6 +82,14 @@ export default function Show({ auth, product, transactions, categories }) {
         is_active: product.is_active !== undefined ? product.is_active : true,
     });
 
+    const getBasePricePreview = (final, iva, ieps) => {
+        const f = parseFloat(final) || 0;
+        const iV = parseFloat(iva) || 0;
+        const iE = parseFloat(ieps) || 0;
+        const divisor = (1 + iE / 100) * (1 + iV / 100);
+        return divisor > 0 ? (f / divisor).toFixed(2) : f.toFixed(2);
+    };
+
     const [showEditModal, setShowEditModal] = useState(false);
 
     const submitEdit = (e) => {
@@ -98,7 +106,7 @@ export default function Show({ auth, product, transactions, categories }) {
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
                         <Link href={route('inventory.index')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors flex items-center justify-center text-slate-500">
-                           <span className="text-xl">←</span>
+                            <span className="text-xl">←</span>
                         </Link>
                         <h2 className="font-extrabold text-xl text-slate-900 dark:text-white leading-tight flex items-center gap-2 uppercase tracking-tight">
                             <span className="w-1.5 h-6 bg-brand-primary rounded-full"></span>
@@ -160,15 +168,19 @@ export default function Show({ auth, product, transactions, categories }) {
                                     </div>
                                     <div className="flex justify-between items-center py-1">
                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic opacity-70">Precio Público</span>
-                                        <span className="font-black text-sm text-slate-900 dark:text-white">${parseFloat(product.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                        <span className="font-black text-sm text-slate-900 dark:text-white">${parseFloat(product.selling_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2 mt-4">
+                                    <div className="grid grid-cols-3 gap-2 mt-4">
                                         <div className="bg-slate-50 dark:bg-slate-900/40 p-2 rounded-xl text-center">
-                                            <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">IVA Aplicado</p>
+                                            <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">IVA %</p>
                                             <p className="font-black text-xs text-slate-600 dark:text-slate-300">{parseFloat(product.tax_iva)}%</p>
                                         </div>
                                         <div className="bg-slate-50 dark:bg-slate-900/40 p-2 rounded-xl text-center">
-                                            <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Mínimo Alerta</p>
+                                            <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">IEPS %</p>
+                                            <p className="font-black text-xs text-slate-600 dark:text-slate-300">{parseFloat(product.tax_ieps || 0)}%</p>
+                                        </div>
+                                        <div className="bg-slate-50 dark:bg-slate-900/40 p-2 rounded-xl text-center">
+                                            <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Mínimo</p>
                                             <p className="font-black text-xs text-slate-600 dark:text-slate-300">{parseFloat(product.min_stock)}</p>
                                         </div>
                                     </div>
@@ -495,7 +507,7 @@ export default function Show({ auth, product, transactions, categories }) {
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Precio al Público</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Precio de Venta Final (IVA e IEPS incl.)</label>
                                     <div className="relative">
                                         <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                                         <input
@@ -506,6 +518,9 @@ export default function Show({ auth, product, transactions, categories }) {
                                             className="w-full bg-slate-50 dark:bg-slate-900/40 border-none rounded-2xl py-3 pl-10 pr-6 focus:ring-2 focus:ring-brand-primary font-black text-sm shadow-inner"
                                             required
                                         />
+                                    </div>
+                                    <div className="flex justify-between px-2">
+                                        <p className="text-[9px] font-bold text-slate-400 italic">Desglose contable (Base): ${getBasePricePreview(editData.price, editData.tax_iva, editData.tax_ieps)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -530,13 +545,24 @@ export default function Show({ auth, product, transactions, categories }) {
                                         required
                                     />
                                 </div>
-                                <div className="space-y-1.5 col-span-1">
+                                <div className="space-y-1.5 col-span-1 border-l dark:border-slate-700/50 pl-4">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">IVA (%)</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         value={editData.tax_iva}
                                         onChange={e => setEditData('tax_iva', e.target.value)}
+                                        className="w-full bg-slate-50 dark:bg-slate-900/40 border-none rounded-2xl py-3 px-6 focus:ring-2 focus:ring-brand-primary font-bold text-xs text-center shadow-inner"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-1.5 col-span-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">IEPS (%)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={editData.tax_ieps}
+                                        onChange={e => setEditData('tax_ieps', e.target.value)}
                                         className="w-full bg-slate-50 dark:bg-slate-900/40 border-none rounded-2xl py-3 px-6 focus:ring-2 focus:ring-brand-primary font-bold text-xs text-center shadow-inner"
                                         required
                                     />

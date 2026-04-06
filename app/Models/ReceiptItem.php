@@ -17,6 +17,8 @@ class ReceiptItem extends Model
         'unit_price',
         'subtotal',
         'tax',
+        'tax_iva',
+        'tax_ieps',
         'total',
         'type',
         'assigned_user_id',

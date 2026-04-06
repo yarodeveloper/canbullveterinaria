@@ -386,7 +386,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                                 onSave={(meds) => {
                                                     updateSurgery({ pre_operative_medications: meds });
                                                 }}
-                                                products={products}
+                                                products={products.filter(p => !p.is_service)}
                                                 canManage={canManage && surgery.status !== 'completed'}
                                                 title="Fármacos Pre-Operatorios"
                                                 iconColor="bg-blue-500"
@@ -534,7 +534,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                                 onSave={(meds) => {
                                                     updateSurgery({ intra_operative_medications: meds });
                                                 }}
-                                                products={products}
+                                                products={products.filter(p => !p.is_service)}
                                                 canManage={canManage && surgery.status !== 'completed'}
                                                 title="Fármacos Intra-Operatorios (Anestesia / Fluidos...)"
                                                 iconColor="bg-amber-500"
@@ -645,7 +645,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                                 onSave={(meds) => {
                                                     updateSurgery({ post_operative_medications: meds });
                                                 }}
-                                                products={products}
+                                                products={products.filter(p => !p.is_service)}
                                                 canManage={canManage && surgery.status !== 'completed'}
                                                 title="Fármacos Post-Operatorios / Receta"
                                                 iconColor="bg-emerald-500"

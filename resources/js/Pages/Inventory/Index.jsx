@@ -64,6 +64,14 @@ export default function Index({ auth, products, categories, filters }) {
         is_service: false,
     });
 
+    const getBasePrice = (final, iva, ieps) => {
+        const f = parseFloat(final) || 0;
+        const iV = parseFloat(iva) || 0;
+        const iE = parseFloat(ieps) || 0;
+        const divisor = (1 + iE / 100) * (1 + iV / 100);
+        return divisor > 0 ? (f / divisor).toFixed(2) : f.toFixed(2);
+    };
+
     const submitProduct = (e) => {
         e.preventDefault();
         if (editingProduct) {
@@ -236,7 +244,7 @@ export default function Index({ auth, products, categories, filters }) {
                                                 <div className="text-right w-24">
                                                     <p className="text-[9px] font-black text-slate-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5 leading-none">P. Público</p>
                                                     <p className="text-xs font-black text-brand-primary group-hover:text-white tracking-tighter">
-                                                        ${parseFloat(product.price).toLocaleString()}
+                                                        ${parseFloat(product.selling_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                                     </p>
                                                 </div>
 
@@ -371,7 +379,7 @@ export default function Index({ auth, products, categories, filters }) {
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Precio al Público</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Precio de Venta Final (IVA e IEPS incl.)</label>
                                     <div className="relative">
                                         <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                                         <input
@@ -384,7 +392,9 @@ export default function Index({ auth, products, categories, filters }) {
                                             placeholder="0.00"
                                         />
                                     </div>
-                                    {errors.price && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.price}</p>}
+                                    <div className="flex justify-between px-2">
+                                        <p className="text-[9px] font-bold text-slate-400 italic">Desglose contable (Base): ${getBasePrice(data.price, data.tax_iva, data.tax_ieps)}</p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -416,11 +426,22 @@ export default function Index({ auth, products, categories, filters }) {
                                     <input
                                         type="number"
                                         value={data.tax_iva}
-                                        onChange={e => setData('tax_iva', e.target.value)}
+                                        onChange={e => handleTaxChange('tax_iva', e.target.value)}
                                         className="w-full bg-slate-50 dark:bg-slate-900/40 border-none rounded-2xl py-3 px-6 focus:ring-2 focus:ring-brand-primary font-bold text-xs text-center shadow-inner"
                                         required
                                     />
                                     {errors.tax_iva && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.tax_iva}</p>}
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">IEPS (%)</label>
+                                    <input
+                                        type="number"
+                                        value={data.tax_ieps}
+                                        onChange={e => handleTaxChange('tax_ieps', e.target.value)}
+                                        className="w-full bg-slate-50 dark:bg-slate-900/40 border-none rounded-2xl py-3 px-6 focus:ring-2 focus:ring-brand-primary font-bold text-xs text-center shadow-inner"
+                                        required
+                                    />
+                                    {errors.tax_ieps && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.tax_ieps}</p>}
                                 </div>
                             </div>
 

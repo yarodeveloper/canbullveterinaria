@@ -27,6 +27,30 @@ class Product extends Model
         'is_service',
     ];
 
+    protected $appends = ['selling_price', 'base_price'];
+
+    /**
+     * El 'price' en la base de datos ahora representa el PRECIO FINAL AL PÚBLICO.
+     */
+    public function getSellingPriceAttribute()
+    {
+        return (float) $this->price;
+    }
+
+    /**
+     * Calcula la base gravable a partir del precio final (Desglose Inverso).
+     */
+    public function getBasePriceAttribute()
+    {
+        $final = (float) $this->price;
+        $ieps = (float) $this->tax_ieps;
+        $iva = (float) $this->tax_iva;
+        
+        // Formula Inversa: Base = Total / ((1 + IEPS/100) * (1 + IVA/100))
+        $divisor = (1 + $ieps / 100) * (1 + $iva / 100);
+        return $divisor > 0 ? $final / $divisor : $final;
+    }
+
     public function category()
     {
         return $this->belongsTo(ProductCategory::class, 'product_category_id');

@@ -79,40 +79,51 @@ export default function Print({ receipt, posPrinterName, posTicketPreview }) {
                 <table className="w-full mb-3">
                     <thead>
                         <tr className="border-b border-black">
-                            <th className="text-left py-1">CONCEPTO</th>
-                            <th className="text-center py-1">CANT</th>
-                            <th className="text-right py-1">TOTAL</th>
+                            <th className="text-left py-1 text-[8px]">CONCEPTO</th>
+                            <th className="text-center py-1 text-[8px]">CANT</th>
+                            <th className="text-right py-1 text-[8px]">TOTAL</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-dashed divide-black/20">
-                        {receipt.items?.map((item, idx) => (
-                            <tr key={idx} className="align-top">
-                                <td className="py-1 pr-2 uppercase font-bold text-[10px]">
-                                    {item.concept}
-                                    {item.assigned_user && (
-                                        <div className="text-[8px] font-normal lowercase italic text-gray-700">
-                                            atendió: {item.assigned_user.name}
-                                        </div>
-                                    )}
-                                </td>
-                                <td className="py-1 text-center">{item.quantity}</td>
-                                <td className="py-1 text-right">${parseFloat(item.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-                            </tr>
-                        ))}
+                        {receipt.items?.map((item, idx) => {
+                            const hasTax = parseFloat(item.tax_iva || 0) > 0 || parseFloat(item.tax_ieps || 0) > 0;
+                            return (
+                                <tr key={idx} className="align-top">
+                                    <td className="py-1 pr-1 uppercase font-bold text-[9px] leading-tight max-w-[50mm] break-words">
+                                        {item.concept} {hasTax ? '*' : ''}
+                                        {item.assigned_user && (
+                                            <div className="text-[7px] font-normal lowercase italic text-gray-700">
+                                                atendió: {item.assigned_user.name}
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td className="py-1 text-center text-[9px]">{parseFloat(item.quantity)}</td>
+                                    <td className="py-1 text-right text-[9px] font-bold">${parseFloat(item.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
 
                 {/* Totals */}
-                <div className="flex flex-col items-end gap-1 mb-4">
-                    <div className="flex justify-between w-full max-w-[150px]">
+                <div className="flex flex-col items-end gap-1 mb-4 border-t border-black pt-2">
+                    <div className="flex justify-between w-full max-w-[160px] text-[9px]">
                         <span>SUBTOTAL:</span>
                         <span className="font-bold">${parseFloat(receipt.subtotal).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                     </div>
-                    <div className="flex justify-between w-full max-w-[150px]">
-                        <span>IMPUESTOS:</span>
-                        <span className="font-bold">${parseFloat(receipt.tax).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                    <div className="flex justify-between w-full max-w-[150px] text-sm border-t border-black pt-1">
+                    {parseFloat(receipt.tax_ieps || 0) > 0 && (
+                        <div className="flex justify-between w-full max-w-[160px] text-[9px]">
+                            <span>IEPS:</span>
+                            <span className="font-bold">${parseFloat(receipt.tax_ieps).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                    )}
+                    {parseFloat(receipt.tax_iva || 0) > 0 && (
+                        <div className="flex justify-between w-full max-w-[160px] text-[9px]">
+                            <span>IVA:</span>
+                            <span className="font-bold">${parseFloat(receipt.tax_iva).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between w-full max-w-[160px] text-xs border-t border-black pt-1">
                         <span className="font-black">TOTAL:</span>
                         <span className="font-black">${parseFloat(receipt.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                     </div>
@@ -121,7 +132,7 @@ export default function Print({ receipt, posPrinterName, posTicketPreview }) {
                 {/* Payment Method */}
                 <div className="text-center mb-6">
                     <div className="border-t border-black border-dashed pt-2">
-                        <p className="font-bold uppercase mb-1">
+                        <p className="font-bold uppercase mb-1 text-[9px]">
                             PAGO: {
                                 receipt.payment_method === 'cash' ? 'EFECTIVO' : 
                                 (receipt.payment_method === 'card' ? 'TARJETA' : 
@@ -140,6 +151,10 @@ export default function Print({ receipt, posPrinterName, posTicketPreview }) {
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    <div className="mt-3 text-[7px] text-gray-500 italic text-left px-2">
+                        <p>* Producto con impuestos desglosados (IVA/IEPS)</p>
                     </div>
 
                     <div className="mt-4 border-t border-dashed border-black pt-4">

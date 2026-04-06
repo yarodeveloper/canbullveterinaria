@@ -398,7 +398,7 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                         <MedicationsEditor 
                             title="Tratamiento Base O Fármacos Programados"
                             medications={euthanasia.medications}
-                            products={products}
+                            products={products.filter(p => !p.is_service)}
                             canManage={canManage}
                             onSave={handleSaveMeds}
                         />

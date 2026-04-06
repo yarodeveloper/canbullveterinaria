@@ -68,10 +68,9 @@ class HospitalizationController extends Controller
             ->get(['id', 'name']);
 
         $products = \App\Models\Product::where('is_active', true)
-            ->where('is_service', false)
             ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
             ->orderBy('name')
-            ->get(['id', 'name', 'unit', 'is_controlled', 'price']);
+            ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service']);
 
         return Inertia::render('Hospitalizations/Create', [
             'pet' => $pet,
@@ -155,10 +154,9 @@ class HospitalizationController extends Controller
             })->get();
 
         $products = \App\Models\Product::where('is_active', true)
-            ->where('is_service', false)
             ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
             ->orderBy('name')
-            ->get(['id', 'name', 'unit', 'is_controlled', 'price']);
+            ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service']);
 
         return Inertia::render('Hospitalizations/Show', [
             'hospitalization' => $hospitalization->load(['pet.owner', 'pet.surgeries', 'veterinarian', 'monitorings.recorder']),

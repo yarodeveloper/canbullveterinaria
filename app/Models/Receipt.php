@@ -17,6 +17,8 @@ class Receipt extends Model
         'receipt_number',
         'date',
         'subtotal',
+        'tax_iva',
+        'tax_ieps',
         'tax',
         'total',
         'payment_method',

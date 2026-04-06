@@ -243,7 +243,7 @@ export default function Create({ auth, pet: initialPet, clients: initialClients,
                                 <MedicationsEditor 
                                     title="Tratamiento Base O Fármacos Programados"
                                     medications={data.medications}
-                                    products={products}
+                                    products={products.filter(p => !p.is_service)}
                                     canManage={true}
                                     isAlwaysEditing={true}
                                     onChange={(meds) => setData('medications', meds)}

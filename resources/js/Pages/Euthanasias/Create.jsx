@@ -277,7 +277,7 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
                             title="Tratamiento Base O Fármacos Programados"
                             medications={data.medications}
                             onChange={(meds) => setData('medications', meds)}
-                            products={products}
+                            products={products.filter(p => !p.is_service)}
                             canManage={true}
                             isAlwaysEditing={true}
                         />

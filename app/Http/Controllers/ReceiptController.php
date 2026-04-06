@@ -130,22 +130,28 @@ class ReceiptController extends Controller
             }
 
             $subtotal = 0;
-            $tax = 0;
+            $tax_iva = 0;
+            $tax_ieps = 0;
             
             foreach ($validated['items'] as $item) {
-                $lineSubtotal = $item['quantity'] * $item['unit_price'];
+                // El unit_price ahora se guarda como PRECIO FINAL
+                $lineTotalFinal = $item['quantity'] * $item['unit_price'];
                 $ivaPercent = $item['tax_iva'] ?? ($item['type'] === 'service' ? 0 : 16);
                 $iepsPercent = $item['tax_ieps'] ?? 0;
 
-                $lineTaxIva = $lineSubtotal * ($ivaPercent / 100);
-                $lineTaxIeps = $lineSubtotal * ($iepsPercent / 100);
-                $lineTax = $lineTaxIva + $lineTaxIeps;
+                // Desglose inverso en cascada para obtener la base y los montos de impuestos
+                $divisor = (1 + $iepsPercent / 100) * (1 + $ivaPercent / 100);
+                $lineBaseTotal = $divisor > 0 ? $lineTotalFinal / $divisor : $lineTotalFinal;
+                
+                $montoIeps = $lineBaseTotal * ($iepsPercent / 100);
+                $montoIva = ($lineBaseTotal + $montoIeps) * ($ivaPercent / 100);
 
-                $subtotal += $lineSubtotal;
-                $tax += $lineTax;
+                $subtotal += $lineBaseTotal;
+                $tax_iva += $montoIva;
+                $tax_ieps += $montoIeps;
             }
 
-            $total = $subtotal + $tax;
+            $total = $subtotal + $tax_iva + $tax_ieps;
 
             $receipt = Receipt::create([
                 'user_id' => $validated['user_id'],
@@ -154,7 +160,9 @@ class ReceiptController extends Controller
                 'receipt_number' => 'REC-' . strtoupper(uniqid()),
                 'date' => now(),
                 'subtotal' => $subtotal,
-                'tax' => $tax,
+                'tax_iva' => $tax_iva,
+                'tax_ieps' => $tax_ieps,
+                'tax' => $tax_iva + $tax_ieps,
                 'total' => $total,
                 'payment_method' => $validated['payment_method'],
                 'status' => $validated['payment_method'] === 'credit' ? 'pending' : 'paid',
@@ -167,23 +175,32 @@ class ReceiptController extends Controller
             }
 
             foreach ($validated['items'] as $item) {
-                $lineSubtotal = $item['quantity'] * $item['unit_price'];
+                // El unit_price que viene del PDV es el PRECIO FINAL
+                $finalPrice = $item['unit_price'];
+                $qty = $item['quantity'];
+                
                 $ivaPercent = $item['tax_iva'] ?? ($item['type'] === 'service' ? 0 : 16);
                 $iepsPercent = $item['tax_ieps'] ?? 0;
 
-                $lineTaxIva = $lineSubtotal * ($ivaPercent / 100);
-                $lineTaxIeps = $lineSubtotal * ($iepsPercent / 100);
+                // Desglose inverso por item
+                $divisor = (1 + $iepsPercent / 100) * (1 + $ivaPercent / 100);
+                $lineBase = $divisor > 0 ? $finalPrice / $divisor : $finalPrice;
+                
+                $lineTaxIeps = $lineBase * ($iepsPercent / 100);
+                $lineTaxIva = ($lineBase + $lineTaxIeps) * ($ivaPercent / 100);
                 $lineTax = $lineTaxIva + $lineTaxIeps;
 
                 ReceiptItem::create([
                     'receipt_id' => $receipt->id,
                     'product_id' => $item['product_id'] ?? null,
                     'concept' => $item['concept'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'subtotal' => $lineSubtotal,
-                    'tax' => $lineTax,
-                    'total' => $lineSubtotal + $lineTax,
+                    'quantity' => $qty,
+                    'unit_price' => $lineBase, // Se guarda la base en el registro contable
+                    'subtotal' => $lineBase * $qty,
+                    'tax' => $lineTax * $qty,
+                    'tax_iva' => $lineTaxIva * $qty,
+                    'tax_ieps' => $lineTaxIeps * $qty,
+                    'total' => $finalPrice * $qty,
                     'type' => $item['type'],
                     'assigned_user_id' => $item['assigned_user_id'] ?? null,
                 ]);

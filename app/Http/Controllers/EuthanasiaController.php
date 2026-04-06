@@ -81,10 +81,9 @@ class EuthanasiaController extends Controller
 
         // Productos del inventario para medicamentos (solo físicos, sin importar stock para registro médico)
         $products = Product::where('is_active', true)
-            ->where('is_service', false)
             ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
             ->orderBy('name')
-            ->get(['id', 'name', 'unit', 'is_controlled']);
+            ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service']);
 
         return Inertia::render('Euthanasias/Create', [
             'pet'          => $pet,
@@ -186,10 +185,9 @@ class EuthanasiaController extends Controller
         $euthanasia->load(['pet.owner', 'veterinarian', 'branch']);
 
         $products = Product::where('is_active', true)
-            ->where('is_service', false)
             ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
             ->orderBy('name')
-            ->get(['id', 'name', 'unit', 'is_controlled']);
+            ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service']);
 
         $documentTemplates = \App\Models\DocumentTemplate::where(function($q) use($branchId) {
                 $q->where('branch_id', $branchId)->orWhereNull('branch_id');
