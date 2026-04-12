@@ -41,6 +41,7 @@ export default function PetRegistrationForm({ initialClients, onSuccess, onCance
         notes: pet?.notes || '',
         user_id: pet?.user_id || (localClients.find(c => c.name === '<< Sin Asignar >>')?.id || ''),
         is_aggressive: !!pet?.is_aggressive,
+        is_sterilized: !!pet?.is_sterilized,
         allergies: pet?.allergies || '',
         chronic_conditions: pet?.chronic_conditions || '',
     });
@@ -435,15 +436,27 @@ export default function PetRegistrationForm({ initialClients, onSuccess, onCance
 
                                 <div className="bg-red-50 dark:bg-red-900/10 p-5 rounded-2xl space-y-4 border border-red-100 dark:border-red-900/20">
                                     <h4 className="text-[10px] font-black text-red-700 dark:text-red-400 uppercase tracking-widest">Alertas Clínicas</h4>
-                                    <div className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            id="is_aggressive_modal"
-                                            checked={data.is_aggressive}
-                                            onChange={e => setData('is_aggressive', e.target.checked)}
-                                            className="rounded border-gray-300 text-brand-primary shadow-sm focus:ring-brand-primary"
-                                        />
-                                        <label htmlFor="is_aggressive_modal" className="ml-2 block text-sm font-bold text-gray-700 dark:text-gray-300">¿Es Agresivo?</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="flex items-center gap-2 bg-white dark:bg-gray-950 rounded-xl px-3 py-2.5 border border-red-100 dark:border-red-900/30">
+                                            <input
+                                                type="checkbox"
+                                                id="is_aggressive_modal"
+                                                checked={data.is_aggressive}
+                                                onChange={e => setData('is_aggressive', e.target.checked)}
+                                                className="rounded border-red-300 text-red-600 shadow-sm focus:ring-red-500"
+                                            />
+                                            <label htmlFor="is_aggressive_modal" className="text-xs font-bold text-red-700 dark:text-red-400 cursor-pointer select-none">⚠️ Agresivo</label>
+                                        </div>
+                                        <div className="flex items-center gap-2 bg-white dark:bg-gray-950 rounded-xl px-3 py-2.5 border border-teal-100 dark:border-teal-900/30">
+                                            <input
+                                                type="checkbox"
+                                                id="is_sterilized_modal"
+                                                checked={data.is_sterilized}
+                                                onChange={e => setData('is_sterilized', e.target.checked)}
+                                                className="rounded border-teal-300 text-teal-600 shadow-sm focus:ring-teal-500"
+                                            />
+                                            <label htmlFor="is_sterilized_modal" className="text-xs font-bold text-teal-700 dark:text-teal-400 cursor-pointer select-none">✂️ Esterilizado</label>
+                                        </div>
                                     </div>
                                     <div className="space-y-3">
                                         <div>

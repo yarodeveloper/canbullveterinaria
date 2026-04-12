@@ -12,6 +12,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import PrimaryButton from '@/Components/PrimaryButton';
 import PetAvatar from '@/Components/PetAvatar';
 import PetRegistrationForm from '@/Components/PetRegistrationForm';
+import PetAlertIcons from '@/Components/PetAlertIcons';
 
 export default function Create({ auth, pet: initialPet, clients: initialClients, appointment_id, products = [] }) {
     const [selectedPet, setSelectedPet] = useState(initialPet);
@@ -42,7 +43,8 @@ export default function Create({ auth, pet: initialPet, clients: initialClients,
         }
     }, [petSearch]);
 
-    const handlePetSelect = (pet) => {
+    const handlePetSelect = (item) => {
+        const pet = item.pet || item;
         setSelectedPet(pet);
         setData(prev => ({
             ...prev,
@@ -129,7 +131,10 @@ export default function Create({ auth, pet: initialPet, clients: initialClients,
                                                             >
                                                                 <PetAvatar pet={p} className="w-9 h-9 rounded-full border border-slate-200" />
                                                                 <div className="flex-1">
-                                                                    <p className="font-bold text-sm text-slate-900 dark:text-white">{p.name}</p>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <p className="font-bold text-sm text-slate-900 dark:text-white">{p.name}</p>
+                                                                        <PetAlertIcons pet={p.pet || p} size="sm" />
+                                                                    </div>
                                                                     <p className="text-[10px] text-slate-500 uppercase">{p.breed} • {p.owner?.name}</p>
                                                                 </div>
                                                             </button>
@@ -154,7 +159,10 @@ export default function Create({ auth, pet: initialPet, clients: initialClients,
                                             <div className="flex items-center gap-3">
                                                 <PetAvatar pet={selectedPet} className="w-12 h-12 rounded-xl border-2 border-brand-primary/30" />
                                                 <div>
-                                                    <h3 className="text-base font-black text-brand-primary truncate">{selectedPet.name}</h3>
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="text-base font-black text-brand-primary truncate">{selectedPet.name}</h3>
+                                                        <PetAlertIcons pet={selectedPet} size="sm" />
+                                                    </div>
                                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mt-1">
                                                         {selectedPet.species} • {selectedPet.breed || 'Mestizo'}
                                                     </p>

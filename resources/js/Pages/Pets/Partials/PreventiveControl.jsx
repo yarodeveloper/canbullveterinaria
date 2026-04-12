@@ -135,6 +135,48 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
         other: 'Otro Tratamiento'
     };
 
+    const [editingRecord, setEditingRecord] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+
+    const { data: editData, setData: setEditData, put: putUpdate, processing: processingUpdate, reset: resetEdit, errors: editErrors } = useForm({
+        type: 'vaccine',
+        name: '',
+        application_date: '',
+        next_due_date: '',
+        lot_number: '',
+        brand: '',
+        weight_at_time: '',
+        notes: '',
+        veterinarian_id: '',
+    });
+
+    const openEditModal = (record) => {
+        setEditingRecord(record);
+        setEditData({
+            type: record.type,
+            name: record.name,
+            application_date: record.application_date ? record.application_date.split(' ')[0].split('T')[0] : '',
+            next_due_date: record.next_due_date ? record.next_due_date.split(' ')[0].split('T')[0] : '',
+            lot_number: record.lot_number || '',
+            brand: record.brand || '',
+            weight_at_time: record.weight_at_time || '',
+            notes: record.notes || '',
+            veterinarian_id: record.veterinarian_id || auth.user.id,
+        });
+        setShowEditModal(true);
+    };
+
+    const handleUpdate = (e) => {
+        e.preventDefault();
+        putUpdate(route('preventive-records.update', editingRecord.id), {
+            onSuccess: () => {
+                setShowEditModal(false);
+                setEditingRecord(null);
+                resetEdit();
+            }
+        });
+    };
+
     const typeIcons = { vaccine: '💉', internal_deworming: '💊', external_deworming: '🧴', other: '🛡️' };
     const typeColors = {
         vaccine: 'text-brand-primary dark:text-brand-primary',
@@ -198,7 +240,14 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                                                 <div>
                                                     <div className="flex items-center gap-2">
                                                         <p className="font-extrabold text-sm text-gray-900 dark:text-gray-100">{record.name}</p>
-                                                        <button onClick={() => deleteRecord(record.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                                                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-all">
+                                                            <button onClick={() => openEditModal(record)} className="text-gray-300 hover:text-indigo-500 transition-all" title="Editar">
+                                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                            </button>
+                                                            <button onClick={() => deleteRecord(record.id)} className="text-gray-300 hover:text-red-500 transition-all" title="Eliminar">
+                                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                     <p className="text-[11px] text-gray-400 mt-0.5">Última: <span className="text-gray-500 dark:text-gray-300">{new Date(record.application_date).toLocaleDateString('es-ES')}</span></p>
                                                 </div>
@@ -411,6 +460,75 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                                 <textarea value={quickData.description} onChange={e => setQuickData('description', e.target.value)} rows="3" className="w-full rounded-2xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-sm p-4"></textarea>
                             </div>
                             <button type="submit" disabled={processingQuick} className="w-full py-4 bg-brand-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-brand-primary/20">Añadir al Catálogo y Seleccionar</button>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* Modal de Edición de Registro Individual */}
+            {showEditModal && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-brand-primary text-white">
+                            <div>
+                                <h3 className="font-black uppercase tracking-widest text-xs">Editar Aplicación</h3>
+                                <p className="text-[9px] text-white/70 uppercase font-black tracking-tighter">Mascota: {pet.name}</p>
+                            </div>
+                            <button onClick={() => setShowEditModal(false)} className="text-xl font-black transition hover:scale-110">×</button>
+                        </div>
+                        <form onSubmit={handleUpdate} className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Nombre Comercial</label>
+                                    <input type="text" value={editData.name} onChange={e => setEditData('name', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-xs font-bold p-3" required />
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Categoría</label>
+                                    <select value={editData.type} onChange={e => setEditData('type', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-xs font-bold p-3">
+                                        <option value="vaccine">Vacuna</option>
+                                        <option value="internal_deworming">Desparasitación Interna</option>
+                                        <option value="external_deworming">Desparasitación Externa</option>
+                                        <option value="other">Otro Tratamiento</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Fecha Aplicación</label>
+                                    <input type="date" value={editData.application_date} onChange={e => setEditData('application_date', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-xs font-bold p-3" />
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Próximo Refuerzo</label>
+                                    <input type="date" value={editData.next_due_date} onChange={e => setEditData('next_due_date', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-xs font-bold p-3" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Lote</label>
+                                    <input type="text" value={editData.lot_number} onChange={e => setEditData('lot_number', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-[10px] p-3" />
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Marca</label>
+                                    <input type="text" value={editData.brand} onChange={e => setEditData('brand', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-[10px] p-3" />
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Peso (kg)</label>
+                                    <input type="number" step="0.01" value={editData.weight_at_time} onChange={e => setEditData('weight_at_time', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-[10px] p-3" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Observaciones / Notas Clínicas</label>
+                                <textarea value={editData.notes} onChange={e => setEditData('notes', e.target.value)} rows="2" className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-xs p-3"></textarea>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 py-3 border border-slate-200 dark:border-gray-700 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition">Cancelar</button>
+                                <button type="submit" disabled={processingUpdate} className="flex-[2] py-3 bg-brand-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-primary/20">
+                                    {processingUpdate ? 'Guardando...' : 'Actualizar Aplicación'}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>

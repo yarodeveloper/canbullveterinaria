@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import React, { useState, useEffect } from 'react';
 import MedicationsEditor from '@/Components/MedicationsEditor';
 import PendingChargesEditor from '@/Components/PendingChargesEditor';
+import PetAlertIcons from '@/Components/PetAlertIcons';
 
 const formatDate = (dateString) => {
     if (!dateString) return "Desconocida";
@@ -308,7 +309,10 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                                         )}
                                     </div>
                                     <div>
-                                        <h4 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{pet.name}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{pet.name}</h4>
+                                            <PetAlertIcons pet={pet} size="sm" />
+                                        </div>
                                         <p className="text-[11px] text-brand-primary/70 font-semibold">{pet.species} • {pet.breed?.name || pet.breed || 'Mestizo'}</p>
                                     </div>
                                 </div>

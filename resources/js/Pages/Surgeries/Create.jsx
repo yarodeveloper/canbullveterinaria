@@ -11,6 +11,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import PrimaryButton from '@/Components/PrimaryButton';
 import PetAvatar from '@/Components/PetAvatar';
 import PetRegistrationForm from '@/Components/PetRegistrationForm';
+import PetAlertIcons from '@/Components/PetAlertIcons';
 
 const roleLabels = {
     admin: 'Adm.',
@@ -54,7 +55,8 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
         }
     }, [petSearch]);
 
-    const handlePetSelect = (pet) => {
+    const handlePetSelect = (item) => {
+        const pet = item.pet || item;
         setSelectedPet(pet);
         setData('pet_id', pet.id);
         setPetSearch('');
@@ -132,7 +134,10 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
                                                             >
                                                                 <PetAvatar pet={p} className="w-9 h-9 rounded-full" />
                                                                 <div className="flex-1">
-                                                                    <p className="font-bold text-sm text-slate-900 dark:text-white leading-none">{p.name}</p>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <p className="font-bold text-sm text-slate-900 dark:text-white leading-none">{p.name}</p>
+                                                                        <PetAlertIcons pet={p.pet || p} size="sm" />
+                                                                    </div>
                                                                     <p className="text-[10px] text-slate-500 mt-1 uppercase">{p.breed} • {p.owner?.name}</p>
                                                                 </div>
                                                             </button>
@@ -156,7 +161,10 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
                                             <div className="flex items-center gap-3">
                                                 <PetAvatar pet={selectedPet} className="w-12 h-12 rounded-xl border border-brand-primary/20" />
                                                 <div>
-                                                    <h4 className="text-base font-black text-brand-primary truncate leading-none">{selectedPet.name}</h4>
+                                                    <div className="flex items-center gap-2">
+                                                        <h4 className="text-base font-black text-brand-primary truncate leading-none">{selectedPet.name}</h4>
+                                                        <PetAlertIcons pet={selectedPet} size="sm" />
+                                                    </div>
                                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
                                                         {selectedPet.species} • {selectedPet.owner?.name}
                                                     </p>

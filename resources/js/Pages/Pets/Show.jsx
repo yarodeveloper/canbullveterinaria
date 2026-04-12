@@ -231,6 +231,7 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
         gender: pet.gender,
         user_id: pet.owners?.length > 0 ? pet.owners[0].id : '',
         is_aggressive: pet.is_aggressive || false,
+        is_sterilized: pet.is_sterilized || false,
         allergies: pet.allergies || '',
         chronic_conditions: pet.chronic_conditions || '',
         notes: pet.notes || '',
@@ -700,9 +701,15 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                                         <option value="inactive">Inactivo</option>
                                                     </select>
                                                 </div>
-                                                <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/10 p-3 rounded-lg border border-red-100 dark:border-red-900/30">
-                                                    <input type="checkbox" id="is_aggressive" checked={data.is_aggressive} onChange={e => setData('is_aggressive', e.target.checked)} className="rounded border-red-300 text-red-600 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50" />
-                                                    <label htmlFor="is_aggressive" className="text-xs font-bold text-red-700 dark:text-red-300 uppercase">Paciente Agresivo</label>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/10 p-3 rounded-lg border border-red-100 dark:border-red-900/30">
+                                                        <input type="checkbox" id="is_aggressive" checked={data.is_aggressive} onChange={e => setData('is_aggressive', e.target.checked)} className="rounded border-red-300 text-red-600 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50" />
+                                                        <label htmlFor="is_aggressive" className="text-xs font-bold text-red-700 dark:text-red-300 uppercase cursor-pointer">⚠️ Agresivo</label>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 bg-teal-50 dark:bg-teal-900/10 p-3 rounded-lg border border-teal-100 dark:border-teal-900/30">
+                                                        <input type="checkbox" id="is_sterilized" checked={data.is_sterilized} onChange={e => setData('is_sterilized', e.target.checked)} className="rounded border-teal-300 text-teal-600 shadow-sm focus:border-teal-300 focus:ring focus:ring-teal-200 focus:ring-opacity-50" />
+                                                        <label htmlFor="is_sterilized" className="text-xs font-bold text-teal-700 dark:text-teal-300 uppercase cursor-pointer">✂️ Esterilizado</label>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -738,7 +745,7 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                         </div>
                                     </form>
                                 ) : (
-                                    (pet.is_aggressive || pet.allergies || pet.chronic_conditions) ? (
+                                    (pet.is_aggressive || pet.allergies || pet.chronic_conditions || pet.is_sterilized) ? (
                                         <div className="bg-red-600 text-white p-4 rounded-lg shadow-lg flex items-center justify-between relative overflow-hidden transition-all border border-red-500 group-hover:border-red-400">
                                             <button onClick={() => handleEdit('alerts')} className="absolute top-2 right-2 text-white bg-red-800/40 hover:bg-red-800 p-1.5 rounded-full transition-colors z-20 opacity-80 group-hover:opacity-100" title="Editar Alertas">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -750,8 +757,9 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                                 <span className="text-2xl mr-4 text-yellow-300">⚠️</span>
                                                 <div className="flex-1">
                                                     <p className="font-black uppercase tracking-tighter">Alerta Clínica Crítica</p>
-                                                    <div className="text-sm font-medium flex flex-wrap gap-x-4 gap-y-1">
+                                                    <div className="text-sm font-medium flex flex-wrap gap-x-3 gap-y-1 mt-0.5">
                                                         {pet.is_aggressive && <span className="underline decoration-yellow-400">AGRESIVO</span>}
+                                                        {pet.is_sterilized && <span className="bg-teal-500/30 text-teal-100 rounded px-1.5 py-0.5 text-[10px] font-black tracking-widest border border-teal-400/40">✂️ ESTERILIZADO</span>}
                                                         {pet.allergies && <span>ALERGIAS: {pet.allergies}</span>}
                                                         {pet.chronic_conditions && <span>CRÓNICO: {pet.chronic_conditions}</span>}
                                                     </div>

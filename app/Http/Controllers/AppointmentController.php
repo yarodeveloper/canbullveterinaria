@@ -10,13 +10,16 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
+use App\Models\Task;
+use App\Models\PreventiveRecord;
+
 class AppointmentController extends Controller
 {
     public function index(Request $request)
     {
         $branchId = Auth::user()->branch_id;
         
-        // Date range for the list view (Points 5)
+        // Date range for the list view
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
         
@@ -24,7 +27,8 @@ class AppointmentController extends Controller
         $selectedDate = $request->get('date', Carbon::today()->toDateString());
         $vetId = $request->get('vet_id');
         
-        $query = Appointment::query()
+        // --- Fetch Appointments ---
+        $aptQuery = Appointment::query()
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->whereBetween('start_time', [
                 Carbon::parse($startDate)->startOfDay(),
@@ -32,26 +36,73 @@ class AppointmentController extends Controller
             ]);
         
         if ($vetId) {
-            $query->where('veterinarian_id', $vetId);
+            $aptQuery->where('veterinarian_id', $vetId);
         }
         
-        $appointments = $query->with(['pet', 'client', 'veterinarian'])
+        $appointments = $aptQuery->with(['pet', 'client', 'veterinarian'])
             ->orderBy('start_time')
             ->get();
 
-        // Monthly counts for Calendar view (based on selectedDate's month)
-        $month = Carbon::parse($selectedDate)->format('Y-m');
-        $monthQuery = Appointment::query()
+        // --- Fetch Tasks ---
+        $taskQuery = Task::query()
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-            ->where('start_time', 'like', $month . '%');
-
+            ->whereBetween('start_time', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay()
+            ]);
+            
+        // If a specific vet is selected, we filter tasks assigned to them (user_id)
         if ($vetId) {
-            $monthQuery->where('veterinarian_id', $vetId);
+            $taskQuery->where('user_id', $vetId);
         }
 
-        $monthlyCounts = $monthQuery->selectRaw('DATE(start_time) as date, count(*) as count')
+        $tasks = $taskQuery->with(['user'])
+            ->orderBy('start_time')
+            ->get();
+
+        // --- Monthly counts for Calendar view ---
+        $month = Carbon::parse($selectedDate)->format('Y-m');
+        
+        $aptMonthCounts = Appointment::query()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->where('start_time', 'like', $month . '%')
+            ->when($vetId, fn($q) => $q->where('veterinarian_id', $vetId))
+            ->selectRaw('DATE(start_time) as date, count(*) as count')
             ->groupBy('date')
             ->pluck('count', 'date');
+
+        $taskMonthCounts = Task::query()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->where('start_time', 'like', $month . '%')
+            ->when($vetId, fn($q) => $q->where('user_id', $vetId))
+            ->selectRaw('DATE(start_time) as date, count(*) as count')
+            ->groupBy('date')
+            ->pluck('count', 'date');
+
+        // --- Fetch Preventive Reminders (Salud Preventiva) ---
+        $preventiveReminders = PreventiveRecord::query()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->whereNotNull('next_due_date')
+            // Fetch overdue (last 60 days) and upcoming (next 30 days)
+            ->whereBetween('next_due_date', [
+                Carbon::now()->subDays(60),
+                Carbon::now()->addDays(30)
+            ])
+            ->with(['pet.owner', 'veterinarian'])
+            ->orderBy('next_due_date', 'asc')
+            ->get();
+
+        // Merge counts
+        $monthlyCounts = $aptMonthCounts->mapWithKeys(function($count, $date) use ($taskMonthCounts) {
+            return [$date => $count + ($taskMonthCounts[$date] ?? 0)];
+        });
+
+        // Add dates that are only in tasks
+        foreach ($taskMonthCounts as $date => $count) {
+            if (!$monthlyCounts->has($date)) {
+                $monthlyCounts[$date] = $count;
+            }
+        }
 
         $veterinarians = User::query()
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
@@ -72,18 +123,21 @@ class AppointmentController extends Controller
 
         $pets = Pet::query()
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->where('status', '!=', 'deceased')
             ->with('owner')
             ->get();
 
         return Inertia::render('Appointments/Index', [
             'appointments' => $appointments,
+            'tasks' => $tasks,
             'selectedDate' => $selectedDate,
             'startDate' => $startDate,
             'endDate' => $endDate,
             'selectedVet' => $vetId,
             'monthlyCounts' => $monthlyCounts,
             'veterinarians' => $veterinarians,
-            'pets' => $pets
+            'pets' => $pets,
+            'preventiveReminders' => $preventiveReminders
         ]);
     }
 
@@ -120,8 +174,8 @@ class AppointmentController extends Controller
             'pet_id' => 'required|exists:pets,id',
             'veterinarian_id' => 'nullable|exists:users,id',
             'start_time' => 'required|date',
-            'duration' => 'required|integer|min:15|max:240', // duration in minutes
-            'type' => 'required|in:consultation,surgery,grooming,follow-up,emergency',
+            'duration' => 'required|integer|min:15|max:480', // duration in minutes (max 8 hours)
+            'type' => 'required|in:consultation,surgery,grooming,hospitalization,follow-up,emergency,euthanasia',
             'reason' => 'nullable|string',
         ]);
 

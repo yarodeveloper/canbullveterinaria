@@ -21,6 +21,8 @@ Route::get('/', function () {
 // Public Carnet
 Route::get('/carnet/{uuid}', [\App\Http\Controllers\PublicPetController::class, 'carnet'])->name('public.carnet');
 
+Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index']);
+
 Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
@@ -68,9 +70,16 @@ Route::middleware('auth')->group(function () {
 
     // Agenda Médica
     Route::resource('appointments', \App\Http\Controllers\AppointmentController::class);
+    
+    // Tareas Administrativas
+    Route::post('tasks', [\App\Http\Controllers\TaskController::class, 'store'])->name('tasks.store');
+    Route::put('tasks/{task}', [\App\Http\Controllers\TaskController::class, 'update'])->name('tasks.update');
+    Route::delete('tasks/{task}', [\App\Http\Controllers\TaskController::class, 'destroy'])->name('tasks.destroy');
 
     // Carnet de Vacunación / Preventivos
+    Route::get('preventive-records', [PreventiveRecordController::class, 'index'])->name('preventive-records.index');
     Route::post('preventive-records', [PreventiveRecordController::class, 'store'])->name('preventive-records.store');
+    Route::put('preventive-records/{preventiveRecord}', [PreventiveRecordController::class, 'update'])->name('preventive-records.update');
     Route::delete('preventive-records/{preventiveRecord}', [PreventiveRecordController::class, 'destroy'])->name('preventive-records.destroy');
 
     // Gestión Web

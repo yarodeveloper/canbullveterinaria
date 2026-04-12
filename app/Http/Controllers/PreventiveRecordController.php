@@ -6,8 +6,94 @@ use App\Models\PreventiveRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use Inertia\Inertia;
+use Carbon\Carbon;
+
 class PreventiveRecordController extends Controller
 {
+    public function index(Request $request)
+    {
+        $branchId = Auth::user()->branch_id;
+        
+        $query = PreventiveRecord::query()
+            ->with(['pet.owner', 'veterinarian'])
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId));
+
+        // Filtering
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->whereHas('pet', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhereHas('owner', fn($qo) => $qo->where('name', 'like', "%{$search}%"));
+            })->orWhere('name', 'like', "%{$search}%");
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+
+        // Actionable filter (default)
+        if (!$request->filled('search') && !$request->has('show_all')) {
+            $query->whereBetween('next_due_date', [
+                Carbon::now()->subDays(90),
+                Carbon::now()->addDays(60)
+            ]);
+        }
+
+        // Export support
+        if ($request->has('export')) {
+            return $this->export($query);
+        }
+
+        $records = $query->whereNotNull('next_due_date')
+            ->orderBy('next_due_date', 'asc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return Inertia::render('Preventive/Index', [
+            'records' => $records,
+            'filters' => $request->only(['search', 'type'])
+        ]);
+    }
+
+    private function export($query)
+    {
+        $records = $query->orderBy('next_due_date', 'asc')->get();
+        $filename = "Salud_Preventiva_" . date('Y-m-d') . ".csv";
+        
+        $headers = [
+            "Content-type"        => "text/csv; charset=UTF-8",
+            "Content-Disposition" => "attachment; filename=$filename",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = ['Mascota', 'Propietario', 'Telefono', 'Tratamiento', 'Tipo', 'Ultima Aplicacion', 'Proximo Refuerzo'];
+
+        $callback = function() use($records, $columns) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+            fputcsv($file, $columns);
+
+            foreach ($records as $r) {
+                fputcsv($file, [
+                    $r->pet->name,
+                    $r->pet->owner->name ?? 'N/A',
+                    $r->pet->owner->phone ?? 'N/A',
+                    $r->name,
+                    $r->type,
+                    $r->application_date,
+                    $r->next_due_date
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function store(Request $request)
     {
         // Support for multiple records in one request
@@ -58,6 +144,29 @@ class PreventiveRecordController extends Controller
         PreventiveRecord::create($validated);
 
         return back()->with('message', 'Registro preventivo guardado correctamente.');
+    }
+
+    public function update(Request $request, PreventiveRecord $preventiveRecord)
+    {
+        if ($preventiveRecord->branch_id !== Auth::user()->branch_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'type' => 'required|in:vaccine,internal_deworming,external_deworming,other',
+            'name' => 'required|string|max:255',
+            'application_date' => 'required|date',
+            'next_due_date' => 'nullable|date|after_or_equal:application_date',
+            'lot_number' => 'nullable|string|max:255',
+            'brand' => 'nullable|string|max:255',
+            'weight_at_time' => 'nullable|numeric',
+            'notes' => 'nullable|string',
+            'veterinarian_id' => 'nullable|exists:users,id',
+        ]);
+
+        $preventiveRecord->update($validated);
+
+        return back()->with('message', 'Registro preventivo actualizado con éxito.');
     }
 
     public function destroy(PreventiveRecord $preventiveRecord)

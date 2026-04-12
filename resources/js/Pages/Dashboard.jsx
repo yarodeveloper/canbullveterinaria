@@ -83,10 +83,10 @@ export default function Dashboard({ auth, stats, peakHours = [], appointmentsByT
                             colorClass="bg-emerald-50 text-emerald-600"
                         />
                         <StatCard 
-                            title="Total Mascotas" 
-                            value={receptionMetrics?.total_pets || 0} 
-                            icon="🐶" 
-                            colorClass="bg-amber-50 text-amber-600"
+                            title="Vistas del Sistema" 
+                            value={(stats?.total_system_views || 0).toLocaleString()} 
+                            icon="👁️" 
+                            colorClass="bg-purple-50 text-purple-600"
                         />
                     </div>
 

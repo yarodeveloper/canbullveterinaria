@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
+import PetAlertIcons from '@/Components/PetAlertIcons';
 
 const roleLabels = {
     admin: 'Adm.',
@@ -68,7 +69,10 @@ export default function Create({ auth, pet, services, groomers, ...props }) {
                                 </div>
                                 <div>
                                     <h3 className="text-sm font-black text-brand-primary dark:text-brand-primary uppercase tracking-widest mb-1">Paciente para Estética</h3>
-                                    <h4 className="text-2xl font-black text-gray-900 dark:text-white leading-none">{pet.name}</h4>
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="text-2xl font-black text-gray-900 dark:text-white leading-none">{pet.name}</h4>
+                                        <PetAlertIcons pet={pet} size="md" />
+                                    </div>
                                     <p className="text-xs font-bold text-gray-500 uppercase mt-2">Dueño: {pet.owner ? pet.owner.name : 'N/A'}</p>
                                 </div>
                             </div>

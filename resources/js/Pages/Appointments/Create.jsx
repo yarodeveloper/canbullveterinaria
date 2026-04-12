@@ -25,10 +25,15 @@ export default function Create({ auth, pets, veterinarians, initialPetId }) {
     const [searchTerm, setSearchTerm] = useState(initialPet ? initialPet.name + ' (' + (initialPet.owner?.name || '---') + ')' : '');
     const [showDropdown, setShowDropdown] = useState(false);
 
-    const filteredPets = pets.filter(pet =>
-        pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (pet.owner?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
-    ).slice(0, 5);
+    const normalizeString = (str) => {
+        return (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    };
+
+    const filteredPets = pets.filter(pet => {
+        const normalizedSearch = normalizeString(searchTerm);
+        return normalizeString(pet.name).includes(normalizedSearch) ||
+               normalizeString(pet.owner?.name).includes(normalizedSearch);
+    }).slice(0, 10);
 
     const submit = (e) => {
         e.preventDefault();
@@ -114,6 +119,8 @@ export default function Create({ auth, pets, veterinarians, initialPetId }) {
                                         <option value="consultation">🩺 Consulta General</option>
                                         <option value="surgery">🔪 Cirugía Programada</option>
                                         <option value="grooming">🛁 Estética / Baño</option>
+                                        <option value="hospitalization">🏥 Hospitalización</option>
+                                        <option value="euthanasia">🌈 Eutanasia</option>
                                         <option value="follow-up">📋 Seguimiento / RECO</option>
                                         <option value="emergency">🚨 Urgencia Médica</option>
                                     </select>
@@ -163,6 +170,8 @@ export default function Create({ auth, pets, veterinarians, initialPetId }) {
                                         <option value="45">📊 Intermedio (45 min)</option>
                                         <option value="60">🕙 Sesión (1 hora)</option>
                                         <option value="120">🏢 Extenso (2 horas)</option>
+                                        <option value="180">⏳ Mas de 2 hrs (3h)</option>
+                                        <option value="300">🏢 Jornada (5h)</option>
                                     </select>
                                 </div>
                             </div>

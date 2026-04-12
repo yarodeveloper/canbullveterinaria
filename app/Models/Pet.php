@@ -36,6 +36,7 @@ class Pet extends Model
         'user_id',
         'branch_id',
         'is_aggressive',
+        'is_sterilized',
         'allergies',
         'chronic_conditions',
         'status',
@@ -47,6 +48,8 @@ class Pet extends Model
         'dob' => 'date',
         'death_date' => 'date',
         'weight' => 'decimal:2',
+        'is_aggressive' => 'boolean',
+        'is_sterilized' => 'boolean',
     ];
 
     public function owners()

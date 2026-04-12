@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '@/Components/Modal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import PetAlertIcons from '@/Components/PetAlertIcons';
 
 const roleLabels = {
     admin: 'Adm.',
@@ -250,7 +251,10 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                                                     <div className="flex items-center gap-4">
                                                         <span className="text-2xl">{pet.species === 'Canino' ? '🐕' : '🐈'}</span>
                                                         <div>
-                                                            <p className="font-black text-slate-900 dark:text-white uppercase text-sm group-hover:text-brand-primary transition-colors">{pet.name}</p>
+                                                            <div className="flex items-center gap-3">
+                                                                <p className="font-black text-slate-900 dark:text-white uppercase text-sm group-hover:text-brand-primary transition-colors">{pet.name}</p>
+                                                                <PetAlertIcons pet={pet} size="sm" />
+                                                            </div>
                                                             <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">Dueño: {pet.owner?.name || 'S/A'}</p>
                                                         </div>
                                                     </div>
@@ -273,7 +277,10 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                                                         <div className="flex items-center gap-4">
                                                             <span className="text-2xl">{pet.species === 'Canino' ? '🐕' : '🐈'}</span>
                                                             <div>
-                                                                <p className="font-black text-slate-900 dark:text-white uppercase text-sm group-hover:text-brand-primary transition-colors">{pet.name}</p>
+                                                                <div className="flex items-center gap-3">
+                                                                    <p className="font-black text-slate-900 dark:text-white uppercase text-sm group-hover:text-brand-primary transition-colors">{pet.name}</p>
+                                                                    <PetAlertIcons pet={pet} size="sm" />
+                                                                </div>
                                                                 <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">Dueño: {client.name}</p>
                                                             </div>
                                                         </div>
@@ -295,7 +302,10 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                                         </div>
                                         <div>
                                             <p className="text-[9px] font-black text-brand-primary uppercase tracking-widest mb-1 italic">Paciente Seleccionado</p>
-                                            <p className="text-2xl font-black text-slate-900 dark:text-white uppercase leading-tight">{selectedPet.name}</p>
+                                            <div className="flex items-center gap-3">
+                                                <p className="text-2xl font-black text-slate-900 dark:text-white uppercase leading-tight">{selectedPet.name}</p>
+                                                <PetAlertIcons pet={selectedPet} size="md" />
+                                            </div>
                                             <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{selectedPet.owner?.name || 'Sin dueño'}</p>
                                         </div>
                                     </div>

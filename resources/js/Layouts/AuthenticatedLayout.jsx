@@ -134,6 +134,13 @@ export default function AuthenticatedLayout({ header, children }) {
                                                             </div>
                                                         </Dropdown.Link>
                                                     )}
+                                                    <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                                                    <Dropdown.Link href={route('preventive-records.index')}>
+                                                        <div className="flex items-center">
+                                                            <img src="/icons/medicine-bottle-drug-svgrepo-com.svg" className="w-4 h-4 mr-3 icon-adaptive opacity-70 group-hover:opacity-100 transition-opacity" alt="" />
+                                                            <span className="font-bold text-brand-primary">Salud Preventiva</span>
+                                                        </div>
+                                                    </Dropdown.Link>
                                                 </Dropdown.Content>
                                             </Dropdown>
                                         </div>
