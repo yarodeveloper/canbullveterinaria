@@ -107,19 +107,27 @@ export default function Show({ auth, hospitalization, templates, products = [] }
     const submitMonitoring = (e) => {
         e.preventDefault();
         if (monitoringToEdit) {
-            put(route('hospitalizations.monitoring.update', monitoringToEdit.id), {
+            patch(route('hospitalizations.monitoring.update', monitoringToEdit.id), {
+                preserveScroll: true,
                 onSuccess: () => {
                     reset();
                     setMonitoringToEdit(null);
                     setShowMonitoringForm(false);
                 },
+                onError: (err) => {
+                    console.error("Error updating monitoring:", err);
+                }
             });
         } else {
             post(route('hospitalizations.monitoring.store', hospitalization.id), {
+                preserveScroll: true,
                 onSuccess: () => {
                     reset();
                     setShowMonitoringForm(false);
                 },
+                onError: (err) => {
+                    console.error("Error storing monitoring:", err);
+                }
             });
         }
     };
@@ -280,7 +288,20 @@ export default function Show({ auth, hospitalization, templates, products = [] }
 
                             {showMonitoringForm && (
                                 <form onSubmit={submitMonitoring} className="bg-white dark:bg-[#1B2132] p-8 rounded-3xl shadow-xl border-2 border-brand-primary/20 animate-in fade-in slide-in-from-top-4">
-                                    <h4 className="text-lg font-black text-slate-900 dark:text-white mb-6">Registro de constantes vitales</h4>
+                                    <h4 className="text-lg font-black text-slate-900 dark:text-white mb-6">
+                                        {monitoringToEdit ? 'Editar registro de constantes' : 'Registro de constantes vitales'}
+                                    </h4>
+                                    
+                                    {Object.keys(errors).length > 0 && (
+                                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-xl">
+                                            <p className="text-xs font-black text-red-600 dark:text-red-400 uppercase tracking-widest mb-2">Errores de validación:</p>
+                                            <ul className="list-disc list-inside text-[10px] text-red-500 font-bold">
+                                                {Object.values(errors).map((error, i) => (
+                                                    <li key={i}>{error}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">
                                         <div>
                                             <div className="flex justify-between items-center mb-1">

@@ -104,7 +104,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('hospitalizations', \App\Http\Controllers\HospitalizationController::class);
     Route::get('/hospitalizations/{hospitalization}/report', [\App\Http\Controllers\HospitalizationController::class, 'printReport'])->name('hospitalizations.report');
     Route::post('/hospitalizations/{hospitalization}/monitoring', [\App\Http\Controllers\HospitalizationController::class, 'storeMonitoring'])->name('hospitalizations.monitoring.store');
-    Route::put('/hospitalizations/monitoring/{monitoring}', [\App\Http\Controllers\HospitalizationController::class, 'updateMonitoring'])->name('hospitalizations.monitoring.update');
+    Route::patch('/hospitalizations/monitoring/{monitoring}', [\App\Http\Controllers\HospitalizationController::class, 'updateMonitoring'])->name('hospitalizations.monitoring.update');
     Route::delete('/hospitalizations/monitoring/{monitoring}', [\App\Http\Controllers\HospitalizationController::class, 'destroyMonitoring'])->name('hospitalizations.monitoring.destroy');
     Route::get('/hospitalizations/{hospitalization}/consent/{template}', [\App\Http\Controllers\HospitalizationController::class, 'printConsent'])->name('hospitalizations.consent.print');
 
