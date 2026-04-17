@@ -4,15 +4,27 @@ import React, { useState } from 'react';
 import { getWhatsAppLink } from '@/Utils/formatters';
 
 export default function Index({ auth, records, filters }) {
-    const [search, setSearch] = useState(filters.search || '');
+    const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [type, setType] = useState(filters.type || '');
     const activeMonitor = filters.monitor_type || 'health';
+
+    React.useEffect(() => {
+        const delayBounceFn = setTimeout(() => {
+            if (searchTerm !== (filters.search || '')) {
+                router.get(route('preventive-records.index'), 
+                    { search: searchTerm, type, monitor_type: activeMonitor }, 
+                    { preserveState: true, replace: true }
+                );
+            }
+        }, 400);
+        return () => clearTimeout(delayBounceFn);
+    }, [searchTerm]);
 
     const permissions = auth.permissions || [];
     const can = (permission) => permissions.includes(permission) || auth.user.role === 'admin';
 
-    const handleFilter = (e) => {
-        router.get(route('preventive-records.index'), { search, type, monitor_type: activeMonitor }, { preserveState: true });
+    const handleFilter = () => {
+        router.get(route('preventive-records.index'), { search: searchTerm, type, monitor_type: activeMonitor }, { preserveState: true });
     };
 
     const switchMonitor = (mode) => {
@@ -21,17 +33,24 @@ export default function Index({ auth, records, filters }) {
 
     const getStatusColor = (dueDate) => {
         if (!dueDate) return 'text-gray-400';
-        const cleanDate = dueDate.split(' ')[0].split('T')[0];
-        const diff = new Date(cleanDate + 'T12:00:00') - new Date();
-        if (diff < 0) return 'text-red-600 bg-red-50 border-red-100';
-        if (diff < 7 * 24 * 60 * 60 * 1000) return 'text-amber-600 bg-amber-50 border-amber-100';
-        return activeMonitor === 'health' ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 'text-brand-primary bg-brand-primary/10 border-brand-primary/20';
+        try {
+            const cleanDate = dueDate.split(' ')[0].split('T')[0];
+            const dateObj = new Date(cleanDate + 'T12:00:00');
+            if (isNaN(dateObj.getTime())) return 'text-gray-400';
+            
+            const diff = dateObj - new Date();
+            if (diff < 0) return 'text-red-600 bg-red-50 border-red-100';
+            if (diff < 7 * 24 * 60 * 60 * 1000) return 'text-amber-600 bg-amber-50 border-amber-100';
+            return activeMonitor === 'health' ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 'text-brand-primary bg-brand-primary/10 border-brand-primary/20';
+        } catch (e) {
+            return 'text-gray-400';
+        }
     };
 
     const formatDate = (dateStr) => {
         if (!dateStr) return 'SIN FECHA';
         try {
-            const cleanDate = dateStr.split(' ')[0].split('T')[0];
+            const cleanDate = dateStr.toString().split(' ')[0].split('T')[0];
             const dateObj = new Date(cleanDate + 'T12:00:00');
             if (isNaN(dateObj.getTime())) return 'FECHA INVÁLIDA';
             return dateObj.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
@@ -42,8 +61,13 @@ export default function Index({ auth, records, filters }) {
 
     const isOverdueCheck = (dueDate) => {
         if (!dueDate) return false;
-        const cleanDate = dueDate.split(' ')[0].split('T')[0];
-        return new Date(cleanDate + 'T12:00:00') < new Date();
+        try {
+            const cleanDate = dueDate.split(' ')[0].split('T')[0];
+            const dateObj = new Date(cleanDate + 'T12:00:00');
+            return !isNaN(dateObj.getTime()) && dateObj < new Date();
+        } catch (e) {
+            return false;
+        }
     };
 
     return (
@@ -89,9 +113,10 @@ export default function Index({ auth, records, filters }) {
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Buscar Mascota o Dueño</label>
                                 <input
                                     type="text"
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
                                     placeholder="Nombre de mascota o propietario..."
+                                    onKeyDown={e => e.key === 'Enter' && handleFilter()}
                                     className="w-full bg-slate-50 dark:bg-gray-900 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 transition"
                                 />
                             </div>

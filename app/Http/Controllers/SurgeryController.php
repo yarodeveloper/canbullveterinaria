@@ -66,7 +66,7 @@ class SurgeryController extends Controller
         $branchId = Auth::user()->branch_id;
         $veterinarians = User::where('branch_id', $branchId)
             ->whereIn('role', ['admin', 'veterinarian'])
-            ->get();
+            ->get(['id', 'name', 'role']);
         
         $clients = User::where('role', 'client')
             ->where('email', '!=', 'publico@general.com')
@@ -75,9 +75,10 @@ class SurgeryController extends Controller
             ->get(['id', 'name']);
 
         $products = \App\Models\Product::where('is_active', true)
-            ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
+            ->orderBy('is_controlled', 'desc')
             ->orderBy('name')
-            ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service']);
+            ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service'])
+            ->makeHidden(['selling_price', 'base_price']);
 
         return Inertia::render('Surgeries/Create', [
             'pet' => $pet,

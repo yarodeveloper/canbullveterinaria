@@ -25,10 +25,17 @@ class PreventiveRecordController extends Controller
             // Filtering
             if ($request->filled('search')) {
                 $search = $request->input('search');
-                $query->whereHas('pet', function($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                    ->orWhereHas('owner', fn($qo) => $qo->where('name', 'like', "%{$search}%"));
-                })->orWhere('name', 'like', "%{$search}%");
+                $query->where(function($q) use ($search) {
+                    $q->whereHas('pet', function($qp) use ($search) {
+                        $qp->where('name', 'like', "%{$search}%")
+                          ->orWhere('breed', 'like', "%{$search}%")
+                          ->orWhere('species', 'like', "%{$search}%")
+                          ->orWhereHas('owner', function($qo) use ($search) {
+                              $qo->where('name', 'like', "%{$search}%")
+                                 ->orWhere('phone', 'like', "%{$search}%");
+                          });
+                    })->orWhere('name', 'like', "%{$search}%");
+                });
             }
 
             if ($request->filled('type')) {
@@ -36,7 +43,7 @@ class PreventiveRecordController extends Controller
             }
 
             // Actionable filter (default)
-            if (!$request->filled('search') && !$request->has('show_all')) {
+            if (!$request->filled('search') && !$request->filled('type') && !$request->has('show_all')) {
                 $query->whereBetween('next_due_date', [
                     Carbon::now()->subDays(90),
                     Carbon::now()->addDays(60)
@@ -74,9 +81,17 @@ class PreventiveRecordController extends Controller
 
             if ($request->filled('search')) {
                 $search = $request->input('search');
-                $query->whereHas('pet', function($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                    ->orWhereHas('owner', fn($qo) => $qo->where('name', 'like', "%{$search}%"));
+                $query->where(function($q) use ($search) {
+                    $q->where('folio', 'like', "%{$search}%")
+                      ->orWhereHas('pet', function($qp) use ($search) {
+                        $qp->where('name', 'like', "%{$search}%")
+                          ->orWhere('breed', 'like', "%{$search}%")
+                          ->orWhere('species', 'like', "%{$search}%")
+                          ->orWhereHas('owner', function($qo) use ($search) {
+                              $qo->where('name', 'like', "%{$search}%")
+                                 ->orWhere('phone', 'like', "%{$search}%");
+                          });
+                    });
                 });
             }
 

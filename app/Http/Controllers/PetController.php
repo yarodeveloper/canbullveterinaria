@@ -102,20 +102,21 @@ class PetController extends Controller
             'pet' => $pet->load([
                 'owner', 
                 'owners', 
-                'medicalRecords.veterinarian', 
+                'medicalRecords.veterinarian:id,name,role', 
                 'appointments', 
                 'consents', 
-                'preventiveRecords.veterinarian',
-                'surgeries.leadSurgeon',
-                'hospitalizations.veterinarian',
-                'documents.uploader',
-                'groomingOrders.user'
+                'preventiveRecords.veterinarian:id,name,role',
+                'surgeries.leadSurgeon:id,name,role',
+                'hospitalizations.veterinarian:id,name,role',
+                'documents.uploader:id,name',
+                'groomingOrders.user:id,name'
             ]),
             'protocols' => \App\Models\HealthProtocol::whereNull('branch_id')
                 ->orWhere('branch_id', Auth::user()->branch_id)
                 ->get(),
             'clients' => User::where('role', 'client')
                 ->orderBy('name')
+                ->limit(20) // Limit to avoid performance issues
                 ->get(['id', 'name']),
             'documentTemplates' => \App\Models\DocumentTemplate::where('is_active', true)
                 ->where(function($query) {
@@ -236,8 +237,8 @@ class PetController extends Controller
                     'name' => $label,
                     'owner_name' => $pet->owner ? $pet->owner->name : 'Sin dueño',
                     'branch_name' => $pet->branch ? $pet->branch->name : 'N/A',
-                    'text' => "{$label} - {$pet->owner->name}{$branchLabel}",
-                    'pet' => $pet // Incluir el objeto completo para el frontend
+                    'text' => "{$label} - " . ($pet->owner ? $pet->owner->name : 'S/D') . "{$branchLabel}",
+                    'pet' => $pet->makeHidden(['selling_price', 'base_price'])
                 ];
             });
 

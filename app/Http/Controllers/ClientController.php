@@ -84,8 +84,8 @@ class ClientController extends Controller
 
         $financialSummary = [
             'pending_credit' => (float) \App\Models\Receipt::where('user_id', $client->id)->where('status', 'pending')->sum('total'),
-            'pending_receipts' => \App\Models\Receipt::where('user_id', $client->id)->where('status', 'pending')->get(),
-            'pending_charges' => \App\Models\PendingCharge::with(['pet', 'product'])->where('client_id', $client->id)->where('status', 'pending')->get(),
+            'pending_receipts' => \App\Models\Receipt::where('user_id', $client->id)->where('status', 'pending')->get(['id', 'receipt_number', 'total', 'date']),
+            'pending_charges' => \App\Models\PendingCharge::with(['pet:id,name', 'product:id,name,price'])->where('client_id', $client->id)->where('status', 'pending')->get(),
             'last_payment_date' => \App\Models\Receipt::where('user_id', $client->id)->where('status', 'paid')->latest()->value('date'),
             'total_historical' => (float) \App\Models\Receipt::where('user_id', $client->id)->where('status', 'paid')->sum('total'),
         ];

@@ -68,9 +68,10 @@ class HospitalizationController extends Controller
             ->get(['id', 'name']);
 
         $products = \App\Models\Product::where('is_active', true)
-            ->orderByRaw("CASE WHEN is_controlled = 1 THEN 0 ELSE 1 END")
+            ->orderBy('is_controlled', 'desc')
             ->orderBy('name')
-            ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service']);
+            ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service'])
+            ->makeHidden(['selling_price', 'base_price']);
 
         return Inertia::render('Hospitalizations/Create', [
             'pet' => $pet,

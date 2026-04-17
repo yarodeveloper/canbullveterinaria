@@ -71,7 +71,9 @@ class MedicalRecordController extends Controller
             'pet' => $medicalRecord->pet->load('owner'),
             'record' => $medicalRecord,
             'isEditing' => true,
-            'products' => \App\Models\Product::where('is_active', true)->get()->values(),
+            'products' => \App\Models\Product::where('is_active', true)
+                ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service'])
+                ->makeHidden(['selling_price', 'base_price']),
         ]);
     }
 
@@ -82,7 +84,9 @@ class MedicalRecordController extends Controller
             // Acceso permitido
         }
 
-        $products = \App\Models\Product::where('is_active', true)->get()->values();
+        $products = \App\Models\Product::where('is_active', true)
+            ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service'])
+            ->makeHidden(['selling_price', 'base_price']);
 
         return Inertia::render('MedicalRecords/Create', [
             'pet' => $pet->load('owner'),
