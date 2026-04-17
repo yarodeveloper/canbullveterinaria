@@ -101,13 +101,18 @@ export default function Create({ auth, clients, products, pets, selectedClientId
         if (!generalSearch) return [];
         const query = generalSearch.toLowerCase();
         if (searchType === 'client') {
-            return clients.filter(c => c.name.toLowerCase().includes(query) || (c.phone && c.phone.includes(query))).slice(0, 8);
+            return clients.filter(c => 
+                c.name.toLowerCase().includes(query) || 
+                (c.phone && c.phone.includes(query)) ||
+                c.pets?.some(p => p.name.toLowerCase().includes(query))
+            ).slice(0, 8);
         } else {
             return pets?.filter(p => {
                 const nameMatch = p.name.toLowerCase().includes(query);
                 const ownerMatch = p.owner?.name?.toLowerCase().includes(query) || 
                                  p.owners?.some(o => o.name?.toLowerCase().includes(query));
-                return nameMatch || ownerMatch;
+                const breedMatch = p.breed?.toLowerCase().includes(query);
+                return nameMatch || ownerMatch || breedMatch;
             }).slice(0, 8) || [];
         }
     }, [generalSearch, searchType, clients, pets]);
@@ -347,22 +352,37 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                         <div className="absolute z-50 top-full right-0 mt-3 w-[400px] bg-white dark:bg-[#1A2131] border border-gray-200 dark:border-[#2A3347] shadow-2xl rounded-2xl p-2 max-h-80 overflow-y-auto">
                                             {filteredSearchOptions.map(opt => {
                                                 const ownerName = opt.owner?.name || (opt.owners && opt.owners[0]?.name);
+                                                const petsList = opt.pets || [];
                                                 return (
-                                                    <div key={opt.id} onClick={() => handleGeneralSelect(opt)} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2A3347] rounded-xl cursor-pointer transition">
+                                                    <div key={opt.id} onClick={() => handleGeneralSelect(opt)} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2A3347] rounded-xl cursor-pointer transition border-b border-gray-50 dark:border-gray-800 last:border-0">
                                                         <div className="flex justify-between items-center">
-                                                            <div>
-                                                                <p className="font-bold text-gray-900 dark:text-white leading-tight">{opt.name}</p>
-                                                                <p className="text-[10px] text-gray-500 uppercase font-bold mt-1">
-                                                                    {searchType === 'pet' 
-                                                                        ? `${opt.breed?.name || opt.breed || 'Sin Raza'} • ${ownerName || 'Público General'}` 
-                                                                        : opt.phone || 'Sin Teléfono'}
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="font-bold text-gray-900 dark:text-white leading-tight truncate">
+                                                                    {opt.name}
+                                                                    {searchType === 'client' && petsList.length > 0 && (
+                                                                        <span className="text-[9px] text-brand-primary ml-2 italic font-black">🐾 {petsList.map(p => p.name).join(', ')}</span>
+                                                                    )}
                                                                 </p>
+                                                                <div className="flex flex-col gap-0.5 mt-1">
+                                                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-tight truncate">
+                                                                        {searchType === 'pet' 
+                                                                            ? `${opt.species || 'Mascota'} • ${opt.breed || 'Sin Raza'} • ${ownerName || 'Público General'}` 
+                                                                            : `${opt.phone || 'Sin Teléfono'}`}
+                                                                    </p>
+
+                                                                </div>
                                                             </div>
-                                                            {searchType === 'pet' && (
-                                                                <span className="text-[9px] bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shrink-0">
-                                                                    Mascota
-                                                                </span>
-                                                            )}
+                                                            <div className="flex items-center gap-2 shrink-0 ml-3">
+                                                                {searchType === 'pet' ? (
+                                                                    <span className={`text-[9px] ${opt.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'} dark:bg-opacity-20 px-2 py-0.5 rounded-full font-black border uppercase tracking-tighter`}>
+                                                                        {opt.species || 'Mascota'}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-[9px] bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full font-black border border-gray-200 dark:border-gray-700 uppercase tracking-tighter">
+                                                                        Cliente
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 );

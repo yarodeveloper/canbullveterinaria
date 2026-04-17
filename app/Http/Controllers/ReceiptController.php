@@ -44,7 +44,7 @@ class ReceiptController extends Controller
             return redirect()->route('cash-register.index')->withErrors(['error' => 'Debes abrir el turno de caja antes de poder realizar cobros.']);
         }
 
-        $clients = User::where('role', 'client')->where('email', '!=', 'publico@general.com')->get();
+        $clients = User::where('role', 'client')->where('email', '!=', 'publico@general.com')->with('pets')->get();
         // Cargar productos con su categoría y listos para calcular el stock en RAM (o con subquery si prefiere)
         $products = Product::where('is_active', true)->with(['category', 'lots' => function($query) use ($branchId) {
             $query->where('branch_id', $branchId)->where('status', 'active');

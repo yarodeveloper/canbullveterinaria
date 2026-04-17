@@ -78,7 +78,7 @@ export default function Show({ auth, hospitalization, templates, products = [] }
     const [showGlasgowModal, setShowGlasgowModal] = useState(false);
     const [showPrintModal, setShowPrintModal] = useState(false);
     const [monitoringToEdit, setMonitoringToEdit] = useState(null);
-    const { data, setData, post, put, delete: destroy, processing, reset, errors } = useForm({
+    const { data, setData, post, put, patch, delete: destroy, processing, reset, errors } = useForm({
         temperature: '',
         heart_rate: '',
         respiratory_rate: '',

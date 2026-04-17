@@ -103,7 +103,11 @@ export default function Index({ auth, euthanasias, filters }) {
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-center gap-3 mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-white/80 font-bold uppercase tracking-wide truncate max-w-xl italic">
-                                                                <span className="truncate">{e.pet?.species || '-'} • {e.reason || 'S/M'}</span>
+                                                                <span className="truncate">{e.pet?.species || '-'} • {e.pet?.breed || 'Sin Raza'} • {e.reason || 'S/M'}</span>
+                                                                <span className="hidden sm:inline-block w-1 h-1 bg-slate-300 group-hover:bg-white/30 rounded-full"></span>
+                                                                <span className="hidden sm:inline-flex items-center gap-1 font-black tracking-widest text-[9px]">
+                                                                    👤 {e.pet?.owner?.name || 'S/A'}
+                                                                </span>
                                                                 <span className="hidden sm:inline-block w-1 h-1 bg-slate-300 group-hover:bg-white/30 rounded-full"></span>
                                                                 <span className="hidden sm:inline-flex items-center gap-1 font-black tracking-widest text-[9px] opacity-70">
                                                                     👨‍⚕️ {e.veterinarian?.name || 'S/V'}

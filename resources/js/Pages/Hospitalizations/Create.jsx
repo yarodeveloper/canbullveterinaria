@@ -130,13 +130,18 @@ export default function Create({ auth, pet: initialPet, clients: initialClients,
                                                                 className="w-full px-5 py-3 flex items-center gap-4 hover:bg-brand-primary/10 dark:hover:bg-slate-800 transition-colors text-left"
                                                             >
                                                                 <PetAvatar pet={p} className="w-9 h-9 rounded-full border border-slate-200" />
-                                                                <div className="flex-1">
+                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="flex items-center gap-2">
-                                                                        <p className="font-bold text-sm text-slate-900 dark:text-white">{p.name}</p>
+                                                                        <p className="font-bold text-sm text-slate-900 dark:text-white leading-none">{p.pet?.name || p.name}</p>
                                                                         <PetAlertIcons pet={p.pet || p} size="sm" />
                                                                     </div>
-                                                                    <p className="text-[10px] text-slate-500 uppercase">{p.breed} • {p.owner?.name}</p>
+                                                                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tight mt-1 truncate">
+                                                                        {(p.pet?.species || p.species)} • {(p.pet?.breed || p.breed) || 'Sin Raza'} • {p.owner_name || p.owner?.name}
+                                                                    </p>
                                                                 </div>
+                                                                <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${(p.pet?.species || p.species) === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
+                                                                    {(p.pet?.species || p.species) || 'Mascota'}
+                                                                </span>
                                                             </button>
                                                         ))}
                                                     </div>

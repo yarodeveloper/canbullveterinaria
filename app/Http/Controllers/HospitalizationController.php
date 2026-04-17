@@ -20,7 +20,7 @@ class HospitalizationController extends Controller
         }
 
         $branchId = Auth::user()->branch_id;
-        $query = Hospitalization::with(['pet', 'veterinarian']);
+        $query = Hospitalization::with(['pet.owner', 'veterinarian']);
         
         // Por defecto ver sucursal actual, pero permitir búsqueda global
         if (!$request->filled('search') && $branchId) {

@@ -23,7 +23,7 @@ class SurgeryController extends Controller
         
         // Ver las cirugías de todas las sucursales (admin) o solo de la actual?
         // El usuario quiere ver/buscar clientes globales.
-        $query = Surgery::with(['pet', 'leadSurgeon']);
+        $query = Surgery::with(['pet.owner', 'leadSurgeon']);
         
         // Si no hay búsqueda, mostramos por defecto las de la sucursal actual
         if (!$request->filled('search') && $branchId) {

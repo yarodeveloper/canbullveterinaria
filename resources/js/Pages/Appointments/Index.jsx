@@ -1003,11 +1003,15 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                                                     }}
                                                     className={`w-full text-left px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between border-b dark:border-gray-700 last:border-0 ${createData.pet_id === pet.id ? 'bg-brand-primary/5 dark:bg-brand-primary/10' : ''}`}
                                                 >
-                                                    <div>
-                                                        <span className="font-black text-gray-900 dark:text-gray-100">{pet.name}</span>
-                                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Responsable: {pet.owner?.name || 'No registrado'}</p>
+                                                    <div className="flex-1 min-w-0">
+                                                        <span className="font-black text-gray-900 dark:text-gray-100 uppercase text-xs truncate block">{pet.name}</span>
+                                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight mt-0.5 truncate">
+                                                            {pet.species} • {pet.breed || 'Sin Raza'} • {pet.owner?.name || 'No registrado'}
+                                                        </p>
                                                     </div>
-                                                    <span className="text-[9px] px-2 py-1 bg-gray-100 dark:bg-gray-900 text-gray-500 rounded-lg font-black uppercase tracking-widest">{pet.species}</span>
+                                                    <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${pet.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
+                                                        {pet.species || 'Mascota'}
+                                                    </span>
                                                 </button>
                                             )) : (
                                                 <div className="p-6 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Sin coincidencias</div>

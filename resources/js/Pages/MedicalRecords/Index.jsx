@@ -52,8 +52,9 @@ export default function Index({ auth, medicalRecords, clients, pets: allPets, ve
 
         const filteredPets = allPets.filter(p => 
             p.name.toLowerCase().includes(query) ||
-            (p.owner?.name && p.owner.name.toLowerCase().includes(query))
-        ).slice(0, 5);
+            (p.owner?.name && p.owner.name.toLowerCase().includes(query)) ||
+            (p.breed && p.breed.toLowerCase().includes(query))
+        ).slice(0, 10);
 
         return { clients: filteredClients, pets: filteredPets };
     }, [clientSearch, clients, allPets]);
@@ -131,10 +132,13 @@ export default function Index({ auth, medicalRecords, clients, pets: allPets, ve
                                                             {record.pet.species === 'Canino' ? '🐕' : '🐈'}
                                                         </div>
                                                         <div className="min-w-0 flex-1">
-                                                            <div className="flex items-center gap-2">
+                                                             <div className="flex items-center gap-2">
                                                                 <p className="text-sm font-black text-slate-900 dark:text-white group-hover:text-white truncate uppercase tracking-tight">
                                                                     {record.pet.name}
                                                                 </p>
+                                                                <span className="text-[10px] font-bold text-slate-400 group-hover:text-white/70 uppercase tracking-tighter hidden sm:inline">
+                                                                    • {record.pet.breed || 'Sin Raza'} • {record.pet.owner?.name}
+                                                                </span>
                                                                 <span className="px-1.5 py-0.5 rounded text-[8px] font-black border border-slate-200 bg-white text-slate-500 uppercase tracking-[0.15em] group-hover:bg-white group-hover:text-brand-primary group-hover:border-white transition-colors shadow-sm">
                                                                     {record.type === 'consultation' ? 'CONSULTA' : record.type.toUpperCase()}
                                                                 </span>
@@ -243,12 +247,16 @@ export default function Index({ auth, medicalRecords, clients, pets: allPets, ve
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <span className="text-xl">{pet.species === 'Canino' ? '🐕' : '🐈'}</span>
-                                                        <div>
-                                                            <p className="font-black text-slate-900 dark:text-white uppercase text-sm group-hover:text-brand-primary transition-colors">{pet.name}</p>
-                                                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">Dueño: {pet.owner?.name || 'S/A'}</p>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-black text-slate-900 dark:text-white uppercase text-sm group-hover:text-brand-primary transition-colors truncate">{pet.name}</p>
+                                                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider truncate">
+                                                                {pet.species} • {pet.breed || 'Sin Raza'} • {pet.owner?.name || 'S/A'}
+                                                            </p>
                                                         </div>
                                                     </div>
-                                                    <span className="text-lg group-hover:translate-x-1 transition-transform">➡️</span>
+                                                    <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${pet.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
+                                                        {pet.species || 'Mascota'}
+                                                    </span>
                                                 </button>
                                             ))}
                                             
@@ -266,12 +274,16 @@ export default function Index({ auth, medicalRecords, clients, pets: allPets, ve
                                                     >
                                                         <div className="flex items-center gap-3">
                                                             <span className="text-xl">{pet.species === 'Canino' ? '🐕' : '🐈'}</span>
-                                                            <div>
-                                                                <p className="font-black text-slate-900 dark:text-white uppercase text-sm group-hover:text-brand-primary transition-colors">{pet.name}</p>
-                                                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">Dueño: {client.name}</p>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-black text-slate-900 dark:text-white uppercase text-sm group-hover:text-brand-primary transition-colors truncate">{pet.name}</p>
+                                                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider truncate">
+                                                                    {pet.species} • {pet.breed || 'Sin Raza'} • {client.name}
+                                                                </p>
                                                             </div>
                                                         </div>
-                                                        <span className="text-lg group-hover:translate-x-1 transition-transform">➡️</span>
+                                                        <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${pet.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
+                                                            {pet.species || 'Mascota'}
+                                                        </span>
                                                     </button>
                                                 ));
                                             })}

@@ -133,13 +133,18 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
                                                                 className="w-full px-5 py-3 flex items-center gap-3 hover:bg-brand-primary/10 dark:hover:bg-slate-700 transition-colors text-left border-b dark:border-gray-700 last:border-0"
                                                             >
                                                                 <PetAvatar pet={p} className="w-9 h-9 rounded-full" />
-                                                                <div className="flex-1">
+                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="flex items-center gap-2">
-                                                                        <p className="font-bold text-sm text-slate-900 dark:text-white leading-none">{p.name}</p>
+                                                                        <p className="font-bold text-sm text-slate-900 dark:text-white leading-none">{p.pet?.name || p.name}</p>
                                                                         <PetAlertIcons pet={p.pet || p} size="sm" />
                                                                     </div>
-                                                                    <p className="text-[10px] text-slate-500 mt-1 uppercase">{p.breed} • {p.owner?.name}</p>
+                                                                    <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-tight truncate">
+                                                                        {(p.pet?.species || p.species)} • {(p.pet?.breed || p.breed) || 'Sin Raza'} • {p.owner_name || p.owner?.name}
+                                                                    </p>
                                                                 </div>
+                                                                <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${(p.pet?.species || p.species) === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
+                                                                    {(p.pet?.species || p.species) || 'Mascota'}
+                                                                </span>
                                                             </button>
                                                         ))}
                                                     </div>

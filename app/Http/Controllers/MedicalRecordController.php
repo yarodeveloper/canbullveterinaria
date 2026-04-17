@@ -15,7 +15,7 @@ class MedicalRecordController extends Controller
     public function index(Request $request)
     {
         $branchId = Auth::user()->branch_id;
-        $query = MedicalRecord::with(['pet', 'veterinarian']);
+        $query = MedicalRecord::with(['pet.owner', 'veterinarian']);
         
         // Si queremos ver todos los registros del sistema (Global):
         // Pero típicamente se filtran por sucursal del REGISTRO MÉDICO.

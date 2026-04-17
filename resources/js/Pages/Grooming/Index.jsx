@@ -51,8 +51,9 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
 
         const filteredPets = allPets.filter(p => 
             p.name.toLowerCase().includes(query) ||
-            (p.owner?.name && p.owner.name.toLowerCase().includes(query))
-        ).slice(0, 5);
+            (p.owner?.name && p.owner.name.toLowerCase().includes(query)) ||
+            (p.breed && p.breed.toLowerCase().includes(query))
+        ).slice(0, 10);
 
         return { clients: filteredClients, pets: filteredPets };
     }, [clientSearch, clients, allPets]);
@@ -147,7 +148,7 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                                                                 <span>FOLIO: {order.folio || `#${order.id}`}</span>
                                                                 <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 group-hover:bg-white/30 rounded-full"></span>
                                                                 <span className="hidden sm:inline-flex items-center gap-1 truncate font-black text-brand-primary group-hover:text-white">
-                                                                    Dueño: {order.pet.owner?.name || 'S/A'}
+                                                                    {order.pet.species} • {order.pet.breed || 'Sin Raza'} • {order.pet.owner?.name || 'S/A'}
                                                                 </span>
                                                                 <span className="hidden sm:inline-block w-1 h-1 bg-gray-300 group-hover:bg-white/30 rounded-full"></span>
                                                                 <span className="hidden sm:inline-flex items-center gap-1 truncate font-medium italic">
@@ -255,10 +256,14 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                                                                 <p className="font-black text-slate-900 dark:text-white uppercase text-sm group-hover:text-brand-primary transition-colors">{pet.name}</p>
                                                                 <PetAlertIcons pet={pet} size="sm" />
                                                             </div>
-                                                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">Dueño: {pet.owner?.name || 'S/A'}</p>
+                                                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider truncate">
+                                                                {pet.species} • {pet.breed || 'Sin Raza'} • {pet.owner?.name || 'S/A'}
+                                                            </p>
                                                         </div>
                                                     </div>
-                                                    <span className="text-xl group-hover:translate-x-1 transition-transform opacity-0 group-hover:opacity-100">➡️</span>
+                                                    <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${pet.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
+                                                        {pet.species || 'Mascota'}
+                                                    </span>
                                                 </button>
                                             ))}
                                             
@@ -281,10 +286,14 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                                                                     <p className="font-black text-slate-900 dark:text-white uppercase text-sm group-hover:text-brand-primary transition-colors">{pet.name}</p>
                                                                     <PetAlertIcons pet={pet} size="sm" />
                                                                 </div>
-                                                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">Dueño: {client.name}</p>
+                                                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider truncate">
+                                                                    {pet.species} • {pet.breed || 'Sin Raza'} • {client.name}
+                                                                </p>
                                                             </div>
                                                         </div>
-                                                        <span className="text-xl group-hover:translate-x-1 transition-transform opacity-0 group-hover:opacity-100">➡️</span>
+                                                        <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${pet.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
+                                                            {pet.species || 'Mascota'}
+                                                        </span>
                                                     </button>
                                                 ));
                                             })}

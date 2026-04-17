@@ -156,17 +156,20 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
                                                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm ${p.owner?.name === '<< Sin Asignar >>' ? 'bg-orange-100 text-orange-600 border border-orange-200' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
                                                                 {p.name?.charAt(0)}
                                                             </div>
-                                                            <div>
-                                                                <p className="font-bold text-sm text-slate-800 dark:text-white">
-                                                                    {p.name} 
-                                                                    {p.owner?.name === '<< Sin Asignar >>' ? (
-                                                                        <span className="text-[9px] bg-orange-500 text-white px-1.5 py-0.5 rounded ml-2 font-black uppercase tracking-tighter">SIN DUEÑO</span>
-                                                                    ) : (
-                                                                        <span className="text-[9px] text-slate-400 font-normal ml-2">{p.owner?.name}</span>
-                                                                    )}
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-bold text-sm text-slate-800 dark:text-white truncate">
+                                                                    {p.pet?.name || p.name} 
+                                                                    {p.owner_name === '<< Sin Asignar >>' || p.owner?.name === '<< Sin Asignar >>' ? (
+                                                                        <span className="text-[9px] bg-orange-500 text-white px-1.5 py-0.5 rounded ml-2 font-black uppercase tracking-tighter shrink-0">SIN DUEÑO</span>
+                                                                    ) : null}
                                                                 </p>
-                                                                <p className="text-[10px] text-slate-400">{p.species} • {p.breed}</p>
+                                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1 truncate">
+                                                                    {(p.pet?.species || p.species)} • {(p.pet?.breed || p.breed) || 'Sin Raza'} • {p.owner_name === '<< Sin Asignar >>' || p.owner?.name === '<< Sin Asignar >>' ? 'S/A' : (p.owner_name || p.owner?.name)}
+                                                                </p>
                                                             </div>
+                                                            <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${(p.pet?.species || p.species) === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
+                                                                {(p.pet?.species || p.species) || 'Mascota'}
+                                                            </span>
                                                         </button>
                                                     ))}
                                                 </div>
