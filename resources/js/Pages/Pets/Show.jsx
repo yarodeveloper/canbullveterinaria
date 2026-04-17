@@ -609,35 +609,43 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                     <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" /></svg>
                                 </div>
                                 <h3 className="text-sm font-black uppercase tracking-widest mb-4">Carnet Público</h3>
-                                <div className="bg-white p-3 rounded-xl mb-4 inline-block">
-                                    <QRCodeSVG 
-                                        value={typeof window !== 'undefined' ? window.location.origin + '/carnet/' + pet.uuid : ''}
-                                        size={96}
-                                        level="H"
-                                        includeMargin={false}
-                                    />
-                                </div>
-                                <p className="text-[10px] font-bold text-indigo-100 uppercase mb-4 leading-relaxed">
-                                    Escanea para ver en el móvil o comparte el link con el dueño.
-                                </p>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(window.location.origin + '/carnet/' + pet.uuid);
-                                            alert('Link copiado al portapapeles');
-                                        }}
-                                        className="flex-1 bg-white/20 hover:bg-white/30 py-2 rounded-lg text-xs font-black uppercase transition"
-                                    >
-                                        Copiar Link
-                                    </button>
-                                    <a
-                                        href={route('public.carnet', pet.uuid)}
-                                        target="_blank"
-                                        className="flex-1 bg-white text-brand-primary hover:bg-indigo-50 py-2 rounded-lg text-xs font-black uppercase text-center transition"
-                                    >
-                                        Ver Vista
-                                    </a>
-                                </div>
+                                {pet.uuid ? (
+                                    <>
+                                        <div className="bg-white p-3 rounded-xl mb-4 inline-block">
+                                            <QRCodeSVG 
+                                                value={typeof window !== 'undefined' ? window.location.origin + '/carnet/' + pet.uuid : ''}
+                                                size={96}
+                                                level="H"
+                                                includeMargin={false}
+                                            />
+                                        </div>
+                                        <p className="text-[10px] font-bold text-indigo-100 uppercase mb-4 leading-relaxed">
+                                            Escanea para ver en el móvil o comparte el link con el dueño.
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(window.location.origin + '/carnet/' + pet.uuid);
+                                                    alert('Link copiado al portapapeles');
+                                                }}
+                                                className="flex-1 bg-white/20 hover:bg-white/30 py-2 rounded-lg text-xs font-black uppercase transition"
+                                            >
+                                                Copiar Link
+                                            </button>
+                                            <a
+                                                href={route('public.carnet', pet.uuid)}
+                                                target="_blank"
+                                                className="flex-1 bg-white text-brand-primary hover:bg-indigo-50 py-2 rounded-lg text-xs font-black uppercase text-center transition"
+                                            >
+                                                Ver Vista
+                                            </a>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <p className="text-[10px] font-bold text-indigo-100 uppercase mb-4 leading-relaxed">
+                                        Generando enlace público...
+                                    </p>
+                                )}
                             </div>
                         </div>
 
