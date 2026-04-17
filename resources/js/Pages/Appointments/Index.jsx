@@ -1,7 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import { getWhatsAppLink } from '@/Utils/formatters';
 import React, { useState } from 'react';
 import Modal from '@/Components/Modal';
+import PetAlertIcons from '@/Components/PetAlertIcons';
 import { IconPlay } from '@/Components/Icons';
 
 const roleLabels = {
@@ -548,8 +550,9 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
 
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 mb-0.5">
-                                                                <span className="text-sm font-black text-gray-900 dark:text-gray-100 group-hover:text-brand-primary transition">
+                                                                <span className="text-sm font-black text-gray-900 dark:text-gray-100 group-hover:text-brand-primary transition flex items-center gap-2">
                                                                     {apt.pet.name}
+                                                                    <PetAlertIcons pet={apt.pet} size="sm" />
                                                                 </span>
                                                                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-500 uppercase font-black tracking-widest">
                                                                     {apt.pet.species}
@@ -790,7 +793,7 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                                                                 </span>
                                                                 <div className="flex gap-1">
                                                                     <a 
-                                                                        href={`https://wa.me/${(record.pet?.owner?.phone || '').replace(/\\D/g, '').length === 10 ? '52' + (record.pet?.owner?.phone || '').replace(/\\D/g, '') : (record.pet?.owner?.phone || '').replace(/\\D/g, '')}?text=Hola+${record.pet?.owner?.name}%2C+te+recordamos+que+la+vacuna+${record.name}+de+${record.pet?.name}+vence+el+${record.next_due_date}.+¿Deseas+agendar+una+cita?`} 
+                                                                        href={getWhatsAppLink(record.pet?.owner?.phone, `Hola ${record.pet?.owner?.name}, te recordamos que la vacuna ${record.name} de ${record.pet?.name} vence el ${record.next_due_date}. ¿Deseas agendar una cita?`)} 
                                                                         target="_blank"
                                                                         className="p-1 px-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition shadow-sm"
                                                                         title="Recordatorio WhatsApp"
@@ -839,7 +842,7 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                                                                 </span>
                                                                 <div className="flex gap-1">
                                                                     <a 
-                                                                        href={`https://wa.me/${(order.pet?.owner?.phone || '').replace(/\\D/g, '').length === 10 ? '52' + (order.pet?.owner?.phone || '').replace(/\\D/g, '') : (order.pet?.owner?.phone || '').replace(/\\D/g, '')}?text=Hola+${order.pet?.owner?.name}%2C+te+recordamos+que+ya+le+toca+su+servicio+de+Estética/Spa+a+${order.pet?.name}.+Su+última+visita+fue+hace+aprox.+30+días.+¿Deseas+agendar+su+próxima+cita?`} 
+                                                                        href={getWhatsAppLink(order.pet?.owner?.phone, `Hola ${order.pet?.owner?.name}, te recordamos que ya le toca su servicio de Estética/Spa a ${order.pet?.name}. Su última visita fue hace aprox. 30 días. ¿Deseas agendar su próxima cita?`)} 
                                                                         target="_blank"
                                                                         className="p-1 px-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition shadow-sm"
                                                                         title="Recordatorio WhatsApp"

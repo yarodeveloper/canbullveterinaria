@@ -8,6 +8,7 @@ import PrintDocumentModal from '@/Components/PrintDocumentModal';
 
 import MedicationsEditor from '@/Components/MedicationsEditor';
 import PendingChargesEditor from '@/Components/PendingChargesEditor';
+import { getWhatsAppLink } from '@/Utils/formatters';
 
 const VITAL_RANGES = {
     Canino: {
@@ -532,7 +533,7 @@ export default function Show({ auth, hospitalization, templates, products = [] }
                                             Llamar
                                         </a>
                                         <a
-                                            href={`https://wa.me/${(hospitalization.pet.owner?.phone || '').replace(/\\D/g, '').length === 10 ? '52' + (hospitalization.pet.owner?.phone || '').replace(/\\D/g, '') : (hospitalization.pet.owner?.phone || '').replace(/\\D/g, '')}`}
+                                            href={getWhatsAppLink(hospitalization.pet.owner?.phone)}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="flex items-center justify-center gap-2 py-3 bg-[#25D366]/80 hover:bg-[#25D366] rounded-xl text-xs font-black uppercase tracking-wide transition"

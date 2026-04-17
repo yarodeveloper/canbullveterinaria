@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import BehaviorSelector, { BehaviorBadge } from '@/Components/BehaviorSelector';
 import PrintDocumentModal from '@/Components/PrintDocumentModal';
+import { getWhatsAppLink } from '@/Utils/formatters';
 
 export default function Show({ auth, client, documentTemplates = [], financialSummary = {} }) {
     const [editingState, setEditingState] = useState(null); // 'contact', 'emergency', 'crm', null
@@ -199,7 +200,7 @@ export default function Show({ auth, client, documentTemplates = [], financialSu
                                                         Llamar
                                                     </a>
                                                     <a
-                                                        href={`https://wa.me/${(client.phone || '').replace(/\\D/g, '').length === 10 ? '52' + (client.phone || '').replace(/\\D/g, '') : (client.phone || '').replace(/\\D/g, '')}`}
+                                                        href={getWhatsAppLink(client.phone)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#25D366]/10 text-[#128C7E] rounded-xl text-[10px] font-black uppercase tracking-wide hover:bg-[#25D366]/20 transition border border-[#25D366]/20"

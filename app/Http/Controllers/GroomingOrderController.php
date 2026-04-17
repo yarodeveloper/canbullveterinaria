@@ -276,4 +276,16 @@ class GroomingOrderController extends Controller
 
         return back()->with('success', 'Orden completada y cargada a caja para cobro.');
     }
+
+    public function print(Request $request, GroomingOrder $groomingOrder)
+    {
+        $groomingOrder->load(['pet.owner', 'user', 'items.product', 'branch']);
+        
+        $type = $request->query('type', 'standard');
+
+        return Inertia::render('Grooming/Print', [
+            'order' => $groomingOrder,
+            'type' => $type
+        ]);
+    }
 }

@@ -134,6 +134,10 @@ export default function Show({ auth, order, services }) {
                                             {isSaving ? 'Guardando...' : 'Guardar borrador de cambios'}
                                         </button>
                                     )}
+                                    <div className="flex gap-2 w-full mt-1">
+                                        <a href={route('grooming-orders.print', { groomingOrder: order.id, type: 'standard' })} target="_blank" rel="noreferrer" className="text-[9px] font-black uppercase flex-1 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 py-2 text-center rounded-xl text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-gray-600 transition shadow-sm">🖨️ A4</a>
+                                        <a href={route('grooming-orders.print', { groomingOrder: order.id, type: 'ticket' })} target="_blank" rel="noreferrer" className="text-[9px] font-black uppercase flex-1 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 py-2 text-center rounded-xl text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-gray-600 transition shadow-sm">🖨️ Ticket</a>
+                                    </div>
                                 </div>
                             </div>
 

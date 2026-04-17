@@ -62,6 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/grooming-orders/{groomingOrder}', [GroomingOrderController::class, 'show'])->name('grooming-orders.show');
     Route::put('/grooming-orders/{groomingOrder}', [GroomingOrderController::class, 'update'])->name('grooming-orders.update');
     Route::post('/grooming-orders/{groomingOrder}/complete', [GroomingOrderController::class, 'complete'])->name('grooming-orders.complete');
+    Route::get('/grooming-orders/{groomingOrder}/print', [GroomingOrderController::class, 'print'])->name('grooming-orders.print');
 
     // Documentos Externos (PDF, Images)
     Route::post('pet-documents', [\App\Http\Controllers\PetDocumentController::class, 'store'])->name('pet-documents.store');

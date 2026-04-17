@@ -5,6 +5,7 @@ import { Head, Link, useForm, router } from '@inertiajs/react';
 import { IconEye, IconPlus, IconEdit, IconPlay } from '@/Components/Icons';
 import PreventiveControl from './Partials/PreventiveControl';
 import PetAvatar from '@/Components/PetAvatar';
+import { getWhatsAppLink } from '@/Utils/formatters';
 import { BehaviorBadge } from '@/Components/BehaviorSelector';
 import PrintDocumentModal from '@/Components/PrintDocumentModal';
 
@@ -538,7 +539,7 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                                     </svg>
                                                 </a>
                                                 <a
-                                                    href={`https://wa.me/${(owner.phone || '').replace(/\\D/g, '').length === 10 ? '52' + (owner.phone || '').replace(/\\D/g, '') : (owner.phone || '').replace(/\\D/g, '')}`}
+                                                    href={getWhatsAppLink(owner.phone)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     title={`WhatsApp a ${owner.name}`}

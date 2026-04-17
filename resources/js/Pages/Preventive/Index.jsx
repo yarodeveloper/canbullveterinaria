@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import React, { useState } from 'react';
+import { getWhatsAppLink } from '@/Utils/formatters';
 
 export default function Index({ auth, records, filters }) {
     const [search, setSearch] = useState(filters.search || '');
@@ -39,10 +40,10 @@ export default function Index({ auth, records, filters }) {
         }
     };
 
-    const formatWhatsApp = (phone) => {
-        if (!phone) return '';
-        const clean = phone.replace(/\D/g, '');
-        return clean.length === 10 ? '52' + clean : clean;
+    const isOverdueCheck = (dueDate) => {
+        if (!dueDate) return false;
+        const cleanDate = dueDate.split(' ')[0].split('T')[0];
+        return new Date(cleanDate + 'T12:00:00') < new Date();
     };
 
     return (
@@ -189,8 +190,8 @@ export default function Index({ auth, records, filters }) {
                                                         <div className="flex justify-center gap-2">
                                                             <a 
                                                                 href={activeMonitor === 'health' 
-                                                                    ? `https://wa.me/${formatWhatsApp(item.pet?.owner?.phone)}?text=Hola+${item.pet?.owner?.name}%2C+te+recordamos+que+la+vacuna+${item.name}+de+${item.pet?.name}+vence+el+${item.next_due_date}.+¿Deseas+agendar+una+cita?`
-                                                                    : `https://wa.me/${formatWhatsApp(item.pet?.owner?.phone)}?text=Hola+${item.pet?.owner?.name}%2C+te+recordamos+que+ya+toca+servicio+de+Estética+para+${item.pet?.name}.+¿Deseas+agendar+su+próxima+cita?`
+                                                                    ? getWhatsAppLink(item.pet?.owner?.phone, `Hola ${item.pet?.owner?.name}, te recordamos que la vacuna ${item.name} de ${item.pet?.name} vence el ${item.next_due_date}. ¿Deseas agendar una cita?`)
+                                                                    : getWhatsAppLink(item.pet?.owner?.phone, `Hola ${item.pet?.owner?.name}, te recordamos que ya toca servicio de Estética para ${item.pet?.name}. ¿Deseas agendar su próxima cita?`)
                                                                 } 
                                                                 target="_blank"
                                                                 className="p-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition shadow-lg"
