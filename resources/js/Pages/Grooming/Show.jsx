@@ -1,6 +1,7 @@
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PetAlertIcons from '@/Components/PetAlertIcons';
 
 const roleLabels = {
     admin: 'Adm.',
@@ -16,7 +17,7 @@ export default function Show({ auth, order, services }) {
     const { data, setData, put, post, processing } = useForm({
         arrival_condition: order.arrival_condition || '',
         notes: order.notes || '',
-        next_visit_date: order.next_visit_date || '',
+        next_visit_date: order.next_visit_date ? String(order.next_visit_date).split('T')[0] : '',
         items: order.items || []
     });
 
@@ -101,7 +102,10 @@ export default function Show({ auth, order, services }) {
                                     </div>
                                     <div className="flex-1">
                                         <h3 className="text-[10px] font-black text-brand-primary uppercase tracking-[0.3em] mb-1">Detalles del Paciente</h3>
-                                        <Link href={route('pets.show', order.pet.id)} className="text-3xl font-black text-gray-900 dark:text-white leading-none hover:text-brand-primary transition tracking-tight">{order.pet.name}</Link>
+                                        <div className="flex items-center gap-3">
+                                            <Link href={route('pets.show', order.pet.id)} className="text-3xl font-black text-gray-900 dark:text-white leading-none hover:text-brand-primary transition tracking-tight">{order.pet.name}</Link>
+                                            <PetAlertIcons pet={order.pet} size="lg" />
+                                        </div>
                                         <div className="flex items-center gap-4 mt-3">
                                             <span className="text-[10px] font-black text-gray-500 uppercase flex items-center gap-1.5">
                                                 <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
