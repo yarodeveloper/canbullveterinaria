@@ -292,9 +292,23 @@ class MedicalRecordController extends Controller
                 }
             })->where('is_active', true)->get();
 
+        // IDs para navegación del mismo paciente
+        $petId = $medicalRecord->pet_id;
+        $prevRecord = MedicalRecord::where('pet_id', $petId)
+            ->where('id', '<', $medicalRecord->id)
+            ->orderBy('id', 'desc')
+            ->first();
+        
+        $nextRecord = MedicalRecord::where('pet_id', $petId)
+            ->where('id', '>', $medicalRecord->id)
+            ->orderBy('id', 'asc')
+            ->first();
+
         return Inertia::render('MedicalRecords/Show', [
             'record'    => $medicalRecord->load(['pet.owner', 'veterinarian', 'attachments']),
-            'templates' => $templates
+            'templates' => $templates,
+            'prevRecordId' => $prevRecord ? $prevRecord->id : null,
+            'nextRecordId' => $nextRecord ? $nextRecord->id : null,
         ]);
     }
 

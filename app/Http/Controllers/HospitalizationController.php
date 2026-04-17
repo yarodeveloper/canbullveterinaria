@@ -304,4 +304,46 @@ class HospitalizationController extends Controller
             'hospitalization' => $hospitalization,
         ]);
     }
+
+    public function updateMonitoring(Request $request, HospitalizationMonitoring $monitoring)
+    {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage hospitalizations')) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'temperature' => 'nullable|numeric',
+            'heart_rate' => 'nullable|integer',
+            'respiratory_rate' => 'nullable|integer',
+            'mucosa_color' => 'nullable|string',
+            'capillary_refill_time' => 'nullable|string',
+            'blood_pressure' => 'nullable|string',
+            'hydration_status' => 'nullable|string',
+            'pain_score' => 'nullable|integer|between:0,10',
+            'mental_state' => 'nullable|string',
+            'medication_administered' => 'nullable|string',
+            'food_intake' => 'nullable|string',
+            'urination' => 'nullable|string',
+            'defecation' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'lymph_nodes' => 'nullable|string',
+            'abdominal_palpation' => 'nullable|string',
+            'bcs' => 'nullable|string',
+        ]);
+
+        $monitoring->update($validated);
+
+        return back()->with('message', 'Registro de monitoreo actualizado.');
+    }
+
+    public function destroyMonitoring(HospitalizationMonitoring $monitoring)
+    {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermissionTo('manage hospitalizations')) {
+            abort(403);
+        }
+
+        $monitoring->delete();
+
+        return back()->with('message', 'Registro de monitoreo eliminado.');
+    }
 }

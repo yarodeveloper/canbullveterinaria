@@ -43,7 +43,7 @@ const sexMap = {
     "Unknown": "Desconocido"
 };
 
-export default function Show({ auth, record, templates = [] }) {
+export default function Show({ auth, record, templates = [], prevRecordId, nextRecordId }) {
     const { pet, veterinarian, attachments = [] } = record;
     const vitalSigns = record.vital_signs || {};
     const anamnesis = record.anamnesis || {};
@@ -63,13 +63,27 @@ export default function Show({ auth, record, templates = [] }) {
 
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                        <div className="flex items-center gap-4">
-                            <Link href={route('pets.show', pet.id)} className="p-3 bg-white/80 dark:bg-slate-800/80 hover:bg-slate-700 rounded-xl transition text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                            </Link>
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="flex items-center gap-1.5">
+                                <Link href={route('pets.show', pet.id)} className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700" title="Volver al Expediente">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                                </Link>
+                                <div className="flex items-center gap-1 ml-2">
+                                    {prevRecordId && (
+                                        <Link href={route('medical-records.show', prevRecordId)} className="p-3 bg-white dark:bg-slate-800 hover:bg-brand-primary hover:text-white rounded-xl transition text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 group" title="Consulta Anterior">
+                                            <svg className="w-5 h-5 transform group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
+                                        </Link>
+                                    )}
+                                    {nextRecordId && (
+                                        <Link href={route('medical-records.show', nextRecordId)} className="p-3 bg-white dark:bg-slate-800 hover:bg-brand-primary hover:text-white rounded-xl transition text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 group" title="Siguiente Consulta">
+                                            <svg className="w-5 h-5 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" /></svg>
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
                             <div>
                                 <h2 className="font-extrabold text-2xl text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                                    Historial de Consulta #{record.id}
+                                    SOAP #{record.id}
                                 </h2>
                                 <p className="text-[10px] text-brand-primary font-bold uppercase tracking-widest mt-1">Realizada el {new Date(record.created_at).toLocaleString('es-ES')}</p>
                             </div>

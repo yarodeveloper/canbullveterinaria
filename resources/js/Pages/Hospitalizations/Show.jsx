@@ -77,7 +77,8 @@ export default function Show({ auth, hospitalization, templates, products = [] }
     const [showMonitoringForm, setShowMonitoringForm] = useState(false);
     const [showGlasgowModal, setShowGlasgowModal] = useState(false);
     const [showPrintModal, setShowPrintModal] = useState(false);
-    const { data, setData, post, processing, reset, errors } = useForm({
+    const [monitoringToEdit, setMonitoringToEdit] = useState(null);
+    const { data, setData, post, put, delete: destroy, processing, reset, errors } = useForm({
         temperature: '',
         heart_rate: '',
         respiratory_rate: '',
@@ -105,12 +106,56 @@ export default function Show({ auth, hospitalization, templates, products = [] }
 
     const submitMonitoring = (e) => {
         e.preventDefault();
-        post(route('hospitalizations.monitoring.store', hospitalization.id), {
-            onSuccess: () => {
-                reset();
-                setShowMonitoringForm(false);
-            },
+        if (monitoringToEdit) {
+            put(route('hospitalizations.monitoring.update', monitoringToEdit.id), {
+                onSuccess: () => {
+                    reset();
+                    setMonitoringToEdit(null);
+                    setShowMonitoringForm(false);
+                },
+            });
+        } else {
+            post(route('hospitalizations.monitoring.store', hospitalization.id), {
+                onSuccess: () => {
+                    reset();
+                    setShowMonitoringForm(false);
+                },
+            });
+        }
+    };
+
+    const handleEditMonitoring = (m) => {
+        setMonitoringToEdit(m);
+        setData({
+            temperature: m.temperature || '',
+            heart_rate: m.heart_rate || '',
+            respiratory_rate: m.respiratory_rate || '',
+            mucosa_color: m.mucosa_color || '',
+            bcs: m.bcs || '',
+            lymph_nodes: m.lymph_nodes || '',
+            abdominal_palpation: m.abdominal_palpation || '',
+            capillary_refill_time: m.capillary_refill_time || '',
+            blood_pressure: m.blood_pressure || '',
+            hydration_status: m.hydration_status || '',
+            pain_score: m.pain_score || 0,
+            mental_state: m.mental_state || '',
+            medication_administered: m.medication_administered || '',
+            food_intake: m.food_intake || '',
+            urination: m.urination || '',
+            defecation: m.defecation || '',
+            notes: m.notes || '',
         });
+        setShowMonitoringForm(true);
+        // Scroll to form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleDeleteMonitoring = (id) => {
+        if (confirm('¿Estás seguro de eliminar este registro de monitoreo?')) {
+            destroy(route('hospitalizations.monitoring.destroy', id), {
+                preserveScroll: true
+            });
+        }
     };
 
     const getStatusBadge = (status) => {
@@ -216,7 +261,14 @@ export default function Show({ auth, hospitalization, templates, products = [] }
                                                         🖨️ Imprimir
                                                     </button>
                                                     <button
-                                                        onClick={() => setShowMonitoringForm(!showMonitoringForm)}
+                                                        onClick={() => {
+                                                            if (showMonitoringForm && monitoringToEdit) {
+                                                                setMonitoringToEdit(null);
+                                                                reset();
+                                                            } else {
+                                                                setShowMonitoringForm(!showMonitoringForm);
+                                                            }
+                                                        }}
                                                         className="px-4 py-2 bg-brand-primary text-white rounded-xl text-xs font-black uppercase hover:opacity-90 transition shadow-lg shadow-primary-100"
                                                     >
                                                         {showMonitoringForm ? 'Cancelar' : '+ Registrar Signos'}
@@ -325,10 +377,11 @@ export default function Show({ auth, hospitalization, templates, products = [] }
                                             <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase mb-2">Notas y Observaciones</label>
                                             <textarea rows="2" value={data.notes} onChange={e => setData('notes', e.target.value)} className="w-full bg-slate-50 dark:bg-[#111822] border-0 rounded-xl focus:ring-2 focus:ring-brand-primary text-sm"></textarea>
                                         </div>
-                                    </div>
-
-                                    <div className="flex justify-end gap-3">
-                                        <button type="submit" disabled={processing} className="px-8 py-3 bg-brand-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:opacity-90 transition disabled:opacity-50">Guardar Registro en Kardex</button>
+                                        <div className="flex justify-end gap-3">
+                                            <button type="submit" disabled={processing} className="px-8 py-3 bg-brand-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:opacity-90 transition disabled:opacity-50">
+                                                {monitoringToEdit ? 'Actualizar Registro' : 'Guardar Registro en Kardex'}
+                                            </button>
+                                        </div>
                                     </div>
                                 </form>
                             )}
@@ -343,11 +396,23 @@ export default function Show({ auth, hospitalization, templates, products = [] }
                                                 <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{format(new Date(m.created_at), "d 'de' MMMM", { locale: es })}</p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase">Registrado por</p>
-                                            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                                                {m.recorder?.name} <span className="text-[10px] text-brand-primary opacity-70">({m.recorder?.role === 'admin' ? 'Administrador' : m.recorder?.role === 'vet' ? 'Médico Veterinario' : m.recorder?.role === 'groomer' ? 'Estilista' : m.recorder?.role === 'receptionist' ? 'Recepción' : m.recorder?.role || 'Personal'})</span>
-                                            </p>
+                                        <div className="text-right flex items-center gap-4">
+                                            <div className="text-right">
+                                                <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase">Registrado por</p>
+                                                <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                                                    {m.recorder?.name} <span className="text-[10px] text-brand-primary opacity-70">({m.recorder?.role === 'admin' ? 'Administrador' : m.recorder?.role === 'vet' ? 'Médico Veterinario' : m.recorder?.role === 'groomer' ? 'Estilista' : m.recorder?.role === 'receptionist' ? 'Recepción' : m.recorder?.role || 'Personal'})</span>
+                                                </p>
+                                            </div>
+                                            {canManage && hospitalization.status === 'active' && (
+                                                <div className="flex gap-2 shrink-0">
+                                                    <button onClick={() => handleEditMonitoring(m)} className="p-2 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-lg transition" title="Editar">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                    </button>
+                                                    <button onClick={() => handleDeleteMonitoring(m.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition" title="Eliminar">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
