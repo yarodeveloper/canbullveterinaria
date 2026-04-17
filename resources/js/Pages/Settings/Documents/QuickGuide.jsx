@@ -67,7 +67,7 @@ export default function QuickGuide({ auth }) {
         { 
             tag: '{branch_name}', 
             description: 'Nombre de la sucursal actual', 
-            example: 'CanBull Central',
+            example: 'Sucursal Centro',
             icon: '🏥'
         },
         { 
@@ -83,7 +83,7 @@ export default function QuickGuide({ auth }) {
             user={auth.user}
             header={<h2 className="font-semibold text-xl text-slate-800 dark:text-slate-200 leading-tight">Guía de Variables Dinámicas</h2>}
         >
-            <Head title="Guía de Plantillas - CanBull" />
+            <Head title="Guía de Plantillas" />
 
             <div className="py-12 bg-slate-50 dark:bg-[#111827]">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -104,7 +104,7 @@ export default function QuickGuide({ auth }) {
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
                             Las variables permiten que el sistema rellene los datos por ti. 
-                            Solo inserta el código entre llaves y CanBull hará el resto al imprimir.
+                            Solo inserta el código entre llaves y el sistema se encargará del resto al momento de imprimir.
                         </p>
                     </div>
 
@@ -174,7 +174,7 @@ export default function QuickGuide({ auth }) {
                             </table>
                         </div>
                         <div className="p-8 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-200 dark:border-slate-700/50 flex justify-between items-center">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">© CanBull 2026 • Sistema de Gestión Veterinaria</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">© {new Date().getFullYear()} • Sistema de Gestión Veterinaria</p>
                             <Link 
                                 href={route('document-templates.index')}
                                 className="px-6 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:shadow-primary-100 dark:hover:shadow-none hover:-translate-y-0.5 transition-all active:translate-y-0 border border-slate-200 dark:border-slate-700"

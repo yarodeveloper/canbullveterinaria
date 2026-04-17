@@ -14,6 +14,7 @@ class SiteSettingSeeder extends Seeder
     {
         $settings = [
             // NEGOCIO
+            ['key' => 'site_name', 'value' => 'Canbull', 'type' => 'text', 'group' => 'business_profile', 'label' => 'Nombre del Sitio (Global)'],
             ['key' => 'site_logo', 'value' => '/img/logo.png', 'type' => 'image', 'group' => 'business_profile', 'label' => 'Logo del Sitio'],
             ['key' => 'site_favicon', 'value' => '/favicon.ico', 'type' => 'image', 'group' => 'business_profile', 'label' => 'Favicon'],
 

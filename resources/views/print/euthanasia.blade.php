@@ -3,7 +3,7 @@
     $logoUrl = $settings['site_logo'] ?? null;
     $primaryColor = $settings['primary_color'] ?? '#84329B';
     $secondaryColor = $settings['secondary_color'] ?? '#581c87';
-    $siteName = $settings['site_name'] ?? 'CanBull';
+    $siteName = $settings['site_name'] ?? 'Veterinaria';
     $copies = [
         ['type' => 'clinic', 'label' => 'COPIA CLÍNICA — HOJA TÉCNICA'],
         ['type' => 'owner', 'label' => 'COPIA PROPIETARIO — EXPEDIENTE OFICIAL']

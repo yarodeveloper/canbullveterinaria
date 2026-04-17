@@ -16,6 +16,7 @@ export default function Show({ auth, order, services }) {
     const { data, setData, put, post, processing } = useForm({
         arrival_condition: order.arrival_condition || '',
         notes: order.notes || '',
+        next_visit_date: order.next_visit_date || '',
         items: order.items || []
     });
 
@@ -74,154 +75,211 @@ export default function Show({ auth, order, services }) {
             <Head title={`Estética - ${order.folio}`} />
 
             <div className="py-12">
-                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-700">
-                        <div className="p-8">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-2xl sm:rounded-[2.5rem] border border-gray-100 dark:border-gray-700">
+                        <div className="p-0">
                             
+                            {/* Status Banner */}
                             {isCompleted && (
-                                <div className="mb-8 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900 grid place-items-center rounded-xl text-emerald-600 dark:text-emerald-400 font-black">✓</div>
+                                <div className="p-6 bg-emerald-500 text-white flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-white/20 backdrop-blur grid place-items-center rounded-2xl text-2xl">✓</div>
                                         <div>
-                                            <h4 className="text-emerald-600 dark:text-emerald-400 font-bold uppercase text-sm tracking-widest">Servicio Completado</h4>
-                                            <p className="text-xs text-emerald-600/70 font-bold">Cargos enviados a Punto de Venta.</p>
+                                            <h4 className="font-black uppercase text-sm tracking-widest">Servicio Completado</h4>
+                                            <p className="text-xs font-bold opacity-80 uppercase tracking-tighter">Los cargos ya están en el Punto de Venta.</p>
                                         </div>
                                     </div>
-                                    <Link href={route('receipts.create')} className="text-xs font-black uppercase bg-emerald-600 text-white hover:bg-emerald-500 py-2 px-4 rounded-xl transition">Ir a Cobrar al POS</Link>
+                                    <Link href={route('receipts.create')} className="text-[10px] font-black uppercase bg-white text-emerald-600 hover:bg-emerald-50 py-3 px-6 rounded-2xl transition shadow-lg shrink-0">Ir a Cobrar al POS</Link>
                                 </div>
                             )}
 
-                            <div className="flex items-center gap-4 mb-8 pb-8 border-b border-gray-100 dark:border-gray-700">
-                                <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 dark:bg-brand-primary/20 flex items-center justify-center text-3xl shadow-inner">
-                                    🛁
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-1">Paciente</h3>
-                                    <Link href={route('pets.show', order.pet.id)} className="text-2xl font-black text-gray-900 dark:text-white leading-none hover:text-brand-primary transition">{order.pet.name}</Link>
-                                    <p className="text-xs font-bold text-gray-500 uppercase mt-2">Atendió: {order.user ? `${order.user.name} (${roleLabels[order.user.role] || order.user.role})` : 'N/A'}</p>
-                                </div>
-                                {canEdit && (
-                                    <button 
-                                        type="button" 
-                                        onClick={saveChanges}
-                                        disabled={isSaving || processing}
-                                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 text-xs font-black uppercase px-6 py-3 rounded-xl transition-all disabled:opacity-50"
-                                    >
-                                        {isSaving ? 'Guardando...' : 'Guardar Cambios Parciales'}
-                                    </button>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                                <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-700">
-                                    <h3 className="text-xs font-black text-brand-primary dark:text-brand-primary/80 uppercase tracking-widest mb-4">Condición de Llegada</h3>
-                                    {canEdit ? (
-                                        <textarea
-                                            className="w-full bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-brand-primary font-medium text-gray-700 dark:text-gray-300 transition-colors"
-                                            rows="3"
-                                            value={data.arrival_condition}
-                                            onChange={e => setData('arrival_condition', e.target.value)}
-                                        />
-                                    ) : (
-                                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed">{data.arrival_condition || 'No especificada.'}</p>
-                                    )}
-                                </div>
-                                
-                                <div>
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-xs font-black text-brand-primary dark:text-brand-primary/80 uppercase tracking-widest">Servicios a Realizar</h3>
+                            {/* Pet Banner */}
+                            <div className="bg-brand-primary/5 dark:bg-brand-primary/10 p-8 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-6">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-20 h-20 rounded-3xl bg-white dark:bg-gray-800 flex items-center justify-center text-4xl shadow-xl border border-white dark:border-gray-700">
+                                        🛁
                                     </div>
-                                    
+                                    <div className="flex-1">
+                                        <h3 className="text-[10px] font-black text-brand-primary uppercase tracking-[0.3em] mb-1">Detalles del Paciente</h3>
+                                        <Link href={route('pets.show', order.pet.id)} className="text-3xl font-black text-gray-900 dark:text-white leading-none hover:text-brand-primary transition tracking-tight">{order.pet.name}</Link>
+                                        <div className="flex items-center gap-4 mt-3">
+                                            <span className="text-[10px] font-black text-gray-500 uppercase flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                                                Atendió: {order.user ? order.user.name : 'N/A'}
+                                            </span>
+                                            <span className="text-[10px] font-black text-gray-500 uppercase flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                                                Folio: #{order.folio}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur px-8 py-4 rounded-3xl border border-white dark:border-gray-700 shadow-sm text-center min-w-[180px]">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total MXN</p>
+                                        <p className="text-3xl font-black text-brand-primary">${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                                    </div>
                                     {canEdit && (
-                                        <div className="flex flex-col sm:flex-row gap-2 mb-4">
-                                            <select
-                                                className="flex-1 w-full bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 shadow-sm"
-                                                value={selectedService}
-                                                onChange={e => setSelectedService(e.target.value)}
-                                            >
-                                                <option value="">Añadir Servicio Extra...</option>
-                                                {services?.map(s => (
-                                                    <option key={s.id} value={s.id}>{s.name} (${parseFloat(s.price).toLocaleString('es-MX', {minimumFractionDigits:2})})</option>
-                                                ))}
-                                            </select>
-                                            <button
-                                                type="button"
-                                                onClick={addService}
-                                                className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white px-6 font-black uppercase tracking-widest rounded-xl text-xs transition min-h-[48px] shrink-0 shadow-sm"
-                                            >
-                                                Agregar
-                                            </button>
-                                        </div>
+                                        <button 
+                                            type="button" 
+                                            onClick={saveChanges}
+                                            disabled={isSaving || processing}
+                                            className="text-[9px] font-black text-brand-primary hover:text-white hover:bg-brand-primary uppercase tracking-widest px-4 py-2 rounded-xl transition-all disabled:opacity-50 border border-brand-primary/20"
+                                        >
+                                            {isSaving ? 'Guardando...' : 'Guardar borrador de cambios'}
+                                        </button>
                                     )}
-
-                                    <div className="space-y-3">
-                                        {data.items.map((item, idx) => (
-                                            <div key={idx} className="flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 p-4 border border-gray-100 dark:border-gray-700 rounded-xl group transition-all">
-                                                <div>
-                                                    <p className="font-bold text-sm text-gray-900 dark:text-white uppercase leading-tight">{item.concept}</p>
-                                                    <p className="font-bold text-xs text-gray-500 uppercase mt-1">Cant: {item.quantity}</p>
-                                                </div>
-                                                {canEdit && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeService(idx)}
-                                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100"
-                                                        title="Eliminar Servicio"
-                                                    >×</button>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="mt-4 text-right pr-4">
-                                        <p className="text-xs font-black uppercase text-gray-400 tracking-widest mb-1">Total MXN Estimado</p>
-                                        <p className="text-2xl font-black text-gray-900 dark:text-white">
-                                            ${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}
-                                        </p>
-                                    </div>
                                 </div>
                             </div>
 
-                            {canEdit && (
-                                <form onSubmit={markAsComplete} className="pt-6 border-t border-gray-100 dark:border-gray-700 mt-6">
-                                    <div className="mb-6">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Observaciones de Salida del Estilista</label>
-                                        <textarea
-                                            className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 mt-2 focus:ring-brand-primary font-medium text-gray-700 dark:text-gray-300 transition-colors"
-                                            rows="2"
-                                            value={data.notes}
-                                            onChange={e => setData('notes', e.target.value)}
-                                            placeholder="El perrito se portó bien, se detectó una verruga, se le puso pañoleta roja..."
-                                        />
-                                    </div>
-                                    <div className="flex flex-col md:flex-row justify-between md:items-center bg-brand-primary/5 dark:bg-brand-primary/10 p-4 rounded-xl border border-brand-primary/20 dark:border-brand-primary/40 gap-4">
-                                        <div>
-                                            <h4 className="text-brand-primary dark:text-brand-primary/80 font-black uppercase tracking-widest text-xs mb-1">Finalizar Servicio</h4>
-                                            <p className="text-[10px] text-brand-primary/80 uppercase font-bold">Esto enviará los cargos directamente al POS para su cobro con el total actual.</p>
-                                            <p className="text-[10px] text-red-500/80 uppercase font-bold mt-1">Asegúrate de haber "Guardado Cambios Parciales" si modificaste servicios.</p>
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            onClick={(e) => {
-                                                if (data.items.length !== order.items.length && !confirm("Has modificado los servicios de la orden pero no guardaste los cambios (botón 'Guardar Cambios Parciales'). ¡El sistema cobrará lo último guardado! ¿Deseas continuar y completar?")) {
-                                                    e.preventDefault();
-                                                }
-                                            }}
-                                            disabled={processing}
-                                            className="bg-brand-primary hover:bg-brand-primary/90 text-white px-8 py-4 text-xs font-black uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-brand-primary/20 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
-                                        >
-                                            {processing ? '...' : 'Completar y Cobrar'}
-                                        </button>
-                                    </div>
-                                </form>
-                            )}
-                            
-                            {isCompleted && data.notes && (
-                                <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700">
-                                    <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Observaciones Finales (Nota de Salida)</h3>
-                                    <p className="text-sm text-gray-800 dark:text-gray-200">{data.notes}</p>
-                                </div>
-                            )}
+                            <div className="p-8">
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                                    
+                                    {/* Left Column: Log */}
+                                    <div className="lg:col-span-7 space-y-8">
+                                        <div className="bg-gray-50 dark:bg-gray-900/40 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 p-8">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                                <div className="space-y-4">
+                                                    <h3 className="text-[10px] font-black text-brand-primary uppercase tracking-widest flex items-center gap-2">
+                                                        <span className="w-1.5 h-1.5 bg-brand-primary rounded-full"></span>
+                                                        Condición de Entrada
+                                                    </h3>
+                                                    {canEdit ? (
+                                                        <textarea
+                                                            className="w-full bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 focus:ring-brand-primary font-medium text-gray-700 dark:text-gray-300 transition-colors text-sm"
+                                                            rows="3"
+                                                            value={data.arrival_condition}
+                                                            onChange={e => setData('arrival_condition', e.target.value)}
+                                                        />
+                                                    ) : (
+                                                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                                                            {data.arrival_condition || 'No especificada.'}
+                                                        </p>
+                                                    )}
+                                                </div>
 
+                                                <div className="space-y-4">
+                                                    <h3 className="text-[10px] font-black text-brand-primary uppercase tracking-widest flex items-center gap-2">
+                                                        <span className="w-1.5 h-1.5 bg-brand-primary rounded-full"></span>
+                                                        Regreso Sugerido
+                                                    </h3>
+                                                    {canEdit ? (
+                                                        <input
+                                                            type="date"
+                                                            className="w-full bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 transition-colors text-sm"
+                                                            value={data.next_visit_date}
+                                                            onChange={e => setData('next_visit_date', e.target.value)}
+                                                        />
+                                                    ) : (
+                                                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                                                            {data.next_visit_date ? new Date(data.next_visit_date).toLocaleDateString('es-MX', {day: '2-digit', month: 'long', year: 'numeric'}) : 'No programada.'}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {(!isCompleted || data.notes) && (
+                                                <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+                                                    <h3 className="text-[10px] font-black text-brand-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                                                        <span className="w-1.5 h-1.5 bg-brand-primary rounded-full"></span>
+                                                        {isCompleted ? 'Observaciones de Salida' : 'Nota de Salida / Instrucciones Finales'}
+                                                    </h3>
+                                                    {canEdit ? (
+                                                        <textarea
+                                                            className="w-full bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 focus:ring-brand-primary font-medium text-gray-700 dark:text-gray-300 transition-colors text-sm"
+                                                            rows="3"
+                                                            value={data.notes}
+                                                            onChange={e => setData('notes', e.target.value)}
+                                                            placeholder="Instrucciones para la entrega del perrito..."
+                                                        />
+                                                    ) : (
+                                                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                                                            {data.notes || 'Sin observaciones finales.'}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {canEdit && (
+                                            <form onSubmit={markAsComplete} className="bg-brand-primary p-8 rounded-[2.5rem] shadow-2xl shadow-brand-primary/40 text-white flex flex-col sm:flex-row items-center justify-between gap-6">
+                                                <div>
+                                                    <h4 className="font-black uppercase tracking-[0.2em] text-sm mb-1">Finalizar Servicio</h4>
+                                                    <p className="text-[11px] font-bold opacity-80 uppercase tracking-tighter leading-tight">Registra el cierre del servicio y envía los cargos al POS.</p>
+                                                </div>
+                                                <button
+                                                    type="submit"
+                                                    onClick={(e) => {
+                                                        if (data.items.length !== order.items.length && !confirm("Has modificado servicios pero no los has 'Guardado'. ¿Finalizar con lo último guardado?")) {
+                                                            e.preventDefault();
+                                                        }
+                                                    }}
+                                                    disabled={processing}
+                                                    className="bg-white text-brand-primary px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl whitespace-nowrap"
+                                                >
+                                                    {processing ? '...' : 'Completar y Cobrar'}
+                                                </button>
+                                            </form>
+                                        )}
+                                    </div>
+
+                                    {/* Right Column: Services */}
+                                    <div className="lg:col-span-5 space-y-6">
+                                        <h4 className="text-[11px] font-black text-brand-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                                            <span className="w-2 h-2 bg-brand-primary rounded-full"></span>
+                                            Servicios Agendados
+                                        </h4>
+                                        
+                                        {canEdit && (
+                                            <div className="flex gap-2">
+                                                <select
+                                                    className="flex-1 bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-xs focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 shadow-inner"
+                                                    value={selectedService}
+                                                    onChange={e => setSelectedService(e.target.value)}
+                                                >
+                                                    <option value="">Añadir extra...</option>
+                                                    {services?.map(s => (
+                                                        <option key={s.id} value={s.id}>{s.name} - ${parseFloat(s.price).toLocaleString('es-MX')}</option>
+                                                    ))}
+                                                </select>
+                                                <button
+                                                    type="button"
+                                                    onClick={addService}
+                                                    className="bg-brand-primary hover:bg-brand-primary/90 text-white w-12 h-12 flex items-center justify-center rounded-2xl transition shadow-lg shadow-brand-primary/20 shrink-0"
+                                                >
+                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                                            {data.items.map((item, idx) => (
+                                                <div key={idx} className="flex justify-between items-center bg-gray-50 dark:bg-gray-900/40 p-5 rounded-[1.5rem] border border-gray-100 dark:border-gray-700 group transition-all">
+                                                    <div>
+                                                        <p className="font-black text-[11px] text-gray-900 dark:text-white uppercase leading-tight tracking-wider">{item.concept}</p>
+                                                        <p className="font-black text-[10px] text-brand-primary mt-1">${parseFloat(item.unit_price).toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                                                    </div>
+                                                    {canEdit && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeService(idx)}
+                                                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 text-red-500 hover:bg-red-500 hover:text-white transition shadow-sm opacity-0 group-hover:opacity-100"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            {data.items.length === 0 && (
+                                                <div className="py-12 text-center bg-gray-50/50 dark:bg-gray-900/20 rounded-[2.5rem] border-2 border-dashed border-gray-100 dark:border-gray-800">
+                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sin servicios registrados</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -19,6 +19,7 @@ class GroomingOrder extends Model
         'status',
         'arrival_condition',
         'notes',
+        'next_visit_date',
         'paid'
     ];
 

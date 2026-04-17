@@ -12,7 +12,7 @@ export default function Welcome({ auth, settings }) {
         <ThemeProvider>
             <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans selection:bg-brand-primary selection:text-white">
                 <Head>
-                    <title>{getSetting('hero_title', 'Veterinaria Canbull')}</title>
+                    <title>{getSetting('hero_title', getSetting('site_name', 'Veterinaria'))}</title>
                     <meta name="description" content={getSetting('hero_subtitle', 'Cuidado experto para tus mascotas')} />
                     {getSetting('site_favicon') && <link rel="icon" href={getSetting('site_favicon')} />}
                 </Head>
@@ -21,7 +21,7 @@ export default function Welcome({ auth, settings }) {
                 {getSetting('promo_active', '0') === '1' && (
                     <div className="bg-brand-primary text-white py-2 px-4 text-center text-sm font-medium">
                         <span className="inline-flex items-center gap-2">
-                            {getSetting('promo_text', '¡Aprovecha nuestras ofertas del mes!') ?? 'Bienvenidos a Canbull'}
+                            {getSetting('promo_text', '¡Aprovecha nuestras ofertas del mes!') ?? `Bienvenidos a ${getSetting('site_name', 'la Veterinaria')}`}
                         </span>
                     </div>
                 )}
@@ -40,7 +40,7 @@ export default function Welcome({ auth, settings }) {
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-2xl font-black tracking-tight text-brand-primary leading-none">
-                                                {getSetting('hero_title', 'CANBULL').split(' ')[0].toUpperCase()}
+                                                {getSetting('hero_title', getSetting('site_name', 'CENTRO')).split(' ')[0].toUpperCase()}
                                             </span>
                                             <span className="text-[10px] font-bold tracking-[0.2em] text-gray-400 dark:text-gray-500 uppercase">
                                                 Centro Veterinario
@@ -89,7 +89,7 @@ export default function Welcome({ auth, settings }) {
                                     {getSetting('hero_title', 'Cuidamos lo que más quieres')}
                                 </h1>
                                 <p className="text-lg lg:text-xl text-gray-600 dark:text-gray-400 mb-12 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                                    {getSetting('hero_subtitle', 'En Canbull combinamos pasión y tecnología para ofrecer el mejor servicio médico y estético para tus mascotas en un ambiente profesional.')}
+                                    {getSetting('hero_subtitle', `En ${getSetting('site_name', 'nuestro centro')} combinamos pasión y tecnología para ofrecer el mejor servicio médico y estético para tus mascotas en un ambiente profesional.`)}
                                 </p>
                                 <div className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start">
                                     <a
@@ -209,7 +209,7 @@ export default function Welcome({ auth, settings }) {
                     <div className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-5 dark:opacity-10" style={{ backgroundImage: `url('${getSetting('why_us_bg_image', 'https://images.unsplash.com/photo-1576201836106-db1758fd1c97?auto=format&fit=crop&q=80&w=2000')}')` }}></div>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                         <div className="text-center mb-16">
-                            <h2 className="text-4xl lg:text-5xl font-black mt-4 text-white mb-6">{getSetting('why_us_title', '¿Por Qué Elegir Canbull?')}</h2>
+                            <h2 className="text-4xl lg:text-5xl font-black mt-4 text-white mb-6">{getSetting('why_us_title', `¿Por Qué Elegir ${getSetting('site_name', 'nuestro centro')}?`)}</h2>
                             <p className="text-white/80 font-medium max-w-2xl mx-auto">{getSetting('why_us_desc', 'Nos apasiona brindarle a tu mascota y a ti una experiencia con la más alta excelencia médica y humana.')}</p>
                         </div>
 
@@ -252,7 +252,7 @@ export default function Welcome({ auth, settings }) {
                             <div className="mb-12 lg:mb-0">
                                 <h2 className="text-4xl lg:text-5xl font-black text-brand-primary mb-6 dark:text-brand-secondary">{getSetting('about_title', 'Sobre Nosotros')}</h2>
                                 <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 leading-relaxed font-medium">
-                                    {getSetting('about_description', 'Canbull te entiende y lo atiende. Tu nuevo aliado confiable que acompaña a tu familia en el cuidado de tus mascotas. Servicios de calidad con personal capacitado.')}
+                                    {getSetting('about_description', `${getSetting('site_name', 'Nuestro centro')} te entiende y lo atiende. Tu nuevo aliado confiable que acompaña a tu familia en el cuidado de tus mascotas. Servicios de calidad con personal capacitado.`)}
                                 </p>
                                 <div className="grid sm:grid-cols-2 gap-6">
                                     <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-6 rounded-[2rem] shadow-sm flex items-start gap-4">
@@ -420,7 +420,7 @@ export default function Welcome({ auth, settings }) {
                              <img src="/icons/pet-svgrepo-com.svg" className="w-10 h-10" alt="Pet Icon" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-3xl font-black tracking-tighter text-white">{getSetting('footer_title', 'CANBULL')}</span>
+                            <span className="text-3xl font-black tracking-tighter text-white">{getSetting('footer_title', getSetting('site_name', 'CENTRO'))}</span>
                             <span className="text-xs font-bold tracking-[0.4em] text-white/50 uppercase">Centro Veterinario Integral</span>
                         </div>
                     </div>
@@ -456,7 +456,7 @@ export default function Welcome({ auth, settings }) {
                             </a>
                         )}
                     </div>
-                    <p className="text-sm font-bold text-white/40">&copy; {new Date().getFullYear()} {getSetting('footer_copyright', 'Centro Veterinario Canbull. Un espacio dedicado a la vida.')}</p>
+                    <p className="text-sm font-bold text-white/40">&copy; {new Date().getFullYear()} {getSetting('footer_copyright', `${getSetting('site_name', 'Centro Veterinario')}. Un espacio dedicado a la vida.`)}</p>
                 </footer>
             </div>
         </ThemeProvider>

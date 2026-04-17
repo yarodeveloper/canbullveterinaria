@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 import React from 'react';
 
-export default function Web({ auth, settings }) {
+export default function System({ auth, settings }) {
     const { data, setData, post, processing, recentlySuccessful } = useForm({
         settings: settings.map(s => ({
             id: s.id,
@@ -42,15 +42,9 @@ export default function Web({ auth, settings }) {
     }, {});
 
     const groupNames = {
-        hero: 'Sección Hero (Principal)',
-        business_profile: 'Perfil del Negocio y Colores',
-        about: 'Sección: Sobre Nosotros',
-        vaccines: 'Sección: Protocolo de Vacunas',
-        services: 'Textos de Servicios',
-        contact: 'Información de Contacto',
-        social: 'Redes Sociales',
-        promos: 'Ofertas y Promociones',
-        footer: 'Pie de Página (Footer)',
+        finances: 'Finanzas e Impresión',
+        system: 'Configuración del Sistema',
+        grooming: 'Gestión de Estética / Spa',
     };
 
     const orderedGroups = Object.keys(groupNames);
@@ -65,9 +59,9 @@ export default function Web({ auth, settings }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Gestión de Contenido Web (Landing Page)</h2>}
+            header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Configuración Administrativa del Sistema</h2>}
         >
-            <Head title="Gestión Web" />
+            <Head title="Configuración del Sistema" />
 
             <div className="py-12">
                 <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">

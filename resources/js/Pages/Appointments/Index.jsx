@@ -41,10 +41,21 @@ const statusColors = {
     'no-show': 'bg-gray-100 text-gray-700 border-gray-200',
 };
 
-export default function Index({ auth, appointments, tasks = [], selectedDate, startDate, endDate, selectedVet, monthlyCounts = {}, veterinarians = [], pets = [], preventiveReminders = [] }) {
+export default function Index({ auth, appointments, tasks = [], selectedDate, startDate, endDate, selectedVet, monthlyCounts = {}, veterinarians = [], pets = [], preventiveReminders = [], groomingReminders = [] }) {
     const [view, setView] = useState('calendar'); // 'list', 'grid', 'calendar'
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+    const [activeMonitor, setActiveMonitor] = useState('health'); // 'health' or 'grooming'
+
+    const permissions = auth.permissions || [];
+    const can = (permission) => permissions.includes(permission) || auth.user.role === 'admin';
+
+    // Auto-switch tab if only one is allowed
+    useState(() => {
+        if (!can('view preventive reminders') && can('view grooming reminders')) {
+            setActiveMonitor('grooming');
+        }
+    }, []);
     const [searchTerm, setSearchTerm] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
 
@@ -749,51 +760,102 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                             </div>
 
                             {/* Monitor de Salud Preventiva */}
-                            <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Monitor de Salud</h3>
-                                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase">{preventiveReminders.length} Alertas</span>
-                                </div>
-                                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-200">
-                                    {preventiveReminders.length === 0 ? (
-                                        <p className="text-[10px] text-gray-400 italic text-center py-4">Sin vacunas próximas</p>
-                                    ) : (
-                                        preventiveReminders.map(record => {
-                                            const isOverdue = new Date(record.next_due_date) < new Date();
-                                            return (
-                                                <div key={record.id} className={`p-3 rounded-2xl border transition hover:shadow-md ${isOverdue ? 'bg-red-50/50 border-red-100' : 'bg-amber-50/30 border-amber-100/50'}`}>
-                                                    <div className="flex justify-between items-start mb-1">
-                                                        <Link href={route('pets.show', record.pet?.id)} className="text-[11px] font-black text-gray-900 truncate max-w-[120px] hover:text-indigo-600 transition">
-                                                            {record.pet?.name}
-                                                        </Link>
-                                                        <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
-                                                            {isOverdue ? 'Vencido' : 'Próximo'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex flex-col gap-0.5">
-                                                        <span className="text-[10px] font-bold text-gray-500 uppercase">{record.name}</span>
-                                                        <div className="flex items-center justify-between mt-1">
-                                                            <span className={`text-[9px] font-black uppercase ${isOverdue ? 'text-red-600' : 'text-amber-600'}`}>
-                                                                📅 {new Date(record.next_due_date?.split(' ')[0]?.split('T')[0] + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }).toUpperCase()}
+                            {can('view preventive reminders') && (
+                                <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Monitor de Salud</h3>
+                                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase">{preventiveReminders.length} Alertas</span>
+                                    </div>
+                                    <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-200">
+                                        {preventiveReminders.length === 0 ? (
+                                            <p className="text-[10px] text-gray-400 italic text-center py-4">Sin vacunas próximas</p>
+                                        ) : (
+                                            preventiveReminders.map(record => {
+                                                const isOverdue = new Date(record.next_due_date) < new Date();
+                                                return (
+                                                    <div key={record.id} className={`p-3 rounded-2xl border transition hover:shadow-md ${isOverdue ? 'bg-red-50/50 border-red-100' : 'bg-amber-50/30 border-amber-100/50'}`}>
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <Link href={route('pets.show', record.pet?.id)} className="text-[11px] font-black text-gray-900 dark:text-gray-100 truncate max-w-[120px] hover:text-indigo-600 transition">
+                                                                {record.pet?.name}
+                                                            </Link>
+                                                            <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                                {isOverdue ? 'Vencido' : 'Próximo'}
                                                             </span>
-                                                            <div className="flex gap-1">
-                                                                <a 
-                                                                    href={`https://wa.me/${record.pet?.owner?.phone?.replace(/\D/g, '')}?text=Hola+${record.pet?.owner?.name}%2C+te+recordamos+que+la+vacuna+${record.name}+de+${record.pet?.name}+vence+el+${record.next_due_date}.+¿Deseas+agendar+una+cita?`} 
-                                                                    target="_blank"
-                                                                    className="p-1 px-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition shadow-sm"
-                                                                    title="Recordatorio WhatsApp"
-                                                                >
-                                                                    <span className="text-[10px] font-black">WA</span>
-                                                                </a>
+                                                        </div>
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <span className="text-[10px] font-bold text-gray-500 uppercase">{record.name}</span>
+                                                            <div className="flex items-center justify-between mt-1">
+                                                                <span className={`text-[9px] font-black uppercase ${isOverdue ? 'text-red-600' : 'text-amber-600'}`}>
+                                                                    📅 {new Date(record.next_due_date?.split(' ')[0]?.split('T')[0] + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }).toUpperCase()}
+                                                                </span>
+                                                                <div className="flex gap-1">
+                                                                    <a 
+                                                                        href={`https://wa.me/${record.pet?.owner?.phone?.replace(/\D/g, '')}?text=Hola+${record.pet?.owner?.name}%2C+te+recordamos+que+la+vacuna+${record.name}+de+${record.pet?.name}+vence+el+${record.next_due_date}.+¿Deseas+agendar+una+cita?`} 
+                                                                        target="_blank"
+                                                                        className="p-1 px-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition shadow-sm"
+                                                                        title="Recordatorio WhatsApp"
+                                                                    >
+                                                                        <span className="text-[10px] font-black">WA</span>
+                                                                    </a>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            );
-                                        })
-                                    )}
+                                                );
+                                            })
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {/* Monitor de Estética / Spa */}
+                            {can('view grooming reminders') && (
+                                <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 mt-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-[10px] font-black text-brand-primary uppercase tracking-[0.2em]">Monitor de Estética</h3>
+                                        <span className="px-2 py-0.5 bg-brand-primary/10 text-brand-primary rounded-lg text-[9px] font-black uppercase">{groomingReminders.length} Próximos</span>
+                                    </div>
+                                    <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-200">
+                                        {groomingReminders.length === 0 ? (
+                                            <p className="text-[10px] text-gray-400 italic text-center py-4">Sin servicios próximos</p>
+                                        ) : (
+                                            groomingReminders.map(order => {
+                                                const isOverdue = new Date(order.next_visit_date) < new Date();
+                                                return (
+                                                    <div key={order.id} className={`p-3 rounded-2xl border transition hover:shadow-md ${isOverdue ? 'bg-red-50/50 border-red-100' : 'bg-brand-primary/5 border-brand-primary/10'}`}>
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <Link href={route('pets.show', order.pet?.id)} className="text-[11px] font-black text-gray-900 dark:text-gray-100 truncate max-w-[120px] hover:text-brand-primary transition">
+                                                                {order.pet?.name}
+                                                            </Link>
+                                                            <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-brand-primary/20 text-brand-primary'}`}>
+                                                                {isOverdue ? 'Vencido' : 'Sugerido'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <span className="text-[10px] font-bold text-gray-500 uppercase truncate">Último: {order.folio}</span>
+                                                            <div className="flex items-center justify-between mt-1">
+                                                                <span className={`text-[9px] font-black uppercase ${isOverdue ? 'text-red-600' : 'text-brand-primary'}`}>
+                                                                    📅 {new Date(order.next_visit_date + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }).toUpperCase()}
+                                                                </span>
+                                                                <div className="flex gap-1">
+                                                                    <a 
+                                                                        href={`https://wa.me/${order.pet?.owner?.phone?.replace(/\D/g, '')}?text=Hola+${order.pet?.owner?.name}%2C+te+recordamos+que+ya+le+toca+su+servicio+de+Estética/Spa+a+${order.pet?.name}.+Su+última+visita+fue+hace+aprox.+30+días.+¿Deseas+agendar+su+próxima+cita?`} 
+                                                                        target="_blank"
+                                                                        className="p-1 px-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition shadow-sm"
+                                                                        title="Recordatorio WhatsApp"
+                                                                    >
+                                                                        <span className="text-[10px] font-black text-white">WA</span>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                 </div>
             </div>

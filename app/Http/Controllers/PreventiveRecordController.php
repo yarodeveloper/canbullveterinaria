@@ -14,46 +14,89 @@ class PreventiveRecordController extends Controller
     public function index(Request $request)
     {
         $branchId = Auth::user()->branch_id;
+        $monitorType = $request->get('monitor_type', 'health');
         
-        $query = PreventiveRecord::query()
-            ->with(['pet.owner', 'veterinarian'])
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId));
+        // --- HEALTH MONITOR ---
+        if ($monitorType === 'health') {
+            $query = PreventiveRecord::query()
+                ->with(['pet.owner', 'veterinarian'])
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId));
 
-        // Filtering
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->whereHas('pet', function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhereHas('owner', fn($qo) => $qo->where('name', 'like', "%{$search}%"));
-            })->orWhere('name', 'like', "%{$search}%");
-        }
+            // Filtering
+            if ($request->filled('search')) {
+                $search = $request->input('search');
+                $query->whereHas('pet', function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                    ->orWhereHas('owner', fn($qo) => $qo->where('name', 'like', "%{$search}%"));
+                })->orWhere('name', 'like', "%{$search}%");
+            }
 
-        if ($request->filled('type')) {
-            $query->where('type', $request->input('type'));
-        }
+            if ($request->filled('type')) {
+                $query->where('type', $request->input('type'));
+            }
 
-        // Actionable filter (default)
-        if (!$request->filled('search') && !$request->has('show_all')) {
-            $query->whereBetween('next_due_date', [
-                Carbon::now()->subDays(90),
-                Carbon::now()->addDays(60)
+            // Actionable filter (default)
+            if (!$request->filled('search') && !$request->has('show_all')) {
+                $query->whereBetween('next_due_date', [
+                    Carbon::now()->subDays(90),
+                    Carbon::now()->addDays(60)
+                ]);
+            }
+
+            // Export support
+            if ($request->has('export')) {
+                return $this->export($query);
+            }
+
+            $records = $query->whereNotNull('next_due_date')
+                ->orderBy('next_due_date', 'asc')
+                ->paginate(15)
+                ->withQueryString();
+
+            return Inertia::render('Preventive/Index', [
+                'records' => $records,
+                'filters' => $request->only(['search', 'type', 'monitor_type'])
+            ]);
+        } 
+        
+        // --- GROOMING MONITOR ---
+        else {
+            $query = \App\Models\GroomingOrder::query()
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->whereNotNull('next_visit_date')
+                // Only most recent order per pet
+                ->whereIn('id', function($q) {
+                    $q->selectRaw('MAX(id)')
+                      ->from('grooming_orders')
+                      ->groupBy('pet_id');
+                })
+                ->with(['pet.owner']);
+
+            if ($request->filled('search')) {
+                $search = $request->input('search');
+                $query->whereHas('pet', function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                    ->orWhereHas('owner', fn($qo) => $qo->where('name', 'like', "%{$search}%"));
+                });
+            }
+
+            // Default time range for monitor
+            if (!$request->filled('search') && !$request->has('show_all')) {
+                $query->whereBetween('next_visit_date', [
+                    Carbon::now()->subDays(90),
+                    Carbon::now()->addDays(60)
+                ]);
+            }
+
+            $records = $query->orderBy('next_visit_date', 'asc')
+                ->paginate(15)
+                ->withQueryString();
+
+            return Inertia::render('Preventive/Index', [
+                'records' => $records,
+                'filters' => $request->only(['search', 'monitor_type'])
             ]);
         }
-
-        // Export support
-        if ($request->has('export')) {
-            return $this->export($query);
-        }
-
-        $records = $query->whereNotNull('next_due_date')
-            ->orderBy('next_due_date', 'asc')
-            ->paginate(15)
-            ->withQueryString();
-
-        return Inertia::render('Preventive/Index', [
-            'records' => $records,
-            'filters' => $request->only(['search', 'type'])
-        ]);
     }
 
     private function export($query)

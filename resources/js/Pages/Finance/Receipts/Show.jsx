@@ -1,9 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function Show({ auth, receipt }) {
+    const { settings } = usePage().props;
     const printReceipt = () => {
         window.print();
     };
@@ -51,7 +52,7 @@ export default function Show({ auth, receipt }) {
                         {/* Cabecera del Recibo */}
                         <div className="flex justify-between items-start mb-16">
                             <div>
-                                <h1 className="text-4xl font-black text-brand-primary tracking-tighter mb-2 italic">CANBULL</h1>
+                                <h1 className="text-4xl font-black text-brand-primary tracking-tighter mb-2 italic uppercase">{settings?.site_name || 'VETERINARIA'}</h1>
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] ml-1">Sistema Veterinario</p>
                                 <div className="mt-8 text-sm">
                                     <p className="font-black text-gray-900 dark:text-gray-100 uppercase">{receipt.branch.name}</p>
@@ -142,7 +143,7 @@ export default function Show({ auth, receipt }) {
 
                         {/* Footer del Recibo */}
                         <div className="mt-20 border-t dark:border-gray-700 pt-10 text-center">
-                            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">Gracias por confiar en el cuidado médico de CanBull</p>
+                            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">Gracias por confiar en el cuidado médico de {settings?.site_name || 'nuestro centro'}</p>
                             <p className="mt-8 italic text-xs text-gray-300">Este documento es un comprobante interno de pago simplificado.</p>
                         </div>
                     </div>

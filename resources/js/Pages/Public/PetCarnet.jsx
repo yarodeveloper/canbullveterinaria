@@ -242,7 +242,7 @@ export default function PetCarnet({ pet, clinic }) {
 
                 {/* Professional Footer */}
                 <div className="mt-12 text-center text-gray-400 opacity-50 print:hidden">
-                    <p className="text-[9px] font-bold uppercase tracking-[0.2em]">&copy; {new Date().getFullYear()} {clinic.name} - Sistema Canbull V.2.0</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em]">&copy; {new Date().getFullYear()} {clinic.name} - Sistema de Gestión V.2.0</p>
                 </div>
 
                 {/* Sello Magnético / Marca de Agua de la Sucursal */}

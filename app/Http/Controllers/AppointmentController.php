@@ -92,6 +92,23 @@ class AppointmentController extends Controller
             ->orderBy('next_due_date', 'asc')
             ->get();
 
+        // --- Fetch Grooming Reminders ---
+        $groomingReminders = \App\Models\GroomingOrder::query()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->whereNotNull('next_visit_date')
+            ->whereIn('id', function($query) {
+                $query->selectRaw('MAX(id)')
+                    ->from('grooming_orders')
+                    ->groupBy('pet_id');
+            })
+            ->whereBetween('next_visit_date', [
+                Carbon::now()->subDays(60),
+                Carbon::now()->addDays(30)
+            ])
+            ->with(['pet.owner', 'user'])
+            ->orderBy('next_visit_date', 'asc')
+            ->get();
+
         // Merge counts
         $monthlyCounts = $aptMonthCounts->mapWithKeys(function($count, $date) use ($taskMonthCounts) {
             return [$date => $count + ($taskMonthCounts[$date] ?? 0)];
@@ -137,7 +154,8 @@ class AppointmentController extends Controller
             'monthlyCounts' => $monthlyCounts,
             'veterinarians' => $veterinarians,
             'pets' => $pets,
-            'preventiveReminders' => $preventiveReminders
+            'preventiveReminders' => $preventiveReminders,
+            'groomingReminders' => $groomingReminders
         ]);
     }
 

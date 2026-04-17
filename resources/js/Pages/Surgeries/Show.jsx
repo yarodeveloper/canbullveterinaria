@@ -674,7 +674,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                 </div>
 
                                 <div className="p-6 border-t dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 rounded-b-[2.5rem] flex justify-end gap-3 text-[10px] font-black text-gray-400">
-                                    <span className="uppercase tracking-[0.2em]">Protocolo CanBull • V. 2026.02</span>
+                                    <span className="uppercase tracking-[0.2em]">Protocolo {settings?.site_name || 'Sistema'} • V. 2026.02</span>
                                 </div>
                             </div>
                         </div>

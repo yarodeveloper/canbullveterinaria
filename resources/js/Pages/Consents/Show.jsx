@@ -31,7 +31,7 @@ export default function Show({ auth, consent }) {
 
                         {/* Membrete para impresion */}
                         <div className="hidden print:block mb-8 text-center border-b pb-4">
-                            <h1 className="text-2xl font-bold uppercase">CanBull Veterinary System</h1>
+                            <h1 className="text-2xl font-bold uppercase">{settings?.site_name || 'Veterinaria'} System</h1>
                             <p className="text-sm">Sucursal: {consent.pet.branch_id} - Fecha: {new Date(consent.signed_at).toLocaleDateString()}</p>
                         </div>
 
@@ -68,7 +68,7 @@ export default function Show({ auth, consent }) {
                         </div>
 
                         <div className="mt-12 hidden print:block text-[10px] text-gray-400 text-center">
-                            Este documento es una copia fiel del original firmado digitalmente en el sistema CanBull.
+                            Este documento es una copia fiel del original firmado digitalmente en el sistema {settings?.site_name || 'Médico'}.
                         </div>
                     </div>
                 </div>

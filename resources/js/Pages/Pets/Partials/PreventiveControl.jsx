@@ -279,9 +279,9 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                             <button onClick={() => setShowModal(false)} className="bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-xl font-black transition">×</button>
                         </div>
                         
-                        <div className="flex flex-col lg:flex-row overflow-hidden flex-1">
+                        <div className="flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden flex-1">
                             {/* Columna Izquierda: Formulario de Entrada */}
-                            <div className="flex-1 p-8 overflow-y-auto custom-scrollbar border-b lg:border-b-0 lg:border-r dark:border-gray-700">
+                            <div className="flex-1 p-4 sm:p-8 overflow-y-visible lg:overflow-y-auto custom-scrollbar border-b lg:border-b-0 lg:border-r dark:border-gray-700 shrink-0">
                                 <div className="space-y-6">
                                     <div className="bg-brand-primary/5 dark:bg-brand-primary/10 p-5 rounded-2xl border border-brand-primary/10 dark:border-brand-primary/20">
                                         <div className="flex justify-between items-center mb-3">
@@ -301,7 +301,7 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                                         </select>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-[10px] font-black uppercase text-slate-500 dark:text-gray-400 tracking-widest mb-1 px-1">Nombre Comercial</label>
                                             <input type="text" value={data.name} onChange={e => setData('name', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-sm font-bold" placeholder="Nombre" />
@@ -317,7 +317,7 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-[10px] font-black uppercase text-slate-500 dark:text-gray-400 tracking-widest mb-1 px-1">Fecha Aplicación</label>
                                             <input type="date" value={data.application_date} onChange={e => setData('application_date', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-sm font-bold" />
@@ -328,7 +328,7 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         <div className="col-span-1">
                                             <label className="block text-[10px] font-black uppercase text-slate-500 dark:text-gray-400 tracking-widest mb-1 px-1">Lote</label>
                                             <input type="text" value={data.lot_number} onChange={e => setData('lot_number', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-xs" />
@@ -361,7 +361,7 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                             </div>
 
                             {/* Columna Derecha: Lista de Staging (Solo PC/Tablet) */}
-                            <div className="w-full lg:w-[380px] bg-slate-50 dark:bg-gray-900/40 p-8 overflow-y-auto custom-scrollbar shrink-0">
+                            <div className="w-full lg:w-[380px] bg-slate-50 dark:bg-gray-900/40 p-4 sm:p-8 overflow-y-visible lg:overflow-y-auto custom-scrollbar shrink-0 border-t lg:border-t-0 border-gray-100 dark:border-gray-700">
                                 <label className="block text-[10px] font-black uppercase text-brand-primary tracking-widest px-1 mb-6 flex items-center justify-between">
                                     <span>Tratamientos en Espera</span>
                                     <span className="bg-brand-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-[9px]">{stagedRecords.length}</span>
@@ -399,9 +399,9 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                         </div>
 
                         {/* Footer de Acción */}
-                        <div className="p-8 border-t dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0 flex gap-4">
-                            <button onClick={() => setShowModal(false)} className="px-8 py-4 border border-slate-200 dark:border-gray-700 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition">Cerrar</button>
-                            <button onClick={submitAll} className="flex-1 py-4 bg-brand-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-brand-primary/90 transition shadow-xl shadow-brand-primary/20 flex items-center justify-center gap-2">
+                        <div className="p-4 sm:p-8 border-t dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0 flex flex-col sm:flex-row gap-4">
+                            <button onClick={() => setShowModal(false)} className="px-8 py-4 border border-slate-200 dark:border-gray-700 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition w-full sm:w-auto">Cerrar</button>
+                            <button onClick={submitAll} className="flex-1 py-4 bg-brand-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-brand-primary/90 transition shadow-xl shadow-brand-primary/20 flex items-center justify-center gap-2 w-full sm:w-auto">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
                                 Finalizar y Guardar Aplicaciones ({stagedRecords.length + (data.name ? 1 : 0)})
                             </button>
@@ -422,7 +422,7 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                             <button onClick={() => setShowQuickModal(false)} className="text-2xl font-black transition hover:scale-110">×</button>
                         </div>
                         <form onSubmit={handleQuickSubmit} className="p-8 space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2 px-1">Nombre Comercial</label>
                                     <input type="text" value={quickData.name} onChange={e => setQuickData('name', e.target.value)} className="w-full rounded-2xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-sm font-bold p-4" required />
@@ -436,7 +436,7 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                                     </select>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2 px-1">Categoría</label>
                                     <select value={quickData.type} onChange={e => setQuickData('type', e.target.value)} className="w-full rounded-2xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-sm font-bold p-4">

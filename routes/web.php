@@ -82,8 +82,9 @@ Route::middleware('auth')->group(function () {
     Route::put('preventive-records/{preventiveRecord}', [PreventiveRecordController::class, 'update'])->name('preventive-records.update');
     Route::delete('preventive-records/{preventiveRecord}', [PreventiveRecordController::class, 'destroy'])->name('preventive-records.destroy');
 
-    // Gestión Web
+    // Gestión Web y Sistema
     Route::get('/settings/web', [\App\Http\Controllers\SiteSettingController::class, 'index'])->name('settings.web.index');
+    Route::get('/settings/system', [\App\Http\Controllers\SiteSettingController::class, 'systemIndex'])->name('settings.system.index');
     Route::post('/settings/web', [\App\Http\Controllers\SiteSettingController::class, 'update'])->name('settings.web.update');
 
     // Mantenimiento de Protocolos de Salud (Vacunas, etc)

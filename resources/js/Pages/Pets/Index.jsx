@@ -49,7 +49,7 @@ export default function Index({ auth, pets, filters }) {
                                     </div>
                                     <Link
                                         href={route('pets.create')}
-                                        className="inline-flex items-center justify-center px-6 py-2 bg-brand-primary border border-transparent rounded-xl font-black text-xs text-white uppercase tracking-widest hover:bg-brand-primary/90 focus:bg-brand-primary/90 active:bg-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 transition ease-in-out duration-150 shadow-lg shadow-brand-primary/20 w-full sm:w-auto"
+                                        className="hidden sm:inline-flex items-center justify-center px-6 py-2 bg-brand-primary border border-transparent rounded-xl font-black text-xs text-white uppercase tracking-widest hover:bg-brand-primary/90 focus:bg-brand-primary/90 active:bg-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 transition ease-in-out duration-150 shadow-lg shadow-brand-primary/20"
                                     >
                                         + Registrar Mascota
                                     </Link>
@@ -62,7 +62,7 @@ export default function Index({ auth, pets, filters }) {
                                         {pets.data.map((pet) => (
                                             <li key={pet.id} className="group hover:bg-brand-primary transition-all duration-200">
                                                 <Link href={route('pets.show', pet.id)} className="block px-6 py-2.5">
-                                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-2 sm:py-0">
                                                         {/* Paciente */}
                                                         <div className="flex items-center min-w-0 gap-4 flex-1 relative w-full sm:w-auto">
                                                             <div className="relative flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -91,7 +91,7 @@ export default function Index({ auth, pets, filters }) {
                                                         </div>
 
                                                         {/* Dueño y Peso */}
-                                                        <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                                                        <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-slate-100 dark:border-slate-700/50 sm:border-0">
                                                             <div className="text-left sm:text-right">
                                                                 <p className="text-[9px] font-black text-gray-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5">🐾 Propietario</p>
                                                                 <div className="flex items-center gap-2 justify-start sm:justify-end">
@@ -162,6 +162,15 @@ export default function Index({ auth, pets, filters }) {
                     </div>
                 </div>
             </div>
+            
+            {/* Mobile FAB */}
+            <Link
+                href={route('pets.create')}
+                className="sm:hidden fixed bottom-6 right-6 w-14 h-14 bg-brand-primary rounded-full flex items-center justify-center text-white shadow-xl shadow-brand-primary/40 z-50 hover:scale-105 active:scale-95 transition-all"
+                title="Registrar Mascota"
+            >
+                <IconPlus className="w-6 h-6 text-white" />
+            </Link>
         </AuthenticatedLayout>
     );
 }

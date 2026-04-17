@@ -2,7 +2,7 @@
     $settings = \App\Models\SiteSetting::all()->pluck('value', 'key');
     $primaryColor = $settings['primary_color'] ?? '#84329B';
     $secondaryColor = $settings['secondary_color'] ?? '#a855f7';
-    $siteName = $settings['site_name'] ?? 'CanBull';
+    $siteName = $settings['site_name'] ?? 'Veterinaria';
     $logoUrl = $settings['site_logo'] ?? null;
     $vitalSigns = $record->vital_signs ?? [];
     $anamnesis = $record->anamnesis ?? [];

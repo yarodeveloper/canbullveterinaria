@@ -111,12 +111,16 @@ class GroomingOrderController extends Controller
             ];
         });
 
+        $nextVisitDays = (int) (\App\Models\SiteSetting::where('key', 'grooming_next_visit_days')->first()?->value ?? 30);
+        $defaultNextVisitDate = \Carbon\Carbon::now()->addDays($nextVisitDays)->toDateString();
+
         return Inertia::render('Grooming/Create', [
             'pet' => $pet,
             'services' => $services,
             'groomers' => $groomers,
             'appointment_id' => $request->appointment_id,
-            'prefill' => $request->only(['groomer_id', 'time'])
+            'prefill' => $request->only(['groomer_id', 'time']),
+            'defaultNextVisitDate' => $defaultNextVisitDate
         ]);
     }
 
@@ -129,6 +133,7 @@ class GroomingOrderController extends Controller
             'user_id' => 'nullable|exists:users,id',
             'arrival_condition' => 'nullable|string',
             'notes' => 'nullable|string',
+            'next_visit_date' => 'nullable|date',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -143,6 +148,7 @@ class GroomingOrderController extends Controller
                 'status' => 'pending',
                 'arrival_condition' => $validated['arrival_condition'],
                 'notes' => $validated['notes'],
+                'next_visit_date' => $validated['next_visit_date'],
             ]);
 
             if (!empty($validated['appointment_id'])) {
@@ -209,6 +215,7 @@ class GroomingOrderController extends Controller
         $validated = $request->validate([
             'arrival_condition' => 'nullable|string',
             'notes' => 'nullable|string',
+            'next_visit_date' => 'nullable|date',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -218,6 +225,7 @@ class GroomingOrderController extends Controller
             $groomingOrder->update([
                 'arrival_condition' => $validated['arrival_condition'],
                 'notes' => $validated['notes'],
+                'next_visit_date' => $validated['next_visit_date'],
             ]);
 
             // Sync items (deleting all and re-creating is simpler for this structure)

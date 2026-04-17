@@ -341,14 +341,14 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                                 <div className="space-y-4 relative z-10">
                                     <div className="bg-slate-100 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-300 dark:border-slate-800 focus-within:border-brand-primary/50 transition-colors">
                                         <p className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-2">Vacunas y Fecha de Aplicación</p>
-                                        <div className="grid grid-cols-2 gap-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                             <input type="text" placeholder="Vacuna..." value={data.anamnesis.vaccine_history} onChange={e => updateAnamnesis('vaccine_history', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-brand-primary focus:border-brand-primary/40 px-3 py-2" />
                                             <input type="date" value={data.anamnesis.vaccine_date} onChange={e => updateAnamnesis('vaccine_date', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-brand-primary focus:border-brand-primary/40 px-3 py-2 [color-scheme:dark]" />
                                         </div>
                                     </div>
                                     <div className="bg-slate-100 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-300 dark:border-slate-800 focus-within:border-brand-primary/50 transition-colors">
                                         <p className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-2">Desparasitación y Fecha</p>
-                                        <div className="grid grid-cols-2 gap-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                             <input type="text" placeholder="Desparasitante..." value={data.anamnesis.deworming_history} onChange={e => updateAnamnesis('deworming_history', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-brand-primary focus:border-brand-primary/40 px-3 py-2" />
                                             <input type="date" value={data.anamnesis.deworming_date} onChange={e => updateAnamnesis('deworming_date', e.target.value)} className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg focus:ring-1 focus:ring-brand-primary focus:border-brand-primary/40 px-3 py-2 [color-scheme:dark]" />
                                         </div>
@@ -448,11 +448,11 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                                 <h3 className={`${headerTitle} text-emerald-400`}>
                                     ⚖ Estado Físico (BCS)
                                 </h3>
-                                <div className="grid grid-cols-5 gap-1.5 mt-4">
-                                    {['Caquéxico', 'Abajo Ideal', 'Ideal', 'Arriba Ideal', 'Obesidad'].map((bcs) => (
+                                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 mt-4">
+                                    {['Caquéxico', 'Abajo Ideal', 'Ideal', 'Arriba Ideal', 'Obesidad'].map((bcs, idx) => (
                                         <button
                                             key={bcs} type="button" onClick={() => setData('physical_state', bcs)}
-                                            className={`aspect-square sm:aspect-auto sm:py-2 flex flex-col items-center justify-center rounded-xl border transition-all ${data.physical_state === bcs
+                                            className={`py-3 sm:aspect-auto sm:py-2 flex flex-col items-center justify-center rounded-xl border transition-all ${idx === 4 ? 'col-span-2 sm:col-span-1' : ''} ${data.physical_state === bcs
                                                 ? 'bg-brand-primary border-brand-primary text-white shadow-lg shadow-brand-primary/30 ring-2 ring-brand-primary/40 ring-offset-1 ring-offset-slate-900 scale-[1.03]'
                                                 : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-700'
                                                 }`}
@@ -746,17 +746,20 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                                 headerTitle={headerTitle}
                             />
 
-                            <div className="pt-6 flex justify-end pb-8 gap-4">
+                            {/* Spacer for sticky footer on mobile */}
+                            <div className="h-24 sm:h-0"></div>
+
+                            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-[#111822]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-50 sm:relative sm:bg-transparent sm:border-0 sm:p-0 sm:pt-6 flex flex-col-reverse sm:flex-row justify-end sm:pb-8 gap-3 sm:gap-4 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)] sm:shadow-none">
                                 <Link
                                     href={route('pets.show', pet.id)}
-                                    className="px-10 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold uppercase text-xs tracking-widest transition-all active:scale-95 shadow-lg shadow-black/20"
+                                    className="px-10 py-3 sm:py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 sm:bg-slate-900 sm:dark:bg-white sm:text-white sm:dark:text-slate-900 rounded-xl font-bold uppercase text-xs tracking-widest transition-all active:scale-95 text-center shadow-sm sm:shadow-lg sm:shadow-black/20 border border-slate-200 dark:border-slate-700 sm:border-transparent"
                                 >
                                     Cerrar / Finalizar
                                 </Link>
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="flex-1 sm:flex-none px-10 py-4 bg-brand-primary hover:opacity-90 text-white rounded-xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-brand-primary/30 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 border border-brand-primary/50"
+                                    className="flex-1 sm:flex-none px-10 py-3 sm:py-4 bg-brand-primary hover:opacity-90 text-white rounded-xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-brand-primary/30 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 border border-brand-primary/50"
                                 >
                                     {processing ? 'Guardando...' : (
                                         <>
@@ -777,7 +780,7 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
             {showPreviewModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
                     <div className="bg-white dark:bg-[#1B2132] rounded-[2.5rem] w-full max-w-lg border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-8 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center">
+                        <div className="p-4 sm:p-8 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center">
                             <div>
                                 <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">👁️ Vista Previa Receta</h3>
                                 <p className="text-[10px] text-brand-primary font-bold uppercase tracking-widest mt-1">Borrador de indicaciones médicas</p>
@@ -785,7 +788,7 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                             <button onClick={() => setShowPreviewModal(false)} className="text-slate-400 hover:text-red-500 transition-colors text-2xl">×</button>
                         </div>
 
-                        <div className="p-8 overflow-y-auto flex-1 custom-scrollbar space-y-6">
+                        <div className="p-4 sm:p-8 overflow-y-auto flex-1 custom-scrollbar space-y-6">
                             <div className="border-l-4 border-brand-primary pl-4 py-2">
                                 <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-4 italic">Rx / Prescripción</p>
                                 

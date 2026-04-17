@@ -1,9 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function Print({ auth, movement }) {
+    const { settings } = usePage().props;
     const printReport = () => {
         window.print();
     };
@@ -49,7 +50,7 @@ export default function Print({ auth, movement }) {
 
                     <div className="bg-white dark:bg-gray-800 rounded-[3rem] border dark:border-gray-700 shadow-2xl p-12 print:shadow-none print:border-none print:p-0 text-center">
                         <h1 className="text-3xl font-black text-brand-primary tracking-tighter mb-1 italic uppercase">
-                            {movement.branch?.name || 'CANBULL'}
+                            {movement.branch?.name || settings?.site_name || 'VETERINARIA'}
                         </h1>
                         <div className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2 italic">
                             {movement.branch?.address} | TEL: {movement.branch?.phone}

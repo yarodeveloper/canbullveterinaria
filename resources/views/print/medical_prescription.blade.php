@@ -3,7 +3,7 @@
     $logoUrl = $settings['site_logo'] ?? null;
     $primaryColor = $settings['primary_color'] ?? '#84329B';
     $secondaryColor = $settings['secondary_color'] ?? '#C4D600';
-    $siteName = $settings['site_name'] ?? 'CanBull';
+    $siteName = $settings['site_name'] ?? 'Veterinaria';
     $vitalSigns = $record->vital_signs ?? [];
 @endphp
 <!DOCTYPE html>

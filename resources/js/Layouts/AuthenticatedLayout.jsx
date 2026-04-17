@@ -138,7 +138,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                     <Dropdown.Link href={route('preventive-records.index')}>
                                                         <div className="flex items-center">
                                                             <img src="/icons/medicine-bottle-drug-svgrepo-com.svg" className="w-4 h-4 mr-3 icon-adaptive opacity-70 group-hover:opacity-100 transition-opacity" alt="" />
-                                                            <span className="font-bold text-brand-primary">Salud Preventiva</span>
+                                                            <span className="font-bold text-brand-primary">Monitor Actividades</span>
                                                         </div>
                                                     </Dropdown.Link>
                                                 </Dropdown.Content>
@@ -301,6 +301,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                                                 Gestión de Sucursales
                                                             </Dropdown.Link>
                                                         )}
+                                                        <Dropdown.Link href={route('settings.system.index')}>
+                                                            Configuración Global
+                                                        </Dropdown.Link>
                                                         <div className="border-t border-gray-100 dark:border-gray-700"></div>
                                                         <div className="block px-4 py-2 text-[10px] font-black text-brand-primary uppercase tracking-widest">
                                                             Página Web
@@ -463,24 +466,28 @@ export default function AuthenticatedLayout({ header, children }) {
                                 href={route('dashboard')}
                                 active={route().current('dashboard')}
                             >
+                                <img src="/icons/imac-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
                                 Dashboard
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 href={route('pets.index')}
                                 active={route().current('pets.*')}
                             >
+                                <img src="/icons/pet-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
                                 Mascotas
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 href={route('clients.index')}
                                 active={route().current('clients.*')}
                             >
+                                <img src="/icons/woman-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
                                 Clientes
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 href={route('receipts.create')}
                                 active={route().current('receipts.*')}
                             >
+                                <img src="/icons/shop-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
                                 PDV
                             </ResponsiveNavLink>
 
@@ -506,6 +513,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     href={route('hospitalizations.index')}
                                     active={route().current('hospitalizations.*')}
                                 >
+                                    <img src="/icons/med-kit-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
                                     Hospitalización
                                 </ResponsiveNavLink>
                             )}
@@ -514,6 +522,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     href={route('surgeries.index')}
                                     active={route().current('surgeries.*')}
                                 >
+                                    <img src="/icons/band-aid-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
                                     Cirugías
                                 </ResponsiveNavLink>
                             )}
@@ -522,35 +531,56 @@ export default function AuthenticatedLayout({ header, children }) {
                                     href={route('euthanasias.index')}
                                     active={route().current('euthanasias.*')}
                                 >
+                                    <img src="/icons/leaf-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
                                     Eutanasia
                                 </ResponsiveNavLink>
                             )}
+                            
+                            <ResponsiveNavLink
+                                href={route('preventive-records.index')}
+                                active={route().current('preventive-records.*')}
+                            >
+                                <img src="/icons/medicine-bottle-drug-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
+                                <span className="font-bold text-brand-primary">Monitor Actividades</span>
+                            </ResponsiveNavLink>
 
                             <div className="border-t border-gray-100 dark:border-gray-700 mt-2 py-1"></div>
                             <ResponsiveNavLink
                                 href={route('appointments.index')}
                                 active={route().current('appointments.*')}
                             >
+                                <img src="/icons/calendar-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
                                 Agenda
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 href={route('inventory.index')}
                                 active={route().current('inventory.*')}
                             >
+                                <img src="/icons/box-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
                                 Inventario
                             </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                href={route('cash-register.index')}
-                                active={route().current('cash-register.*')}
-                            >
-                                Turno Caja
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                href={route('cash.index')}
-                                active={route().current('cash.*')}
-                            >
-                                Egresos Extras
-                            </ResponsiveNavLink>
+                            
+                            {can('manage finances') && (
+                                <>
+                                    <div className="px-4 py-2 text-xs font-black text-slate-500 uppercase tracking-widest border-t border-gray-100 dark:border-gray-700 mt-2">
+                                        Finanzas
+                                    </div>
+                                    <ResponsiveNavLink
+                                        href={route('cash-register.index')}
+                                        active={route().current('cash-register.*')}
+                                    >
+                                        <img src="/icons/bank-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
+                                        Turno Caja
+                                    </ResponsiveNavLink>
+                                    <ResponsiveNavLink
+                                        href={route('cash.index')}
+                                        active={route().current('cash.*')}
+                                    >
+                                        <img src="/icons/price-tag-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
+                                        Egresos Extras
+                                    </ResponsiveNavLink>
+                                </>
+                            )}
 
                             {user.role === 'admin' && (
                                 <ResponsiveNavLink
@@ -582,6 +612,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                         Categorías
                                     </ResponsiveNavLink>
                                 )}
+                                <ResponsiveNavLink
+                                    href={route('settings.system.index')}
+                                    active={route().current('settings.system.*')}
+                                >
+                                    Párametros del Sistema
+                                </ResponsiveNavLink>
                                 <ResponsiveNavLink
                                     href={route('settings.web.index')}
                                     active={route().current('settings.web.*')}

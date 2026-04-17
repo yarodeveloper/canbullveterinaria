@@ -3,7 +3,7 @@
     $logoUrl = $settings['site_logo'] ?? null;
     $primaryColor = $settings['primary_color'] ?? '#84329B';
     $secondaryColor = $settings['secondary_color'] ?? '#EC4899';
-    $siteName = $settings['site_name'] ?? 'CanBull';
+    $siteName = $settings['site_name'] ?? 'Veterinaria';
 @endphp
 <!DOCTYPE html>
 <html lang="es">

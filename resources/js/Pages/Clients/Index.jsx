@@ -49,7 +49,7 @@ export default function Index({ auth, clients, filters }) {
                                     </div>
                                     <Link
                                         href={route('clients.create')}
-                                        className="inline-flex items-center justify-center px-6 py-2 bg-brand-primary text-white rounded-xl font-black text-xs uppercase hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 shadow-lg shadow-brand-primary/20 transition ease-in-out duration-150 w-full sm:w-auto"
+                                        className="hidden sm:inline-flex items-center justify-center px-6 py-2 bg-brand-primary text-white rounded-xl font-black text-xs uppercase hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 shadow-lg shadow-brand-primary/20 transition ease-in-out duration-150"
                                     >
                                         + Nuevo Cliente
                                     </Link>
@@ -62,7 +62,7 @@ export default function Index({ auth, clients, filters }) {
                                         {clients.data.map((client) => (
                                             <li key={client.id} className="group hover:bg-brand-primary transition-all duration-200">
                                                 <Link href={route('clients.show', client.id)} className="block px-6 py-2.5 text-gray-900 dark:text-gray-100">
-                                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-2 sm:py-0">
                                                         {/* Info del Cliente */}
                                                         <div className="flex items-center min-w-0 gap-4 flex-1 relative w-full sm:w-auto">
                                                             <div className="flex-shrink-0 w-10 h-10 bg-brand-secondary/50 group-hover:bg-white/20 rounded-full flex items-center justify-center text-brand-primary group-hover:text-white font-black text-xs uppercase transition-colors group-hover:scale-110 shadow-inner">
@@ -88,7 +88,7 @@ export default function Index({ auth, clients, filters }) {
                                                         </div>
 
                                                         {/* Mascotas e Info extra */}
-                                                        <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                                                        <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-slate-100 dark:border-slate-700/50 sm:border-0">
                                                             <div className="text-left sm:text-right">
                                                                 <p className="text-[9px] font-black text-gray-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5">Pacientes</p>
                                                                 <span className="inline-flex items-center px-1.5 py-0.5 bg-green-100 group-hover:bg-white/20 text-green-700 group-hover:text-white text-[10px] rounded-md font-black transition-colors">
@@ -140,6 +140,15 @@ export default function Index({ auth, clients, filters }) {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile FAB */}
+            <Link
+                href={route('clients.create')}
+                className="sm:hidden fixed bottom-6 right-6 w-14 h-14 bg-brand-primary rounded-full flex items-center justify-center text-white shadow-xl shadow-brand-primary/40 z-50 hover:scale-105 active:scale-95 transition-all"
+                title="Nuevo Cliente"
+            >
+                <IconPlus className="w-6 h-6 text-white" />
+            </Link>
         </AuthenticatedLayout>
     );
 }

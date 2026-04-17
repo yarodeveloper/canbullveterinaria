@@ -11,7 +11,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
         pending_charge_ids: [],
     });
 
-    const { flash } = usePage().props;
+    const { flash, settings } = usePage().props;
     const hasPermission = (permission) => auth.user?.role === 'admin' || auth.permissions?.includes(permission);
 
     useEffect(() => {
@@ -296,30 +296,32 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                 </div>
             ) : (
                 <>
-                    <div className="h-20 bg-white dark:bg-[#1A2131] border-b border-gray-200 dark:border-[#2A3347] flex items-center justify-between px-6 shrink-0 z-40 print:hidden relative transition-colors">
-                        <div className="flex items-center gap-6">
-                            <Link href={route('dashboard')} title="Regresar al Dashboard" className="w-10 h-10 bg-purple-600 hover:bg-purple-50 rounded-xl flex items-center justify-center text-white font-black shadow-lg transition-all group">
-                                <svg className="w-6 h-6 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                            </Link>
-                            <div className="hidden md:flex flex-col">
-                                <span className="text-xl font-black text-gray-900 dark:text-white tracking-widest uppercase leading-none">CANBULL</span>
-                                <span className="text-[9px] font-black text-purple-600 dark:text-purple-400 tracking-[0.2em] uppercase mt-1">POS System</span>
+                    <div className="h-auto md:h-20 py-4 md:py-0 bg-white dark:bg-[#1A2131] border-b border-gray-200 dark:border-[#2A3347] flex flex-col md:flex-row items-start md:items-center justify-between px-6 gap-4 shrink-0 z-40 print:hidden relative transition-colors">
+                        <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto justify-between md:justify-start">
+                            <div className="flex items-center gap-4">
+                                <Link href={route('dashboard')} title="Regresar al Dashboard" className="w-10 h-10 bg-purple-600 hover:bg-purple-50 rounded-xl flex items-center justify-center text-white font-black shadow-lg transition-all group">
+                                    <svg className="w-6 h-6 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                                </Link>
+                                <div className="hidden sm:flex flex-col">
+                                    <span className="text-xl font-black text-gray-900 dark:text-white tracking-widest uppercase leading-none">{settings?.site_name || 'POS'}</span>
+                                    <span className="text-[9px] font-black text-purple-600 dark:text-purple-400 tracking-[0.2em] uppercase mt-1">POS System</span>
+                                </div>
+                                <div className="h-8 w-px bg-gray-200 dark:bg-[#2A3347] mx-2 hidden sm:block"></div>
                             </div>
-                            <div className="h-8 w-px bg-gray-200 dark:bg-[#2A3347] mx-2"></div>
-                            <div className="flex flex-col gap-0.5">
+                            <div className="flex flex-col gap-0.5 items-end md:items-start">
                                 <span className="text-emerald-600 dark:text-emerald-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5">
                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>Turno Abierto
                                 </span>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase">En Caja:</span>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase hidden sm:inline">En Caja:</span>
                                     <span className="text-gray-900 dark:text-white font-black text-sm">{showBalance ? `$${currentStats ? parseFloat(currentStats.expected_amount).toLocaleString('es-MX', { minimumFractionDigits: 2 }) : '0.00'}` : '****'}</span>
                                     <button onClick={() => setShowBalance(!showBalance)} className="text-gray-400 hover:text-purple-600 dark:hover:text-white transition" title="Ver Saldo">👁</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => setShowSettingsModal(true)} className="w-10 h-10 bg-gray-100 dark:bg-[#111623] hover:bg-gray-200 dark:hover:bg-[#2A3347] rounded-xl flex items-center justify-center text-gray-600 dark:text-gray-400 transition-all shadow-sm" title="Configuración PDV">⚙️</button>
+                        <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
+                            <button onClick={() => setShowSettingsModal(true)} className="w-10 h-10 bg-gray-100 dark:bg-[#111623] hover:bg-gray-200 dark:hover:bg-[#2A3347] rounded-xl flex shrink-0 items-center justify-center text-gray-600 dark:text-gray-400 transition-all shadow-sm" title="Configuración PDV">⚙️</button>
                             <Link href={route('receipts.index')} className="hidden xl:flex bg-gray-50 dark:bg-[#111623] hover:bg-purple-50 dark:hover:bg-[#2A3347] border border-gray-200 dark:border-[#2A3347] px-4 py-2 rounded-lg text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest transition items-center gap-2">📄 Ventas</Link>
                             {flash?.print_receipt_id && (
                                 <button onClick={handlePrintLatest} className="hidden xl:flex bg-emerald-50 dark:bg-emerald-900/10 hover:bg-emerald-100 dark:hover:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/20 px-4 py-2 rounded-lg text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest transition items-center gap-2">🖨️ Reimprimir Ticket</button>
@@ -327,13 +329,13 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                             <button onClick={() => setShowInventoryModal(true)} className="hidden xl:flex bg-gray-50 dark:bg-[#111623] hover:bg-purple-50 dark:hover:bg-[#2A3347] border border-gray-200 dark:border-[#2A3347] px-4 py-2 rounded-lg text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest transition items-center gap-2">🔍 Buscar</button>
                             <button onClick={() => setShowWithdrawalModal(true)} className="hidden xl:flex bg-gray-50 dark:bg-[#111623] hover:bg-purple-50 dark:hover:bg-[#2A3347] border border-gray-200 dark:border-[#2A3347] px-4 py-2 rounded-lg text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest transition items-center gap-2">💸 Retirar</button>
                             <button onClick={() => setShowCloseModal(true)} className="hidden xl:flex bg-gray-50 dark:bg-red-500/10 border border-gray-200 px-4 py-2 rounded-lg text-[10px] font-bold text-red-600 dark:text-blue-400">🔐 Corte Z</button>
-                            <div className="h-8 w-px bg-gray-200 dark:bg-[#2A3347] mx-2"></div>
-                            <div className="bg-gray-50 dark:bg-[#111623] border border-gray-200 dark:border-[#2A3347] rounded-full flex flex-row items-center p-1 w-[320px] md:w-[400px] relative">
-                                <div className="flex bg-white dark:bg-[#1A2131] rounded-full p-0.5 shrink-0 border border-gray-100 dark:border-transparent">
-                                    <button onClick={() => { setSearchType('client'); setGeneralSearch(''); }} className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition ${searchType === 'client' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-purple-600'}`}>Cliente</button>
-                                    <button onClick={() => { setSearchType('pet'); setGeneralSearch(''); }} className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition ${searchType === 'pet' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-purple-600'}`}>Mascota</button>
+                            <div className="h-8 w-px bg-gray-200 dark:bg-[#2A3347] mx-2 hidden xl:block"></div>
+                            <div className="bg-gray-50 dark:bg-[#111623] border border-gray-200 dark:border-[#2A3347] rounded-[2rem] flex flex-col sm:flex-row items-center p-1 w-full md:w-[400px] relative gap-1 sm:gap-0">
+                                <div className="w-full sm:w-auto flex bg-white dark:bg-[#1A2131] rounded-full p-0.5 shrink-0 border border-gray-100 dark:border-transparent">
+                                    <button onClick={() => { setSearchType('client'); setGeneralSearch(''); }} className={`flex-1 sm:flex-none px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition ${searchType === 'client' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-purple-600'}`}>Cliente</button>
+                                    <button onClick={() => { setSearchType('pet'); setGeneralSearch(''); }} className={`flex-1 sm:flex-none px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition ${searchType === 'pet' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-purple-600'}`}>Mascota</button>
                                 </div>
-                                <div className="flex-1 relative">
+                                <div className="flex-1 relative w-full">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">🔍</div>
                                     <input type="text" className="w-full bg-transparent border-none py-2 pl-9 pr-4 text-sm font-bold text-gray-800 dark:text-white focus:ring-0 placeholder-gray-400" placeholder={`Buscar ${searchType === 'client' ? 'cliente' : 'mascota'}...`} value={generalSearch} onChange={e => { setGeneralSearch(e.target.value); setIsSearchOpen(true); }} onFocus={() => setIsSearchOpen(true)} onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)} />
                                     {isSearchOpen && filteredSearchOptions.length > 0 && (
@@ -351,7 +353,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                         </div>
                     </div>
 
-                    <div className="flex-1 flex flex-col xl:flex-row gap-6 p-6 overflow-hidden min-h-0">
+                    <div className="flex-1 flex flex-col xl:flex-row gap-4 md:gap-6 p-4 md:p-6 overflow-y-auto xl:overflow-hidden min-h-0">
                         {/* Seccion Izquierda: Productos (6.5/10) */}
                         <div className="flex-[6.5] flex flex-col bg-white dark:bg-[#1A2131] border border-gray-200 dark:border-[#2A3347] rounded-[2rem] shadow-2xl relative transition-colors duration-300">
                             {localSuccessMessage && (
@@ -485,11 +487,11 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                             </div>
 
                             {/* Nueva Distribución Vertical de Pago */}
-                            <div className="bg-white dark:bg-[#1A2131] border border-gray-200 dark:border-[#2A3347] rounded-[2rem] p-6 flex-1 flex flex-row gap-6 shadow-xl overflow-hidden min-h-0 transition-colors duration-300">
+                            <div className="bg-white dark:bg-[#1A2131] border border-gray-200 dark:border-[#2A3347] rounded-[2rem] p-4 sm:p-6 flex-1 flex flex-col sm:flex-row gap-6 shadow-xl transition-colors duration-300">
                                 {/* Columna 1: Métodos de Pago */}
-                                <div className="w-1/3 flex flex-col border-r border-gray-100 dark:border-[#2A3347] pr-4">
-                                    <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4">Método</h3>
-                                    <div className="flex-1 flex flex-col gap-2 overflow-y-auto scrollbar-none">
+                                <div className="w-full sm:w-1/3 flex flex-row sm:flex-col border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-[#2A3347] pb-4 sm:pb-0 sm:pr-4 overflow-x-auto sm:overflow-visible scrollbar-none">
+                                    <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 sm:mb-4 shrink-0">Método</h3>
+                                    <div className="flex sm:flex-1 flex-row sm:flex-col gap-2 shrink-0">
                                         {[ 
                                             { id: 'cash', label: 'Efectivo', icon: '💵' }, 
                                             { id: 'card', label: 'Tarjeta', icon: '💳' }, 
@@ -508,8 +510,8 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                 </div>
 
                                 {/* Columna 2: Detalles y Confirmación */}
-                                <div className="w-2/3 flex flex-col justify-between">
-                                    <div className="flex-1 space-y-4 overflow-y-auto scrollbar-none pb-4">
+                                <div className="w-full sm:w-2/3 flex flex-col justify-between flex-1 gap-4">
+                                    <div className="space-y-4 pb-4">
                                         {data.payment_method === 'cash' && (
                                             <div className="space-y-3 animate-in fade-in duration-300 slide-in-from-right-2">
                                                 <div className="space-y-1.5">

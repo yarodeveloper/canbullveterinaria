@@ -21,6 +21,7 @@ export default function Create({ auth, pet, services, groomers, ...props }) {
         user_id: props.prefill?.groomer_id || '',
         arrival_condition: '',
         notes: '',
+        next_visit_date: props.defaultNextVisitDate || '',
         items: [] // list of {product_id, quantity, concept, price}
     });
 
@@ -59,129 +60,183 @@ export default function Create({ auth, pet, services, groomers, ...props }) {
             <Head title={`Orden de Estética - ${pet.name}`} />
 
             <div className="py-12">
-                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-700">
-                        <div className="p-8">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-2xl sm:rounded-[2.5rem] border border-gray-100 dark:border-gray-700">
+                        <div className="p-0">
                             
-                            <div className="flex items-center gap-4 mb-8 pb-8 border-b border-gray-100 dark:border-gray-700">
-                                <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 dark:bg-brand-primary/20 flex items-center justify-center text-3xl shadow-inner">
-                                    ✂️
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-black text-brand-primary dark:text-brand-primary uppercase tracking-widest mb-1">Paciente para Estética</h3>
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="text-2xl font-black text-gray-900 dark:text-white leading-none">{pet.name}</h4>
-                                        <PetAlertIcons pet={pet} size="md" />
+                            {/* Pet Banner */}
+                            <div className="bg-brand-primary/5 dark:bg-brand-primary/10 p-8 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-6">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-20 h-20 rounded-3xl bg-white dark:bg-gray-800 flex items-center justify-center text-4xl shadow-xl border border-white dark:border-gray-700">
+                                        ✂️
                                     </div>
-                                    <p className="text-xs font-bold text-gray-500 uppercase mt-2">Dueño: {pet.owner ? pet.owner.name : 'N/A'}</p>
+                                    <div>
+                                        <h3 className="text-[10px] font-black text-brand-primary uppercase tracking-[0.3em] mb-1">Paciente para Grooming</h3>
+                                        <div className="flex items-center gap-3">
+                                            <h4 className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">{pet.name}</h4>
+                                            <PetAlertIcons pet={pet} size="lg" />
+                                        </div>
+                                        <div className="flex items-center gap-4 mt-3">
+                                            <span className="text-[10px] font-black text-gray-500 uppercase flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                                                Dueño: {pet.owner?.name || 'N/A'}
+                                            </span>
+                                            {pet.breed && (
+                                                <span className="text-[10px] font-black text-gray-500 uppercase flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                                                    Raza: {pet.breed?.name}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur px-6 py-4 rounded-3xl border border-white dark:border-gray-700 shadow-sm text-center">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Estimado</p>
+                                    <p className="text-3xl font-black text-brand-primary">${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
                                 </div>
                             </div>
 
-                            <form onSubmit={submit} className="space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Atiende (Groomer / Estilista)</label>
-                                        <select
-                                            className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 transition-colors"
-                                            value={data.user_id}
-                                            onChange={e => setData('user_id', e.target.value)}
-                                            required
-                                        >
-                                            <option value="">-- Seleccionar --</option>
-                                            {groomers.map(g => (
-                                                <option key={g.id} value={g.id}>{g.name} ({roleLabels[g.role] || g.role})</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                            <form onSubmit={submit} className="p-8">
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                                    
+                                    {/* Left Column: Conditions & Notes */}
+                                    <div className="lg:col-span-7 space-y-8">
+                                        <div>
+                                            <h4 className="text-[11px] font-black text-brand-primary uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                                <span className="w-2 h-2 bg-brand-primary rounded-full"></span>
+                                                Diagnóstico de Entrada
+                                            </h4>
+                                            <div className="space-y-6">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Condición de Llegada</label>
+                                                    <textarea
+                                                        className="w-full bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-700 rounded-[2rem] px-6 py-4 focus:ring-brand-primary font-medium text-gray-700 dark:text-gray-300 transition-all placeholder:text-gray-400 text-sm shadow-inner"
+                                                        rows="4"
+                                                        value={data.arrival_condition}
+                                                        onChange={e => setData('arrival_condition', e.target.value)}
+                                                        placeholder="Detalla si tiene nudos, parásitos, afecciones de piel, estado de ánimo..."
+                                                        required
+                                                    ></textarea>
+                                                </div>
 
-                                    <div className="space-y-4 md:col-span-2">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Servicios a Realizar</label>
-                                        
-                                        <div className="flex flex-col sm:flex-row gap-2">
-                                            <select
-                                                className="flex-1 w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 transition-colors"
-                                                value={selectedService}
-                                                onChange={e => setSelectedService(e.target.value)}
-                                            >
-                                                <option value="">-- Seleccionar Servicio del Catálogo --</option>
-                                                {services.map(s => (
-                                                    <option key={s.id} value={s.id}>{s.name} (${parseFloat(s.price).toLocaleString('es-MX', {minimumFractionDigits:2})})</option>
-                                                ))}
-                                            </select>
-                                            <button
-                                                type="button"
-                                                onClick={addService}
-                                                className="bg-brand-primary hover:opacity-90 text-white px-5 font-black uppercase tracking-[0.1em] rounded-xl text-[10px] transition min-h-[48px] shrink-0 shadow-lg shadow-brand-primary/20 flex items-center gap-2"
-                                            >
-                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-                                                Agregar
-                                            </button>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Instrucciones Especiales</label>
+                                                    <textarea
+                                                        className="w-full bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-700 rounded-[2rem] px-6 py-4 focus:ring-brand-primary font-medium text-gray-700 dark:text-gray-300 transition-all placeholder:text-gray-400 text-sm shadow-inner"
+                                                        rows="3"
+                                                        value={data.notes}
+                                                        onChange={e => setData('notes', e.target.value)}
+                                                        placeholder="Corte específico, perfume, moño, precauciones..."
+                                                    ></textarea>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        {errors.items && <p className="text-red-500 text-xs font-bold mt-1">{errors.items}</p>}
+                                        <div className="flex items-center gap-6 pt-4">
+                                            <Link
+                                                href={route('pets.show', pet.id)}
+                                                className="px-8 py-4 text-xs font-black text-gray-400 hover:text-gray-900 dark:hover:text-white uppercase tracking-widest transition-all"
+                                            >
+                                                Cancelar
+                                            </Link>
+                                            <button
+                                                type="submit"
+                                                disabled={processing || data.items.length === 0}
+                                                className="flex-1 bg-brand-primary hover:scale-[1.02] active:scale-95 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs transition-all shadow-2xl shadow-brand-primary/40 disabled:opacity-50 disabled:grayscale disabled:scale-100"
+                                            >
+                                                {processing ? 'Generando...' : 'Crear Orden de Servicio'}
+                                            </button>
+                                        </div>
+                                    </div>
 
-                                        {data.items.length > 0 && (
-                                            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-2 mt-4">
+                                    {/* Right Column: Execution & Services */}
+                                    <div className="lg:col-span-5 space-y-8">
+                                        
+                                        {/* Logistics */}
+                                        <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-[2.5rem] border border-gray-50 dark:border-gray-700 space-y-6">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Atiende</label>
+                                                    <select
+                                                        className="w-full bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 transition-all text-xs"
+                                                        value={data.user_id}
+                                                        onChange={e => setData('user_id', e.target.value)}
+                                                        required
+                                                    >
+                                                        <option value="">-- Estilista --</option>
+                                                        {groomers.map(g => (
+                                                            <option key={g.id} value={g.id}>{g.name} ({roleLabels[g.role] || g.role})</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sugerir Regreso</label>
+                                                    <input
+                                                        type="date"
+                                                        className="w-full bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 transition-all text-xs"
+                                                        value={data.next_visit_date}
+                                                        onChange={e => setData('next_visit_date', e.target.value)}
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Services Selection */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-[11px] font-black text-brand-primary uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                                <span className="w-2 h-2 bg-brand-primary rounded-full"></span>
+                                                Servicios del Catálogo
+                                            </h4>
+                                            
+                                            <div className="flex gap-2">
+                                                <select
+                                                    className="flex-1 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 transition-all text-sm"
+                                                    value={selectedService}
+                                                    onChange={e => setSelectedService(e.target.value)}
+                                                >
+                                                    <option value="">Seleccionar servicio...</option>
+                                                    {services.map(s => (
+                                                        <option key={s.id} value={s.id}>{s.name} - ${parseFloat(s.price).toLocaleString('es-MX')}</option>
+                                                    ))}
+                                                </select>
+                                                <button
+                                                    type="button"
+                                                    onClick={addService}
+                                                    className="bg-brand-primary hover:bg-brand-primary/90 text-white w-12 h-12 flex items-center justify-center rounded-2xl transition shadow-lg shadow-brand-primary/20 shrink-0"
+                                                >
+                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
+                                                </button>
+                                            </div>
+
+                                            {errors.items && <p className="text-red-500 text-[10px] font-black uppercase mt-1 ml-2">{errors.items}</p>}
+
+                                            <div className={`space-y-3 overflow-y-auto pr-1 transition-all ${data.items.length > 0 ? 'max-h-[300px]' : 'h-0'}`}>
                                                 {data.items.map((item, idx) => (
-                                                    <div key={idx} className="flex justify-between items-center bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                                                    <div key={idx} className="flex justify-between items-center bg-gray-50 dark:bg-gray-900/40 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 animate-in fade-in slide-in-from-right-4 duration-300 group">
                                                         <div>
-                                                            <p className="font-bold text-gray-900 dark:text-white uppercase text-sm">{item.concept}</p>
-                                                            <p className="text-xs text-gray-500 font-bold mt-0.5">${parseFloat(item.unit_price).toLocaleString('es-MX', {minimumFractionDigits:2})}</p>
+                                                            <p className="font-black text-gray-900 dark:text-white uppercase text-[10px] tracking-wider">{item.concept}</p>
+                                                            <p className="text-[10px] text-brand-primary font-black mt-0.5">${parseFloat(item.unit_price).toLocaleString('es-MX', {minimumFractionDigits:2})}</p>
                                                         </div>
                                                         <button
                                                             type="button"
                                                             onClick={() => removeService(idx)}
-                                                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-500 hover:text-white transition"
-                                                        >×</button>
+                                                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 text-red-500 hover:bg-red-500 hover:text-white transition shadow-sm opacity-0 group-hover:opacity-100"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                        </button>
                                                     </div>
                                                 ))}
-                                                <div className="pt-2 text-right">
-                                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Estimado</p>
-                                                    <p className="text-xl font-black text-brand-primary">${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
-                                                </div>
                                             </div>
-                                        )}
+
+                                            {data.items.length === 0 && (
+                                                <div className="py-12 text-center bg-gray-50/50 dark:bg-gray-900/20 rounded-[2.5rem] border-2 border-dashed border-gray-100 dark:border-gray-800">
+                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No hay servicios seleccionados</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-
-                                    <div className="space-y-2 md:col-span-2">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Condición de Llegada</label>
-                                        <textarea
-                                            className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-brand-primary font-medium text-gray-700 dark:text-gray-300 transition-colors"
-                                            rows="3"
-                                            value={data.arrival_condition}
-                                            onChange={e => setData('arrival_condition', e.target.value)}
-                                            placeholder="Detalla si tiene nudos, parásitos (pulgas/garrapatas), afecciones de piel, estado de ánimo..."
-                                            required
-                                        ></textarea>
-                                    </div>
-
-                                    <div className="space-y-2 md:col-span-2">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Notas Adicionales (Opcional)</label>
-                                        <textarea
-                                            className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-brand-primary font-medium text-gray-700 dark:text-gray-300 transition-colors"
-                                            rows="2"
-                                            value={data.notes}
-                                            onChange={e => setData('notes', e.target.value)}
-                                            placeholder="Corte específico requerido por el dueño, perfume, moño..."
-                                        ></textarea>
-                                    </div>
-
-                                </div>
-
-                                <div className="flex items-center justify-end pt-6 border-t border-gray-100 dark:border-gray-700 gap-4 mt-8">
-                                    <Link
-                                        href={route('pets.show', pet.id)}
-                                        className="text-xs font-black text-gray-500 hover:text-gray-900 dark:hover:text-white uppercase tracking-widest transition"
-                                    >
-                                        Cancelar
-                                    </Link>
-                                    <button
-                                        type="submit"
-                                        disabled={processing || data.items.length === 0}
-                                        className="bg-brand-primary hover:opacity-90 text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-brand-primary/30 disabled:opacity-50"
-                                    >
-                                        {processing ? 'Guardando...' : 'Registrar Orden'}
-                                    </button>
                                 </div>
                             </form>
                         </div>
