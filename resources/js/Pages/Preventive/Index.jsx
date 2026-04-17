@@ -190,8 +190,8 @@ export default function Index({ auth, records, filters }) {
                                                         <div className="flex justify-center gap-2">
                                                             <a 
                                                                 href={activeMonitor === 'health' 
-                                                                    ? getWhatsAppLink(item.pet?.owner?.phone, `Hola ${item.pet?.owner?.name}, te recordamos que la vacuna ${item.name} de ${item.pet?.name} vence el ${item.next_due_date}. ¿Deseas agendar una cita?`)
-                                                                    : getWhatsAppLink(item.pet?.owner?.phone, `Hola ${item.pet?.owner?.name}, te recordamos que ya toca servicio de Estética para ${item.pet?.name}. ¿Deseas agendar su próxima cita?`)
+                                                                    ? getWhatsAppLink(item.pet?.owner?.phone, `Hola ${item.pet?.owner?.name}, te recordamos que la vacuna ${item.name} de ${item.pet?.name} vence el ${item.next_due_date ? item.next_due_date.split('T')[0] : ''}. ¿Deseas agendar una cita?`)
+                                                                    : getWhatsAppLink(item.pet?.owner?.phone, `Hola ${item.pet?.owner?.name}, te recordamos que ya toca servicio de Estética para ${item.pet?.name}. Su última visita fue el ${item.created_at ? item.created_at.split('T')[0] : ''}. ¿Deseas agendar su próxima cita?`)
                                                                 } 
                                                                 target="_blank"
                                                                 className="p-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition shadow-lg"
