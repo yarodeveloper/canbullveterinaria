@@ -1,7 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
 export default function Show({ auth, consent }) {
+    const { settings } = usePage().props;
+    
     const handlePrint = () => {
         window.print();
     };
