@@ -51,7 +51,7 @@ const WarningIcon = ({ status, range }) => {
     return null;
 };
 
-export default function Show({ auth, surgery, templates, veterinarians, branches, products = [] }) {
+export default function Show({ auth, surgery, templates, veterinarians, branches, products = [], settings = {} }) {
     const permissions = auth.permissions || [];
     const can = (permission) => permissions.includes(permission) || auth.user.role === 'admin';
     const canManage = can('manage surgeries');
