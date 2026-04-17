@@ -39,6 +39,12 @@ export default function Index({ auth, records, filters }) {
         }
     };
 
+    const formatWhatsApp = (phone) => {
+        if (!phone) return '';
+        const clean = phone.replace(/\D/g, '');
+        return clean.length === 10 ? '52' + clean : clean;
+    };
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -183,8 +189,8 @@ export default function Index({ auth, records, filters }) {
                                                         <div className="flex justify-center gap-2">
                                                             <a 
                                                                 href={activeMonitor === 'health' 
-                                                                    ? `https://wa.me/${item.pet?.owner?.phone?.replace(/\D/g, '')}?text=Hola+${item.pet?.owner?.name}%2C+te+recordamos+que+la+vacuna+${item.name}+de+${item.pet?.name}+vence+el+${item.next_due_date}.+¿Deseas+agendar+una+cita?`
-                                                                    : `https://wa.me/${item.pet?.owner?.phone?.replace(/\D/g, '')}?text=Hola+${item.pet?.owner?.name}%2C+te+recordamos+que+ya+toca+servicio+de+Estética+para+${item.pet?.name}.+¿Deseas+agendar+su+próxima+cita?`
+                                                                    ? `https://wa.me/${formatWhatsApp(item.pet?.owner?.phone)}?text=Hola+${item.pet?.owner?.name}%2C+te+recordamos+que+la+vacuna+${item.name}+de+${item.pet?.name}+vence+el+${item.next_due_date}.+¿Deseas+agendar+una+cita?`
+                                                                    : `https://wa.me/${formatWhatsApp(item.pet?.owner?.phone)}?text=Hola+${item.pet?.owner?.name}%2C+te+recordamos+que+ya+toca+servicio+de+Estética+para+${item.pet?.name}.+¿Deseas+agendar+su+próxima+cita?`
                                                                 } 
                                                                 target="_blank"
                                                                 className="p-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition shadow-lg"

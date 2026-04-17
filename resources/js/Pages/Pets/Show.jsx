@@ -538,7 +538,7 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                                     </svg>
                                                 </a>
                                                 <a
-                                                    href={`https://wa.me/${(owner.phone || '').replace(/\D/g, '')}`}
+                                                    href={`https://wa.me/${(owner.phone || '').replace(/\\D/g, '').length === 10 ? '52' + (owner.phone || '').replace(/\\D/g, '') : (owner.phone || '').replace(/\\D/g, '')}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     title={`WhatsApp a ${owner.name}`}

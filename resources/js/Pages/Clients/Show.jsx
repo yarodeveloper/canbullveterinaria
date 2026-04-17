@@ -199,7 +199,7 @@ export default function Show({ auth, client, documentTemplates = [], financialSu
                                                         Llamar
                                                     </a>
                                                     <a
-                                                        href={`https://wa.me/${(client.phone || '').replace(/\D/g, '')}`}
+                                                        href={`https://wa.me/${(client.phone || '').replace(/\\D/g, '').length === 10 ? '52' + (client.phone || '').replace(/\\D/g, '') : (client.phone || '').replace(/\\D/g, '')}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#25D366]/10 text-[#128C7E] rounded-xl text-[10px] font-black uppercase tracking-wide hover:bg-[#25D366]/20 transition border border-[#25D366]/20"
