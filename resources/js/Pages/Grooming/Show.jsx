@@ -232,9 +232,9 @@ export default function Show({ auth, order, services }) {
                                         </h4>
                                         
                                         {canEdit && (
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-2 w-full">
                                                 <select
-                                                    className="flex-1 bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-xs focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 shadow-inner"
+                                                    className="flex-1 min-w-0 w-full bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-xs sm:text-sm truncate pr-8 focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 shadow-inner"
                                                     value={selectedService}
                                                     onChange={e => setSelectedService(e.target.value)}
                                                 >
@@ -264,7 +264,7 @@ export default function Show({ auth, order, services }) {
                                                         <button
                                                             type="button"
                                                             onClick={() => removeService(idx)}
-                                                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 text-red-500 hover:bg-red-500 hover:text-white transition shadow-sm opacity-0 group-hover:opacity-100"
+                                                            className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 text-red-500 hover:bg-red-500 hover:text-white transition shadow-sm md:opacity-0 md:group-hover:opacity-100"
                                                         >
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
                                                         </button>
