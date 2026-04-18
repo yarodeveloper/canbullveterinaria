@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '@/Components/Modal';
 import { format } from 'date-fns';
@@ -16,14 +16,22 @@ const roleLabels = {
     staff: 'Staff'
 };
 
-export default function Index({ auth, groomingOrders, clients, pets: allPets, groomers, filters }) {
+export default function Index({ auth, groomingOrders, clients, pets: allPets, groomers, services = [], groomingStyles = [], defaultNextVisitDate = '', filters }) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [clientSearch, setClientSearch] = useState('');
     const [selectedPet, setSelectedPet] = useState(null);
-    const [creationData, setCreationData] = useState({
-        appointment_time: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-        groomer_id: auth.user.id,
+    const [selectedService, setSelectedService] = useState('');
+
+    const { data, setData, post, processing, reset } = useForm({
+        pet_id: '',
+        client_id: '',
+        user_id: String(auth.user.id),
+        arrival_condition: '',
+        notes: '',
+        next_visit_date: '',
+        items: [],
+        complete_after: false,
     });
 
     const permissions = auth.permissions || [];
@@ -58,19 +66,48 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
         return { clients: filteredClients, pets: filteredPets };
     }, [clientSearch, clients, allPets]);
 
-    const handlePetSelect = (pet) => {
-        setSelectedPet(pet);
-        setClientSearch('');
-    };
+    const handlePetSelect = (pet) => handlePetSelectAndSet(pet);
 
     const resetModal = () => {
         setShowCreateModal(false);
         setSelectedPet(null);
         setClientSearch('');
-        setCreationData({
-            appointment_time: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-            groomer_id: auth.user.id,
-        });
+        setSelectedService('');
+        reset();
+        setData('user_id', String(auth.user.id));
+        setData('next_visit_date', defaultNextVisitDate);
+    };
+
+    const handlePetSelectAndSet = (pet) => {
+        setSelectedPet(pet);
+        setData('pet_id', String(pet.id));
+        setData('client_id', String(pet.owner?.id || ''));
+        setClientSearch('');
+    };
+
+    const addServiceToOrder = () => {
+        if (!selectedService) return;
+        const s = services.find(x => x.id == selectedService);
+        if (s) {
+            setData('items', [...data.items, { product_id: s.id, concept: s.name, unit_price: s.price, quantity: 1 }]);
+            setSelectedService('');
+        }
+    };
+
+    const removeServiceFromOrder = (idx) => {
+        const copy = [...data.items];
+        copy.splice(idx, 1);
+        setData('items', copy);
+    };
+
+    const applyStyleToNotes = (style) => {
+        const prefix = data.notes ? data.notes + '\n' : '';
+        setData('notes', `${prefix}[${style.name}]: ${style.description}`);
+    };
+
+    const submitOrder = (completeAfter = false) => {
+        if (!selectedPet || data.items.length === 0) return;
+        router.post(route('grooming-orders.store'), { ...data, complete_after: completeAfter });
     };
 
     const statusBadge = (status) => {
@@ -93,14 +130,23 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                         <img src="/icons/scissors-svgrepo-com.svg" className="w-6 h-6 icon-adaptive" alt="" />
                         Estética y Grooming
                     </h2>
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="bg-brand-primary text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-brand-primary/20 flex items-center gap-2"
-                    >
-                        <img src="/icons/scissors-svgrepo-com.svg" className="w-3.5 h-3.5 invert brightness-0" alt="" />
-                        <span className="hidden sm:inline">Nueva Orden</span>
-                        <span className="sm:hidden">Nuevo</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href={route('grooming-styles.index')}
+                            className="bg-white dark:bg-slate-800 text-slate-500 hover:text-brand-primary p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 transition shadow-sm flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+                            title="Gestionar Estilos"
+                        >
+                            ✂️ Estilos
+                        </Link>
+                        <button
+                            onClick={() => setShowCreateModal(true)}
+                            className="bg-brand-primary text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-brand-primary/20 flex items-center gap-2"
+                        >
+                            <img src="/icons/scissors-svgrepo-com.svg" className="w-3.5 h-3.5 invert brightness-0" alt="" />
+                            <span className="hidden sm:inline">Nueva Orden</span>
+                            <span className="sm:hidden">Nuevo</span>
+                        </button>
+                    </div>
                 </div>
             }
         >
@@ -216,59 +262,69 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                 </div>
             </div>
 
-            <Modal show={showCreateModal} onClose={resetModal} maxWidth="2xl">
-                <div className="bg-white dark:bg-[#1B2132] overflow-hidden rounded-[2.5rem]">
-                    <div className="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
-                        <div>
-                            <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">✂️ Nueva Orden de Estética</h3>
-                            <p className="text-[10px] text-brand-primary font-bold uppercase tracking-widest mt-1">Grooming & Lavado Profesional</p>
+            <Modal show={showCreateModal} onClose={resetModal} maxWidth="lg">
+                <div className="bg-white dark:bg-[#1B2132] overflow-hidden rounded-3xl sm:rounded-[2rem]">
+                    <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                        <div className="flex items-center gap-3">
+                            <div>
+                                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">✂️ Nueva Orden</h3>
+                                <p className="text-[8px] sm:text-[9px] text-brand-primary font-bold uppercase tracking-widest mt-0.5 italic">Grooming & Lavado</p>
+                            </div>
+                            {data.items.length > 0 && (
+                                <div className="bg-brand-primary/10 border border-brand-primary/20 px-3 py-1.5 rounded-xl text-center">
+                                    <p className="text-[7px] font-black text-brand-primary uppercase tracking-widest leading-none mb-0.5">Total</p>
+                                    <p className="text-sm font-black text-brand-primary leading-none">
+                                        ${data.items.reduce((acc, i) => acc + parseFloat(i.unit_price), 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                         <button onClick={resetModal} className="text-slate-400 hover:text-red-500 transition-colors text-2xl">×</button>
                     </div>
                     
-                    <div className="p-8 space-y-6">
+                    <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                         {!selectedPet ? (
-                            <div className="space-y-4">
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest italic">1. BUSCAR PACIENTE O DUEÑO</label>
+                            <div className="space-y-3">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest italic">1. BUSCAR PACIENTE O DUEÑO</label>
                                 <div className="relative group">
-                                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors text-xl">🔍</span>
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors text-lg">🔍</span>
                                     <input
                                         type="text"
                                         autoFocus
                                         placeholder="Escribe el nombre aquí..."
                                         value={clientSearch}
                                         onChange={(e) => setClientSearch(e.target.value)}
-                                        className="w-full bg-slate-100 dark:bg-slate-900/50 border-transparent focus:bg-white dark:focus:bg-[#1B2132] border-slate-300 dark:border-slate-700 focus:border-brand-primary focus:ring-brand-primary rounded-3xl pl-14 pr-6 py-5 text-lg font-bold text-slate-900 dark:text-white transition-all shadow-inner"
+                                        className="w-full bg-slate-100 dark:bg-slate-900/50 border-transparent focus:bg-white dark:focus:bg-[#1B2132] border-slate-300 dark:border-slate-700 focus:border-brand-primary focus:ring-brand-primary rounded-2xl pl-12 pr-4 py-3.5 text-base font-bold text-slate-900 dark:text-white transition-all shadow-inner"
                                     />
 
                                     {clientSearch && (searchResults.clients.length > 0 || searchResults.pets.length > 0) && (
-                                        <div className="relative z-10 w-full mt-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-xl p-2 max-h-64 overflow-y-auto custom-scrollbar">
+                                        <div className="relative z-10 w-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-1.5 max-h-56 overflow-y-auto custom-scrollbar">
                                             {searchResults.pets.map(pet => (
                                                 <button
                                                     key={`p-${pet.id}`}
                                                     onClick={() => handlePetSelect(pet)}
-                                                    className="w-full text-left px-5 py-4 rounded-2xl hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 group transition-all flex justify-between items-center border-b border-gray-50 dark:border-gray-800 last:border-0"
+                                                    className="w-full text-left px-4 py-3 rounded-xl hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 group transition-all flex justify-between items-center border-b border-gray-50 dark:border-gray-800 last:border-0"
                                                 >
-                                                    <div className="flex items-center gap-4">
-                                                        <span className="text-2xl">{pet.species === 'Canino' ? '🐕' : '🐈'}</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-xl">{pet.species === 'Canino' ? '🐕' : '🐈'}</span>
                                                         <div>
-                                                            <div className="flex items-center gap-3">
-                                                                <p className="font-black text-slate-900 dark:text-white uppercase text-sm group-hover:text-brand-primary transition-colors">{pet.name}</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="font-black text-slate-900 dark:text-white uppercase text-xs group-hover:text-brand-primary transition-colors">{pet.name}</p>
                                                                 <PetAlertIcons pet={pet} size="sm" />
                                                             </div>
-                                                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider truncate">
+                                                            <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider truncate">
                                                                 {pet.species} • {pet.breed || 'Sin Raza'} • {pet.owner?.name || 'S/A'}
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${pet.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
+                                                    <span className={`text-[8px] px-1.5 py-0.5 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${pet.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
                                                         {pet.species || 'Mascota'}
                                                     </span>
                                                 </button>
                                             ))}
                                             
                                             {searchResults.clients.length > 0 && (
-                                                <div className="px-5 py-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] bg-gray-50 dark:bg-gray-800/30 my-2 rounded-lg italic">Resultados por Dueño</div>
+                                                <div className="px-4 py-1.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] bg-gray-50 dark:bg-gray-800/30 my-1 rounded-lg italic">Resultados por Dueño</div>
                                             )}
 
                                             {searchResults.clients.map(client => {
@@ -277,21 +333,21 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                                                     <button
                                                         key={`cp-${pet.id}`}
                                                         onClick={() => handlePetSelect(pet)}
-                                                        className="w-full text-left px-5 py-4 rounded-2xl hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 group transition-all flex justify-between items-center border-b border-gray-50 dark:border-gray-800 last:border-0"
+                                                        className="w-full text-left px-4 py-3 rounded-xl hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 group transition-all flex justify-between items-center border-b border-gray-50 dark:border-gray-800 last:border-0"
                                                     >
-                                                        <div className="flex items-center gap-4">
-                                                            <span className="text-2xl">{pet.species === 'Canino' ? '🐕' : '🐈'}</span>
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="text-xl">{pet.species === 'Canino' ? '🐕' : '🐈'}</span>
                                                             <div>
-                                                                <div className="flex items-center gap-3">
-                                                                    <p className="font-black text-slate-900 dark:text-white uppercase text-sm group-hover:text-brand-primary transition-colors">{pet.name}</p>
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="font-black text-slate-900 dark:text-white uppercase text-xs group-hover:text-brand-primary transition-colors">{pet.name}</p>
                                                                     <PetAlertIcons pet={pet} size="sm" />
                                                                 </div>
-                                                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider truncate">
+                                                                <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider truncate">
                                                                     {pet.species} • {pet.breed || 'Sin Raza'} • {client.name}
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                        <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${pet.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
+                                                        <span className={`text-[8px] px-1.5 py-0.5 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${pet.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
                                                             {pet.species || 'Mascota'}
                                                         </span>
                                                     </button>
@@ -302,108 +358,96 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                                 </div>
                             </div>
                         ) : (
-                            <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-300">
-                                {/* Paciente Seleccionado */}
-                                <div className="flex items-center justify-between bg-brand-primary/5 dark:bg-brand-primary/10 border border-brand-primary/20 dark:border-brand-primary/40 rounded-[2rem] px-8 py-6 shadow-sm">
-                                    <div className="flex items-center gap-5">
-                                        <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center text-3xl shadow-md border dark:border-slate-700">
+                            <div className="space-y-3 animate-in slide-in-from-bottom-4 duration-300">
+                                {/* Paciente */}
+                                <div className="flex items-center justify-between bg-brand-primary/5 border border-brand-primary/20 rounded-2xl px-4 py-3 shadow-sm">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center text-xl shadow-md border dark:border-slate-700">
                                             {selectedPet.species === 'Canino' ? '🐕' : '🐈'}
                                         </div>
                                         <div>
-                                            <p className="text-[9px] font-black text-brand-primary uppercase tracking-widest mb-1 italic">Paciente Seleccionado</p>
-                                            <div className="flex items-center gap-3">
-                                                <p className="text-2xl font-black text-slate-900 dark:text-white uppercase leading-tight">{selectedPet.name}</p>
-                                                <PetAlertIcons pet={selectedPet} size="md" />
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">{selectedPet.name}</p>
+                                                <PetAlertIcons pet={selectedPet} size="sm" />
                                             </div>
-                                            <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{selectedPet.owner?.name || 'Sin dueño'}</p>
+                                            <p className="text-[9px] text-slate-500 font-bold uppercase">{selectedPet.owner?.name || 'Sin dueño'}</p>
                                         </div>
                                     </div>
-                                    <button onClick={() => setSelectedPet(null)} className="text-[10px] font-black text-slate-500 hover:text-red-500 uppercase tracking-widest bg-white dark:bg-slate-800 px-5 py-2.5 rounded-2xl shadow-sm border dark:border-slate-700 transition active:scale-95">Cambiar</button>
+                                    <button onClick={() => setSelectedPet(null)} className="text-[8px] font-black text-slate-500 hover:text-red-500 uppercase bg-white dark:bg-slate-800 px-3 py-2 rounded-xl shadow-sm border dark:border-slate-700 transition">Cambiar</button>
                                 </div>
 
-                                {/* Formulario */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha y Hora Preferida</label>
-                                            <input
-                                            type="datetime-local"
-                                            value={creationData.appointment_time}
-                                            onChange={e => setCreationData({...creationData, appointment_time: e.target.value})}
-                                            className="w-full bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 focus:border-brand-primary focus:ring-brand-primary rounded-2xl py-3 px-5 font-bold text-slate-700 dark:text-slate-300 transition-all"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Groomer Asignado</label>
-                                        <select
-                                            value={creationData.groomer_id}
-                                            onChange={e => setCreationData({...creationData, groomer_id: e.target.value})}
-                                            className="w-full bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 focus:border-brand-primary focus:ring-brand-primary rounded-2xl py-3 px-5 font-bold text-slate-700 dark:text-slate-300 transition-all"
-                                        >
-                                            {groomers.map(g => (
-                                                <option key={g.id} value={g.id}>{g.name} ({roleLabels[g.role] || g.role})</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                {/* Estilista */}
+                                <div className="space-y-1">
+                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Estilista</label>
+                                    <select value={data.user_id} onChange={e => setData('user_id', e.target.value)}
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 focus:border-brand-primary focus:ring-brand-primary rounded-xl py-2 px-3 font-bold text-slate-700 dark:text-slate-300 text-xs">
+                                        {groomers.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                                    </select>
                                 </div>
+
+                                {/* Servicios */}
+                                <div className="space-y-2">
+                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Servicios *</label>
+                                    <select
+                                        value=""
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            if (!val) return;
+                                            const s = services.find(x => x.id == val);
+                                            if (s && !data.items.find(i => i.product_id == s.id)) {
+                                                setData('items', [...data.items, { product_id: s.id, concept: s.name, unit_price: s.price, quantity: 1 }]);
+                                            }
+                                        }}
+                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-brand-primary focus:ring-brand-primary rounded-xl py-2 px-3 font-bold text-slate-700 dark:text-slate-300 text-xs block"
+                                    >
+                                        <option value="">+ Toca para añadir servicio...</option>
+                                        {services.map(s => (
+                                            <option key={s.id} value={s.id}>
+                                                {s.name} — ${parseFloat(s.price).toLocaleString('es-MX')}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {data.items.length > 0 && (
+                                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                                            {data.items.map((item, i) => (
+                                                <div key={i} className="flex items-center justify-between bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                                    <p className="text-[10px] font-black text-slate-700 dark:text-white uppercase truncate flex-1 mr-2">{item.concept}</p>
+                                                    <div className="flex items-center gap-2 shrink-0">
+                                                        <p className="text-[9px] font-bold text-brand-primary whitespace-nowrap">${parseFloat(item.unit_price).toLocaleString('es-MX')}</p>
+                                                        <button type="button" onClick={() => removeServiceFromOrder(i)}
+                                                            className="w-5 h-5 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-500 text-red-400 hover:text-white transition-all text-xs font-black">×</button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {data.items.length === 0 && (
+                                        <p className="text-[9px] text-slate-400 italic text-center py-1">Sin servicios — selecciona uno arriba</p>
+                                    )}
+                                </div>
+
                             </div>
                         )}
-                    </div>
 
-                    <div className="p-8 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 flex flex-wrap justify-end gap-4 rounded-b-[2.5rem]">
-                        <button
-                            onClick={resetModal}
-                            className="px-6 py-3 rounded-2xl text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-800 transition order-last sm:order-first"
-                        >
-                            Cancelar
-                        </button>
-                        
-                        <div className="flex gap-4 w-full sm:w-auto">
-                            <button
-                                onClick={() => {
-                                    if (!selectedPet) return;
-                                    router.post(route('appointments.store'), {
-                                        pet_id: selectedPet.id,
-                                        veterinarian_id: creationData.groomer_id,
-                                        start_time: creationData.appointment_time,
-                                        duration: 60,
-                                        type: 'grooming',
-                                        reason: 'Cita de Estética Programada'
-                                    }, {
-                                        onSuccess: () => {
-                                            resetModal();
-                                            // Trigger a notification or some feedback
-                                        },
-                                        onFinish: () => setShowCreateModal(false)
-                                    });
-                                }}
-                                disabled={!selectedPet}
-                                className={`flex-1 sm:flex-none px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition border-2 ${
-                                    selectedPet 
-                                    ? 'border-indigo-600 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20' 
-                                    : 'border-slate-200 text-slate-400 cursor-not-allowed'
-                                }`}
-                            >
-                                📅 Agendar Cita
+                        <div className="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/50">
+                            <button onClick={resetModal}
+                                className="px-4 py-2 rounded-xl text-[8px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition">
+                                Cerrar
                             </button>
-
-                            <button
-                                onClick={() => {
-                                    if (!selectedPet) return;
-                                    router.get(route('grooming-orders.create'), {
-                                        pet_id: selectedPet.id,
-                                        groomer_id: creationData.groomer_id,
-                                        time: creationData.appointment_time
-                                    });
-                                }}
-                                disabled={!selectedPet}
-                                className={`flex-1 sm:flex-none px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition shadow-lg ${
-                                    selectedPet 
-                                    ? 'bg-brand-primary text-white hover:opacity-90 shadow-brand-primary/20' 
-                                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                }`}
-                            >
-                                ✂️ Iniciar Estética
-                            </button>
+                            <div className="flex-1 flex justify-end gap-2">
+                                <button
+                                    onClick={() => submitOrder(true)}
+                                    disabled={!selectedPet || data.items.length === 0 || processing}
+                                    className="px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition border border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                                    {processing ? '...' : '⚡ Crear y Finalizar'}
+                                </button>
+                                <button
+                                    onClick={() => submitOrder(false)}
+                                    disabled={!selectedPet || data.items.length === 0 || processing}
+                                    className="px-5 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition shadow-lg bg-brand-primary text-white hover:opacity-90 shadow-brand-primary/20 disabled:opacity-40 disabled:cursor-not-allowed">
+                                    {processing ? '...' : '✂️ Crear Orden'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

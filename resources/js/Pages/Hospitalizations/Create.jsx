@@ -260,6 +260,7 @@ export default function Create({ auth, pet: initialPet, clients: initialClients,
                                     canManage={true}
                                     isAlwaysEditing={true}
                                     onChange={(meds) => setData('medications', meds)}
+                                    petWeight={data.initial_weight || initialPet?.weight || selectedPet?.weight}
                                 />
                             </div>
 

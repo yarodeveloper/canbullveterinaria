@@ -296,6 +296,7 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
                                     canManage={true}
                                     isAlwaysEditing={true}
                                     onChange={(meds) => setData('pre_operative_medications', meds)}
+                                    petWeight={selectedPet?.weight || initialPet?.weight}
                                 />
                             </div>
 

@@ -283,6 +283,7 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
                             products={products.filter(p => !p.is_service)}
                             canManage={true}
                             isAlwaysEditing={true}
+                            petWeight={data.weight || selectedPet?.weight || initialPet?.weight}
                         />
 
                         {/* Contexto familiar y destino del cuerpo */}

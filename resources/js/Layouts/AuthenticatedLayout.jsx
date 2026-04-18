@@ -281,6 +281,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                                         <Dropdown.Link href={route('health-protocols.index')}>
                                                             Vacunas y Tratamientos
                                                         </Dropdown.Link>
+                                                        <Dropdown.Link href={route('grooming-styles.index')}>
+                                                            Estilos de Corte (Grooming)
+                                                        </Dropdown.Link>
                                                         {user.role === 'admin' && (
                                                             <Dropdown.Link href={route('product-categories.index')}>
                                                                 Categorías
@@ -603,6 +606,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                     active={route().current('breeds.*')}
                                 >
                                     Razas y Especies
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
+                                    href={route('grooming-styles.index')}
+                                    active={route().current('grooming-styles.*')}
+                                >
+                                    Estilos de Corte
                                 </ResponsiveNavLink>
                                 {user.role === 'admin' && (
                                     <ResponsiveNavLink

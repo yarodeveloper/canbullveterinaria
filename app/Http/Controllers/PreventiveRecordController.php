@@ -20,6 +20,8 @@ class PreventiveRecordController extends Controller
         if ($monitorType === 'health') {
             $query = PreventiveRecord::query()
                 ->with(['pet.owner', 'veterinarian'])
+                ->where('is_dismissed', false)
+                ->whereHas('pet', fn($q) => $q->whereNull('death_date'))
                 ->when($branchId, fn($q) => $q->where('branch_id', $branchId));
 
             // Filtering
@@ -70,11 +72,14 @@ class PreventiveRecordController extends Controller
         else {
             $query = \App\Models\GroomingOrder::query()
                 ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->where('is_dismissed', false)
                 ->whereNotNull('next_visit_date')
-                // Only most recent order per pet
+                ->whereHas('pet', fn($q) => $q->whereNull('death_date'))
+                // Only most recent order per pet (that is not dismissed)
                 ->whereIn('id', function($q) {
                     $q->selectRaw('MAX(id)')
                       ->from('grooming_orders')
+                      ->where('is_dismissed', false)
                       ->groupBy('pet_id');
                 })
                 ->with(['pet.owner']);
@@ -236,5 +241,21 @@ class PreventiveRecordController extends Controller
         $preventiveRecord->delete();
 
         return back()->with('message', 'Registro eliminado.');
+    }
+
+    public function dismiss(Request $request, $id)
+    {
+        $type = $request->get('type', 'health');
+        $branchId = Auth::user()->branch_id;
+
+        if ($type === 'health') {
+            $record = PreventiveRecord::where('branch_id', $branchId)->findOrFail($id);
+        } else {
+            $record = \App\Models\GroomingOrder::where('branch_id', $branchId)->findOrFail($id);
+        }
+
+        $record->update(['is_dismissed' => true]);
+
+        return back()->with('message', 'Registro descartado del monitor.');
     }
 }

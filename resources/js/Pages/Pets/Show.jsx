@@ -330,14 +330,14 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
         <AuthenticatedLayout
             user={auth.user}
             header={
-                <div className="flex justify-between items-center">
-                    <h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <h2 className="font-semibold text-lg sm:text-xl text-gray-800 dark:text-gray-200 leading-tight truncate w-full">
                         Expediente: {pet.name}
                     </h2>
-                    <div className="flex space-x-1.5 bg-gray-100 dark:bg-gray-800/50 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner">
+                    <div className="flex w-full sm:w-auto overflow-x-auto hide-scrollbar pb-1 sm:pb-0 gap-1.5 bg-gray-100 dark:bg-gray-800/50 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner">
                         <Link
                             href={route('medical-records.create', pet.id)}
-                            className={`inline-flex items-center px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm ${pet.status === 'deceased' ? 'bg-white dark:bg-gray-900 text-red-600 hover:bg-red-500 hover:text-white border-2 border-red-100 group' : 'bg-white dark:bg-gray-900 text-brand-primary hover:bg-brand-primary hover:text-white border-2 border-brand-primary/10 group'}`}
+                            className={`inline-flex items-center px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm shrink-0 ${pet.status === 'deceased' ? 'bg-white dark:bg-gray-900 text-red-600 hover:bg-red-500 hover:text-white border-2 border-red-100 group' : 'bg-white dark:bg-gray-900 text-brand-primary hover:bg-brand-primary hover:text-white border-2 border-brand-primary/10 group'}`}
                             title={pet.status === 'deceased' ? 'Consulta Post-mortem' : 'Nueva Consulta'}
                         >
                             <img src={pet.status === 'deceased' ? "/icons/leaf-svgrepo-com.svg" : "/icons/vet-with-cat-svgrepo-com.svg"} className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" />
@@ -345,7 +345,7 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                         </Link>
                         <Link
                             href={route('hospitalizations.create', { pet_id: pet.id })}
-                            className={`hidden md:inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm ${pet.status === 'deceased' ? 'opacity-50 grayscale cursor-not-allowed bg-gray-50' : 'bg-white dark:bg-gray-900 text-purple-600 hover:bg-purple-600 hover:text-white border-2 border-purple-100 group'}`}
+                            className={`inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm shrink-0 ${pet.status === 'deceased' ? 'opacity-50 grayscale cursor-not-allowed bg-gray-50' : 'bg-white dark:bg-gray-900 text-purple-600 hover:bg-purple-600 hover:text-white border-2 border-purple-100 group'}`}
                             title="Hospitalización"
                             onClick={pet.status === 'deceased' ? (e) => e.preventDefault() : undefined}
                         >
@@ -353,7 +353,7 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                         </Link>
                         <Link
                             href={route('surgeries.create', { pet_id: pet.id })}
-                            className={`hidden md:inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm ${pet.status === 'deceased' ? 'opacity-50 grayscale cursor-not-allowed bg-gray-50' : 'bg-white dark:bg-gray-900 text-blue-600 hover:bg-blue-600 hover:text-white border-2 border-blue-100 group'}`}
+                            className={`inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm shrink-0 ${pet.status === 'deceased' ? 'opacity-50 grayscale cursor-not-allowed bg-gray-50' : 'bg-white dark:bg-gray-900 text-blue-600 hover:bg-blue-600 hover:text-white border-2 border-blue-100 group'}`}
                             title="Programar Cirugía"
                             onClick={pet.status === 'deceased' ? (e) => e.preventDefault() : undefined}
                         >
@@ -363,14 +363,14 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                             <>
                                 <Link
                                     href={route('grooming-orders.create', { pet_id: pet.id })}
-                                    className="hidden md:inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm bg-white dark:bg-gray-900 text-brand-primary hover:bg-brand-primary hover:text-white border-2 border-brand-primary/10 dark:border-brand-primary/40 group"
+                                    className="inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm shrink-0 bg-white dark:bg-gray-900 text-brand-primary hover:bg-brand-primary hover:text-white border-2 border-brand-primary/10 dark:border-brand-primary/40 group"
                                     title="Servicio de Estética / Grooming"
                                 >
                                     <img src="/icons/scissors-svgrepo-com.svg" className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Estética
                                 </Link>
                                 <Link
                                     href={route('euthanasias.create', { pet_id: pet.id })}
-                                    className="hidden md:inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm bg-white dark:bg-gray-900 text-slate-500 hover:bg-slate-800 hover:text-white border-2 border-slate-200 dark:border-slate-700 group"
+                                    className="inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm shrink-0 bg-white dark:bg-gray-900 text-slate-500 hover:bg-slate-800 hover:text-white border-2 border-slate-200 dark:border-slate-700 group"
                                     title="Registrar Eutanasia"
                                 >
                                     <img src="/icons/leaf-svgrepo-com.svg" className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Eutanasia

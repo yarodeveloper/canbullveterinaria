@@ -22,6 +22,7 @@ class PreventiveRecord extends Model
         'notes',
         'veterinarian_id',
         'branch_id',
+        'is_dismissed',
     ];
 
     protected $casts = [

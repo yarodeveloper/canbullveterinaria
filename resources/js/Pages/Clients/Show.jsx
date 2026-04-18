@@ -72,20 +72,20 @@ export default function Show({ auth, client, documentTemplates = [], financialSu
         <AuthenticatedLayout
             user={auth.user}
             header={
-                <div className="flex items-center gap-4 group">
-                    <h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 group">
+                    <h2 className="font-semibold text-lg sm:text-xl text-gray-800 dark:text-gray-200 leading-tight flex flex-wrap items-center gap-2">
                         Perfil de Cliente: <span className={editingState === 'name' ? 'hidden' : 'inline'}>{client.name}</span>
                         {editingState === 'name' ? (
-                            <form className="inline-flex gap-2" onSubmit={handleSave}>
+                            <form className="inline-flex gap-2 w-full sm:w-auto mt-2 sm:mt-0" onSubmit={handleSave}>
                                 <input
                                     type="text"
                                     value={data.name}
                                     onChange={e => setData('name', e.target.value)}
-                                    className="text-lg py-0 px-2 rounded border-gray-300 dark:bg-gray-800 dark:border-gray-600 focus:ring-brand-primary focus:border-brand-primary"
+                                    className="text-base sm:text-lg py-1 px-2 rounded border-gray-300 dark:bg-gray-800 dark:border-gray-600 focus:ring-brand-primary focus:border-brand-primary flex-1 sm:flex-none"
                                     autoFocus
                                 />
-                                <button type="submit" disabled={processing} className="text-sm bg-indigo-600 text-white px-2 py-1 rounded">Guardar</button>
-                                <button type="button" onClick={handleCancel} className="text-sm bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded">X</button>
+                                <button type="submit" disabled={processing} className="text-xs bg-indigo-600 text-white px-3 py-1 rounded font-bold uppercase">Guardar</button>
+                                <button type="button" onClick={handleCancel} className="text-xs bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 px-3 py-1 rounded font-bold">X</button>
                             </form>
                         ) : null}
 
@@ -101,12 +101,12 @@ export default function Show({ auth, client, documentTemplates = [], financialSu
                     <div className="relative">
                         {editingState === 'behavior' ? (
                             <>
-                                <div className="fixed inset-0 z-40" onClick={handleCancel}></div>
-                                <div className="absolute top-0 left-0 mt-8 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 w-[300px] sm:w-[600px] max-w-[90vw]">
+                                <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm sm:bg-transparent sm:backdrop-blur-none" onClick={handleCancel}></div>
+                                <div className="fixed sm:absolute inset-x-4 top-24 sm:inset-auto sm:top-0 sm:right-0 sm:mt-8 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 sm:w-[600px] max-w-full animate-in fade-in zoom-in-95 duration-200">
                                     <div className="flex justify-between items-center mb-4">
-                                        <h3 className="font-bold text-gray-700 dark:text-gray-300">Perfil de Atención</h3>
-                                        <button type="button" onClick={handleCancel} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <h3 className="font-black text-gray-700 dark:text-gray-300 text-[10px] uppercase tracking-widest">Perfil de Atención / Emoción</h3>
+                                        <button type="button" onClick={handleCancel} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 bg-gray-50 dark:bg-gray-700 rounded-full transition">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                                             </svg>
                                         </button>

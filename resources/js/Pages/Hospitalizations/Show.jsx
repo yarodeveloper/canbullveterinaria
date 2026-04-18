@@ -255,6 +255,7 @@ export default function Show({ auth, hospitalization, templates, products = [] }
                                 canManage={canManage && hospitalization.status === 'active'}
                                 title="Tratamiento Base O Fármacos Programados"
                                 iconColor="bg-amber-500"
+                                petWeight={hospitalization.weight || hospitalization.pet?.weight}
                             />
 
                             <div className="flex justify-between items-center bg-slate-50 dark:bg-[#111822]/50 p-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">

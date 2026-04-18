@@ -69,11 +69,20 @@ class GroomingOrderController extends Controller
                 ];
             });
 
+        $services = Product::where('is_service', true)->get(['id', 'name', 'price']);
+        $groomingStyles = \App\Models\GroomingStyle::where('is_active', true)->get(['id', 'name', 'description']);
+
+        $nextVisitDays = (int) (\App\Models\SiteSetting::where('key', 'grooming_next_visit_days')->first()?->value ?? 30);
+        $defaultNextVisitDate = \Carbon\Carbon::now()->addDays($nextVisitDays)->toDateString();
+
         return Inertia::render('Grooming/Index', [
             'groomingOrders' => $groomingOrders,
             'clients' => $clients,
             'pets' => $pets,
             'groomers' => $groomers,
+            'services' => $services,
+            'groomingStyles' => $groomingStyles,
+            'defaultNextVisitDate' => $defaultNextVisitDate,
             'filters' => $request->only(['search'])
         ]);
     }
@@ -83,20 +92,7 @@ class GroomingOrderController extends Controller
         $pet = Pet::with(['owner'])->findOrFail($request->pet_id);
         // Products that are aesthetic services (we assume all services could be used or a subset)
         // Perhaps all is_service products
-        $services = Product::where('is_service', true)
-            ->where(function($q) {
-                $q->where('name', 'like', '%estetic%')
-                  ->orWhere('name', 'like', '%grooming%')
-                  ->orWhere('name', 'like', '%baño%')
-                  ->orWhere('name', 'like', '%corte%')
-                  ->orWhere('name', 'like', '%pelo%');
-            })
-            ->get();
-            
-        // If empty fallback to all services, or all products
-        if ($services->isEmpty()) {
-            $services = Product::where('is_service', true)->get();
-        }
+        $services = Product::where('is_service', true)->get();
 
         $groomers = User::whereHas('roles', function($q) {
             $q->whereIn('name', ['admin', 'veterinarian', 'groomer', 'staff']);
@@ -114,10 +110,13 @@ class GroomingOrderController extends Controller
         $nextVisitDays = (int) (\App\Models\SiteSetting::where('key', 'grooming_next_visit_days')->first()?->value ?? 30);
         $defaultNextVisitDate = \Carbon\Carbon::now()->addDays($nextVisitDays)->toDateString();
 
+        $groomingStyles = \App\Models\GroomingStyle::where('is_active', true)->get();
+
         return Inertia::render('Grooming/Create', [
             'pet' => $pet,
             'services' => $services,
             'groomers' => $groomers,
+            'groomingStyles' => $groomingStyles,
             'appointment_id' => $request->appointment_id,
             'prefill' => $request->only(['groomer_id', 'time']),
             'defaultNextVisitDate' => $defaultNextVisitDate
@@ -139,7 +138,7 @@ class GroomingOrderController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        DB::transaction(function () use ($validated, &$order) {
+        DB::transaction(function () use ($validated, &$order, $request) {
             $order = GroomingOrder::create([
                 'branch_id' => Auth::user()->branch_id ?? 1,
                 'client_id' => $validated['client_id'],
@@ -164,45 +163,43 @@ class GroomingOrderController extends Controller
                     'unit_price' => $product->price,
                     'quantity' => $item['quantity'],
                 ]);
+            }
 
-                // Create POS Pending Charge
-                \App\Models\PendingCharge::create([
-                    'branch_id' => $order->branch_id,
-                    'client_id' => $order->client_id,
-                    'pet_id' => $order->pet_id,
-                    'product_id' => $product->id,
-                    'quantity' => $item['quantity'],
-                    'assigned_user_id' => $order->user_id,
-                    'status' => 'pending',
-                    'notes' => 'Estética: ' . ($validated['notes'] ?? '')
-                ]);
+            // If user chose to complete immediately
+            if ($request->boolean('complete_after')) {
+                $order->update(['status' => 'completed']);
+                
+                // Create Pending Charges for POS
+                foreach ($order->items as $item) {
+                    \App\Models\PendingCharge::create([
+                        'branch_id' => $order->branch_id,
+                        'client_id' => $order->client_id,
+                        'pet_id' => $order->pet_id,
+                        'product_id' => $item->product_id,
+                        'quantity' => $item->quantity,
+                        'assigned_user_id' => $order->user_id,
+                        'status' => 'pending',
+                        'notes' => 'Estética Folio: ' . ($order->folio ?? $order->id),
+                    ]);
+                }
             }
         });
 
-        return redirect()->route('pets.show', $validated['pet_id'])->with('success', 'Orden de estética creada exitosamente.');
+        return redirect()->route('grooming-orders.show', $order->id)->with('success', 'Orden de estética creada exitosamente.');
     }
 
     public function show(GroomingOrder $groomingOrder)
     {
         $groomingOrder->load(['pet.owner', 'user', 'items.product']);
 
-        $services = Product::where('is_service', true)
-            ->where(function($q) {
-                $q->where('name', 'like', '%estetic%')
-                  ->orWhere('name', 'like', '%grooming%')
-                  ->orWhere('name', 'like', '%baño%')
-                  ->orWhere('name', 'like', '%corte%')
-                  ->orWhere('name', 'like', '%pelo%');
-            })
-            ->get();
-            
-        if ($services->isEmpty()) {
-            $services = Product::where('is_service', true)->get();
-        }
+        $services = Product::where('is_service', true)->get();
+
+        $groomingStyles = \App\Models\GroomingStyle::where('is_active', true)->get();
 
         return Inertia::render('Grooming/Show', [
             'order' => $groomingOrder,
-            'services' => $services
+            'services' => $services,
+            'groomingStyles' => $groomingStyles
         ]);
     }
 

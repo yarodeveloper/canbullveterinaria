@@ -20,7 +20,8 @@ class GroomingOrder extends Model
         'arrival_condition',
         'notes',
         'next_visit_date',
-        'paid'
+        'paid',
+        'is_dismissed'
     ];
 
     public function branch() { return $this->belongsTo(Branch::class); }

@@ -63,6 +63,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/grooming-orders/{groomingOrder}', [GroomingOrderController::class, 'update'])->name('grooming-orders.update');
     Route::post('/grooming-orders/{groomingOrder}/complete', [GroomingOrderController::class, 'complete'])->name('grooming-orders.complete');
     Route::get('/grooming-orders/{groomingOrder}/print', [GroomingOrderController::class, 'print'])->name('grooming-orders.print');
+    Route::get('/grooming-orders/{groomingOrder}/ticket', [GroomingOrderController::class, 'print'])->name('grooming-orders.ticket');
+
+    // Grooming Styles Catalog
+    Route::resource('grooming-styles', \App\Http\Controllers\GroomingStyleController::class)->except(['create', 'show', 'edit']);
 
     // Documentos Externos (PDF, Images)
     Route::post('pet-documents', [\App\Http\Controllers\PetDocumentController::class, 'store'])->name('pet-documents.store');
@@ -82,6 +86,7 @@ Route::middleware('auth')->group(function () {
     Route::post('preventive-records', [PreventiveRecordController::class, 'store'])->name('preventive-records.store');
     Route::put('preventive-records/{preventiveRecord}', [PreventiveRecordController::class, 'update'])->name('preventive-records.update');
     Route::delete('preventive-records/{preventiveRecord}', [PreventiveRecordController::class, 'destroy'])->name('preventive-records.destroy');
+    Route::post('preventive-records/{id}/dismiss', [PreventiveRecordController::class, 'dismiss'])->name('preventive-records.dismiss');
 
     // Gestión Web y Sistema
     Route::get('/settings/web', [\App\Http\Controllers\SiteSettingController::class, 'index'])->name('settings.web.index');

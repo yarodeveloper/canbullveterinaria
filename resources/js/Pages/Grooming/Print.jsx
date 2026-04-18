@@ -94,14 +94,14 @@ export default function Print({ auth, order, type }) {
                                 {order.items.map((item, idx) => (
                                     <div key={idx} className="flex justify-between mb-1">
                                         <span className="truncate max-w-[65%]">{item.quantity}x {item.concept}</span>
-                                        <span>${parseFloat(item.subtotal).toLocaleString()}</span>
+                                        <span>${(parseFloat(item.unit_price) * item.quantity).toLocaleString('es-MX', {minimumFractionDigits:2})}</span>
                                     </div>
                                 ))}
                             </div>
 
                             <div className="text-[12px] font-black flex justify-between mb-4 pb-4 border-b border-dashed border-gray-300">
                                 <span>TOTAL</span>
-                                <span>${order.items.reduce((acc, item) => acc + parseFloat(item.subtotal), 0).toLocaleString()}</span>
+                                <span>${order.items.reduce((acc, item) => acc + (parseFloat(item.unit_price) * item.quantity), 0).toLocaleString('es-MX', {minimumFractionDigits:2})}</span>
                             </div>
 
                             {(order.arrival_condition || order.notes) && (
@@ -176,7 +176,7 @@ export default function Print({ auth, order, type }) {
                                             <tr key={idx}>
                                                 <td className="py-6 px-4 font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">{item.concept}</td>
                                                 <td className="py-6 px-4 text-center font-bold text-gray-600">{item.quantity}</td>
-                                                <td className="py-6 px-4 text-right font-black text-gray-900 dark:text-gray-100">${parseFloat(item.subtotal).toLocaleString()}</td>
+                                                <td className="py-6 px-4 text-right font-black text-gray-900 dark:text-gray-100">${(parseFloat(item.unit_price) * item.quantity).toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
                                             </tr>
                                         ))}
                                     </tbody>

@@ -9,11 +9,14 @@ export default function PendingChargesEditor({
     onAddCharge, 
     onRemoveCharge, 
     onUpdateCharge,
+    onSave = null,
+    allowSave = false,
     title = "Cargos a Caja (Punto de Venta)",
     cardBase = "bg-white dark:bg-[#1B2132] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-xl p-6",
     headerTitle = "text-lg font-black tracking-tight flex items-center gap-2 mb-4"
 }) {
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
     const normalize = (str) => (str || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
@@ -36,15 +39,52 @@ export default function PendingChargesEditor({
         setSearchQuery('');
     };
 
+    const handleSave = async () => {
+        if (typeof onSave !== 'function') return;
+        
+        setIsSaving(true);
+        try {
+            await onSave();
+        } catch (error) {
+            console.error("Error saving charges:", error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
         <div className={cardBase + " relative"}>
             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full blur-xl overflow-hidden pointer-events-none"></div>
-            <h3 className={headerTitle + " text-emerald-500 relative z-10"}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {title}
-            </h3>
+            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 relative z-10">
+                <h3 className={headerTitle + " text-emerald-500 !mb-0"}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {title}
+                </h3>
+
+                {(allowSave || typeof onSave === 'function') && charges.length > 0 && (
+                    <button
+                        type="button"
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition shadow-lg shadow-emerald-500/20"
+                    >
+                        {isSaving ? (
+                            <>
+                                <svg className="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                Guardando...
+                            </>
+                        ) : (
+                            <>
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                                Guardar Cargos
+                            </>
+                        )}
+                    </button>
+                )}
+            </div>
             
             <div className="relative z-10 mt-6">
                 <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-2">Añadir Cargos o Servicios</p>

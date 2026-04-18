@@ -401,6 +401,7 @@ export default function Show({ auth, euthanasia: initialEuthanasia, products = [
                             products={products.filter(p => !p.is_service)}
                             canManage={canManage}
                             onSave={handleSaveMeds}
+                            petWeight={euthanasia.weight || euthanasia.pet?.weight}
                         />
 
                         {/* Cargos a Caja */}

@@ -664,6 +664,19 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                                         className="w-full bg-white dark:bg-[#111822] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-[2rem] text-sm p-6 focus:ring-brand-primary focus:border-brand-primary shadow-sm mb-4 min-h-[150px]" 
                                         placeholder="Escribe las indicaciones generales para el propietario (dieta, reposo, cuidados especiales)..."></textarea>
 
+                                    {/* TRATAMIENTO BASE O FÁRMACOS APLICADOS (EN CLÍNICA) */}
+                                    <div className="mb-8">
+                                        <MedicationsEditor 
+                                            title="Tratamiento Base O Fármacos Aplicados (En Clínica)"
+                                            medications={data.applied_medications}
+                                            onChange={(meds) => setData('applied_medications', meds)}
+                                            products={products.filter(p => !p.is_service)}
+                                            canManage={true}
+                                            isAlwaysEditing={true}
+                                            petWeight={data.vital_signs.weight || pet?.weight}
+                                        />
+                                    </div>
+
                                     {/* Listado de Medicamentos/Servicios con estilo unificado */}
                                     <div className="space-y-3 mt-4">
                                         {data.medications.length > 0 && <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-2">Artículos y Servicios Programados (Receta)</p>}

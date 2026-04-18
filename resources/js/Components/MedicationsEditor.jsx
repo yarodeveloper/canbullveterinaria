@@ -5,7 +5,7 @@ function EditSectionBtn({ onClick, active }) {
         <button
             type="button"
             onClick={onClick}
-            title={active ? 'Cancelar edición' : 'Editar sección'}
+            title={active ? 'Cerrar Edición' : 'Editar sección'}
             className={`ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition
                 ${active
                     ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-700'
@@ -15,7 +15,7 @@ function EditSectionBtn({ onClick, active }) {
             {active ? (
                 <>
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-                    Cancelar
+                    Cerrar Edición
                 </>
             ) : (
                 <>
@@ -35,7 +35,8 @@ export default function MedicationsEditor({
     canManage = false, 
     title = "Tratamiento Base O Fármacos Programados", 
     iconColor = "bg-amber-500",
-    isAlwaysEditing = false
+    isAlwaysEditing = false,
+    petWeight = 0
 }) {
     const [isEditing, setIsEditing] = useState(isAlwaysEditing);
     const [saving, setSaving] = useState(false);
@@ -80,8 +81,30 @@ export default function MedicationsEditor({
         triggerChange(updated);
     };
 
+    const calculateTotalDose = (med) => {
+        const conc = parseFloat(med.concentration);
+        const dose = parseFloat(med.dose_mg_kg);
+        const weight = parseFloat(petWeight);
+
+        if (!isNaN(conc) && !isNaN(dose) && !isNaN(weight) && conc > 0) {
+            const result = (dose * weight) / conc;
+            return result.toFixed(2);
+        }
+        return med.total_dose;
+    };
+
     const updateMed = (idx, field, value) => {
-        const updated = editMeds.map((m, i) => i === idx ? { ...m, [field]: value } : m);
+        const updated = editMeds.map((m, i) => {
+            if (i === idx) {
+                const updatedMed = { ...m, [field]: value };
+                // If weight, dose or concentration changed, recalculate total_dose
+                if (field === 'concentration' || field === 'dose_mg_kg') {
+                    updatedMed.total_dose = calculateTotalDose(updatedMed);
+                }
+                return updatedMed;
+            }
+            return m;
+        });
         setEditMeds(updated);
         triggerChange(updated);
     };
@@ -93,9 +116,16 @@ export default function MedicationsEditor({
     };
 
     const handleSave = async () => {
-        setSaving(true);
-        await onSave(editMeds);
-        setSaving(false);
+        if (typeof onSave === 'function') {
+            setSaving(true);
+            try {
+                await onSave(editMeds);
+            } catch (error) {
+                console.error("Error saving medications:", error);
+            } finally {
+                setSaving(false);
+            }
+        }
         setIsEditing(false);
     };
 
@@ -181,19 +211,18 @@ export default function MedicationsEditor({
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                         </button>
                                     </div>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-xs">
                                         {[
-                                            { field: 'concentration', label: 'Concentración', placeholder: 'Ej: 390 mg/mL' },
+                                            { field: 'concentration', label: 'Concentración (Mg/Ml)', placeholder: 'Ej: 390' },
                                             { field: 'dose_mg_kg',    label: 'Dosis (mg/kg)', placeholder: 'Ej: 87' },
-                                            { field: 'total_dose',    label: 'Dosis Total',  placeholder: 'Ej: 87 mg' },
-                                            { field: 'volume_ml',     label: 'Volumen (mL)', placeholder: 'Ej: 5.5' },
+                                            { field: 'total_dose',    label: 'Total (mL)',  placeholder: 'Auto-calculado' },
                                             { field: 'lot_number',    label: 'N° Lote',      placeholder: 'LOT-001' },
                                         ].map(f => (
                                             <div key={f.field}>
                                                 <p className="text-[8px] font-black text-slate-400 uppercase mb-1">{f.label}</p>
                                                 <input value={med[f.field]} onChange={e => updateMed(idx, f.field, e.target.value)}
                                                     placeholder={f.placeholder}
-                                                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-primary" />
+                                                    className={`w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-primary ${f.field === 'total_dose' ? 'font-bold text-brand-primary' : ''}`} />
                                             </div>
                                         ))}
                                         <div>
@@ -208,17 +237,19 @@ export default function MedicationsEditor({
                                         <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Notas</p>
                                         <input value={med.notes} onChange={e => updateMed(idx, 'notes', e.target.value)}
                                             placeholder="Observaciones de aplicación…"
-                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-primary" />
+                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-primary" />
                                     </div>
                                 </div>
                             ))}
                         </div>
                     )}
 
-                    <button disabled={saving} onClick={handleSave}
-                        className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition">
-                        {saving ? 'Guardando…' : '✓ Guardar Medicamentos'}
-                    </button>
+                    {typeof onSave === 'function' && (
+                        <button type="button" disabled={saving} onClick={handleSave}
+                            className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition">
+                            {saving ? 'Guardando…' : '✓ Guardar Medicamentos'}
+                        </button>
+                    )}
                 </div>
             ) : (
                 medications.length === 0 ? (
@@ -228,7 +259,7 @@ export default function MedicationsEditor({
                         <table className="w-full text-xs">
                             <thead>
                                 <tr className="border-b border-slate-100 dark:border-slate-700">
-                                    {['Medicamento', 'Concentración', 'Dosis mg/kg', 'Total', 'Vol. (mL)', 'Vía', 'N° Lote', 'Notas'].map(h => (
+                                    {['Medicamento', 'Conc. (Mg/Ml)', 'Dosis mg/kg', 'Total (mL)', 'Vía', 'N° Lote', 'Notas'].map(h => (
                                         <th key={h} className="pb-2 text-left text-[9px] font-black text-slate-400 uppercase tracking-wider pr-4">{h}</th>
                                     ))}
                                 </tr>
@@ -242,8 +273,7 @@ export default function MedicationsEditor({
                                         </td>
                                         <td className="py-2 pr-4 text-slate-600 dark:text-slate-400">{m.concentration || '—'}</td>
                                         <td className="py-2 pr-4 text-slate-600 dark:text-slate-400">{m.dose_mg_kg || '—'}</td>
-                                        <td className="py-2 pr-4 text-slate-600 dark:text-slate-400">{m.total_dose || '—'}</td>
-                                        <td className="py-2 pr-4 text-slate-600 dark:text-slate-400">{m.volume_ml || '—'}</td>
+                                        <td className="py-2 pr-4 font-bold text-brand-primary">{m.total_dose || '—'}</td>
                                         <td className="py-2 pr-4 font-bold text-slate-700 dark:text-slate-300">{m.route || '—'}</td>
                                         <td className="py-2 pr-4 font-mono text-slate-500">{m.lot_number || '—'}</td>
                                         <td className="py-2 text-slate-500 italic">{m.notes || '—'}</td>

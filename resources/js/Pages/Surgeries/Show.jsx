@@ -390,6 +390,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                                 canManage={canManage && surgery.status !== 'completed'}
                                                 title="Fármacos Pre-Operatorios"
                                                 iconColor="bg-blue-500"
+                                                petWeight={surgery.weight || surgery.pet?.weight}
                                             />
 
                                             <div className="space-y-4">
@@ -538,6 +539,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                                 canManage={canManage && surgery.status !== 'completed'}
                                                 title="Fármacos Intra-Operatorios (Anestesia / Fluidos...)"
                                                 iconColor="bg-amber-500"
+                                                petWeight={surgery.weight || surgery.pet?.weight}
                                             />
 
                                             <div className="pt-6 border-t dark:border-gray-700">
@@ -568,7 +570,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                                         Constantes Post-Operatorias
                                                     </h4>
                                                     {surgery.status !== 'completed' && (
-                                                        <button onClick={savePostVitals} className="text-[9px] bg-gray-100 dark:bg-gray-700 font-bold px-3 py-1 rounded-lg hover:bg-gray-200 transition">
+                                                        <button onClick={savePostVitals} className="text-[9px] bg-gray-100 dark:gray-700 font-bold px-3 py-1 rounded-lg hover:bg-gray-200 transition">
                                                             GUARDAR CONSTANTES
                                                         </button>
                                                     )}
@@ -649,6 +651,7 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                                                 canManage={canManage && surgery.status !== 'completed'}
                                                 title="Fármacos Post-Operatorios / Receta"
                                                 iconColor="bg-emerald-500"
+                                                petWeight={surgery.weight || surgery.pet?.weight}
                                             />
 
                                             <div className="flex justify-between items-center">
