@@ -102,9 +102,9 @@ class DashboardController extends Controller
 
         // --- 1. MÉTRICAS PARA ADMINISTRADORES ---
         if ($role === 'admin') {
-            $revenueMonth = (float) Receipt::whereBetween('date', [$startDate, Carbon::parse($endDate)->endOfDay()])
+            $revenueMonth = (float) CashMovement::where('type', 'in')->whereBetween('created_at', [$startDate, Carbon::parse($endDate)->endOfDay()])
                 ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-                ->sum('total');
+                ->sum('amount');
             $expensesMonth = (float) CashMovement::where('type', 'out')->whereBetween('created_at', [$startDate, Carbon::parse($endDate)->endOfDay()])
                 ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
                 ->sum('amount');
@@ -126,15 +126,15 @@ class DashboardController extends Controller
                 ->select(DB::raw("
                     CASE 
                         WHEN product_categories.name IS NOT NULL THEN product_categories.name
-                        WHEN receipt_items.type = 'product' AND (receipt_items.concept LIKE '%Correa%' OR receipt_items.concept LIKE '%Placa%' OR receipt_items.concept LIKE '%Juguete%') THEN 'Accesorios'
-                        WHEN receipt_items.type = 'product' AND (receipt_items.concept LIKE '%Melox%' OR receipt_items.concept LIKE '%Antibio%' OR receipt_items.concept LIKE '%Med%') THEN 'Farmacia'
-                        WHEN receipt_items.type = 'product' AND (receipt_items.concept LIKE '%Croqueta%' OR receipt_items.concept LIKE '%Lata%' OR receipt_items.concept LIKE '%Alimento%') THEN 'Alimento'
                         WHEN receipt_items.concept LIKE '%Consulta%' OR receipt_items.concept LIKE '%Revisión%' THEN 'Consultas'
                         WHEN receipt_items.concept LIKE '%Cirug%' THEN 'Cirugías'
                         WHEN receipt_items.concept LIKE '%Hosp%' THEN 'Hospitalización'
                         WHEN receipt_items.concept LIKE '%Vacun%' OR receipt_items.concept LIKE '%Vacuna%' THEN 'Vacunas'
-                        WHEN receipt_items.concept LIKE '%Estética%' OR receipt_items.concept LIKE '%Baño%' OR receipt_items.concept LIKE '%Lavado%' OR receipt_items.concept LIKE '%Peluquería%' THEN 'Estética'
-                        ELSE 'Otros (Varios)'
+                        WHEN receipt_items.concept LIKE '%Estética%' OR receipt_items.concept LIKE '%Baño%' OR receipt_items.concept LIKE '%Peluquería%' THEN 'Estética'
+                        WHEN receipt_items.concept LIKE '%Imagen%' OR receipt_items.concept LIKE '%RX%' OR receipt_items.concept LIKE '%Eco%' THEN 'Imagenología'
+                        WHEN receipt_items.concept LIKE '%Lab%' OR receipt_items.concept LIKE '%Analisis%' THEN 'Laboratorio'
+                        WHEN receipt_items.type = 'product' THEN 'Accesorios/Farmacia'
+                        ELSE 'Servicios Varios'
                     END as rubro
                 "), DB::raw("SUM(receipt_items.total) as total"), DB::raw("COUNT(*) as sales_count"))
                 ->groupBy('rubro')
@@ -142,10 +142,11 @@ class DashboardController extends Controller
 
             // Ventas por Mes (Iniciando de Enero a Diciembre del año actual)
             $currentYear = date('Y');
-            $yearlySales = DB::table('receipts')
+            $yearlySales = DB::table('cash_movements')
                 ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-                ->whereYear('date', $currentYear)
-                ->select(DB::raw('MONTH(date) as month'), DB::raw('SUM(total) as revenue'))
+                ->where('type', 'in')
+                ->whereYear('created_at', $currentYear)
+                ->select(DB::raw('MONTH(created_at) as month'), DB::raw('SUM(amount) as revenue'))
                 ->groupBy('month')
                 ->orderBy('month')
                 ->get()
@@ -196,7 +197,7 @@ class DashboardController extends Controller
             // Gráfica semanal
             for ($i = 6; $i >= 0; $i--) {
                 $date = Carbon::today()->subDays($i);
-                $in = Receipt::query()->when($branchId, fn($q) => $q->where('branch_id', $branchId))->whereDate('date', $date)->sum('total');
+                $in = CashMovement::query()->where('type', 'in')->when($branchId, fn($q) => $q->where('branch_id', $branchId))->whereDate('created_at', $date)->sum('amount');
                 $out = CashMovement::query()->where('type', 'out')->when($branchId, fn($q) => $q->where('branch_id', $branchId))->whereDate('created_at', $date)->sum('amount');
                 $data['revenueData'][] = ['name' => $date->translatedFormat('D d'), 'ingresos' => (float) $in, 'egresos' => (float) $out];
             }

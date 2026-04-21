@@ -48,7 +48,7 @@ class CashRegisterController extends Controller
                 $q->where('cash_register_id', $activeRegister->id)->where('status', 'paid');
             })->where('type', 'service')->sum('total');
 
-            $expected = $activeRegister->opening_amount + $receiptsTotal + $incomes - $expenses;
+            $expected = $activeRegister->opening_amount + $incomes - $expenses;
             
             $currentStats = [
                 'receipts_total' => $receiptsTotal,
@@ -128,7 +128,7 @@ class CashRegisterController extends Controller
             ->where('type', 'out')
             ->sum('amount');
             
-        $expectedAmount = $cashRegister->opening_amount + $receiptsTotal + $incomes - $expenses;
+        $expectedAmount = $cashRegister->opening_amount + $incomes - $expenses;
 
         $cashRegister->update([
             'closed_by' => Auth::id(),

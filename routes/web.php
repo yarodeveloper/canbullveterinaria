@@ -138,7 +138,11 @@ Route::middleware('auth')->group(function () {
     // Categorias de productos y servicios
     Route::resource('product-categories', \App\Http\Controllers\ProductCategoryController::class)->except(['create', 'show', 'edit']);
 
-
+    // Cotizador e Inventario Clínico
+    Route::resource('service-templates', \App\Http\Controllers\ServiceTemplateController::class)->except(['create', 'show', 'edit']);
+    Route::resource('quotes', \App\Http\Controllers\QuoteController::class);
+    Route::post('/quotes/{quote}/convert-to-charge', [\App\Http\Controllers\QuoteController::class, 'convertToCharge'])->name('quotes.convert-to-charge');
+    Route::post('/quotes/{quote}/revert-conversion', [\App\Http\Controllers\QuoteController::class, 'revertConversion'])->name('quotes.revert-conversion');
     // Finanzas (Cortes de Caja, Recibos y Movimientos)
     Route::get('/cash-register', [\App\Http\Controllers\CashRegisterController::class, 'index'])->name('cash-register.index');
     Route::post('/cash-register/open', [\App\Http\Controllers\CashRegisterController::class, 'open'])->name('cash-register.open');

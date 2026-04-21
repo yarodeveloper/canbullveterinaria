@@ -75,6 +75,16 @@ class ReceiptController extends Controller
             ->where('status', 'pending')
             ->get();
 
+        // Calcular estadísticas para el "ojito" del saldo
+        $currentStats = null;
+        if ($activeRegister) {
+            $receiptsTotal = Receipt::where('cash_register_id', $activeRegister->id)->where('status', 'paid')->sum('total');
+            $incomes = CashMovement::where('cash_register_id', $activeRegister->id)->where('type', 'in')->sum('amount');
+            $expenses = CashMovement::where('cash_register_id', $activeRegister->id)->where('type', 'out')->sum('amount');
+            $expected = $activeRegister->opening_amount + $incomes - $expenses;
+            $currentStats = ['expected_amount' => $expected];
+        }
+
         return Inertia::render('Finance/Receipts/Create', [
             'clients' => $clients,
             'products' => $products,
@@ -82,6 +92,7 @@ class ReceiptController extends Controller
             'selectedClientId' => $request->client_id,
             'pendingCharges' => $pendingCharges,
             'activeRegister' => $activeRegister,
+            'currentStats' => $currentStats,
             'generalPublicClient' => $generalPublicClient,
             'staff' => $staff,
             'posPrinterName' => \App\Models\SiteSetting::where('key', 'pos_printer_name')->value('value') ?? 'POS-80',
@@ -170,8 +181,16 @@ class ReceiptController extends Controller
             ]);
 
             if (!empty($validated['pending_charge_ids'])) {
-                \App\Models\PendingCharge::whereIn('id', $validated['pending_charge_ids'])
-                    ->update(['status' => 'invoiced']);
+                $charges = \App\Models\PendingCharge::whereIn('id', $validated['pending_charge_ids'])->get();
+                foreach ($charges as $charge) {
+                    $charge->update(['status' => 'invoiced']);
+                    // Si el cargo viene de una cotización, marcarla como cobrada
+                    if ($charge->source_quote_id) {
+                        \App\Models\Quote::where('id', $charge->source_quote_id)
+                            ->where('status', 'Aceptada')
+                            ->update(['status' => 'Cobrada']);
+                    }
+                }
             }
 
             foreach ($validated['items'] as $item) {

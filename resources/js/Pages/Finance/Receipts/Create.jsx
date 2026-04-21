@@ -189,12 +189,12 @@ export default function Create({ auth, clients, products, pets, selectedClientId
             ...d,
             items: [...d.items, {
                 product_id: charge.product_id,
-                concept: charge.product?.name || 'Cargo Pendiente',
-                unit_price: Number(charge.product?.price || 0),
+                concept: charge.description || charge.product?.name || 'Cargo Pendiente',
+                unit_price: Number(charge.price || charge.product?.price || 0),
                 quantity: Number(charge.quantity),
                 tax_iva: charge.product?.tax_iva || (charge.product?.is_service ? 0 : 16),
                 tax_ieps: charge.product?.tax_ieps || 0,
-                type: charge.product?.is_service ? 'service' : 'product',
+                type: (charge.product?.is_service || !charge.product_id) ? 'service' : 'product',
                 assigned_user_id: charge.assigned_user_id || '',
                 notes: charge.notes
             }],
@@ -442,8 +442,8 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                                     className="flex flex-col p-2.5 bg-white dark:bg-slate-800 rounded-xl border border-amber-200 dark:border-amber-800/50 hover:border-amber-500 hover:shadow-lg transition-all text-left group"
                                                 >
                                                     <div className="flex justify-between items-start">
-                                                        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-tight group-hover:text-amber-600 truncate flex-1">{charge.product?.name || 'Servicio'}</span>
-                                                        <span className="text-[10px] font-black text-emerald-600 ml-2 shrink-0">${parseFloat(charge.product?.price || 0).toLocaleString()}</span>
+                                                        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase leading-tight group-hover:text-amber-600 truncate flex-1">{charge.description || charge.product?.name || 'Servicio'}</span>
+                                                        <span className="text-[10px] font-black text-emerald-600 ml-2 shrink-0">${parseFloat(charge.price || charge.product?.price || 0).toLocaleString()}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-slate-700">
                                                         <span className="text-[8px] font-black text-gray-500 uppercase tracking-tighter">Cant: {charge.quantity}</span>
