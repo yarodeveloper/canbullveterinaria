@@ -32,7 +32,16 @@ const TimelineItem = ({ event }) => {
         badgeColor = "text-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800";
         badgeType = "🌿 Prevención";
         dotColor = "bg-emerald-500";
-        title = event.category === "vaccine" ? `Vacuna Aplicada: ${event.product?.name || "N/A"}` : `Desparasitación: ${event.product?.name || "N/A"}`;
+        const treatmentName = event.name || "N/A";
+        if (event.type === "vaccine") {
+            title = `💉 Vacuna: ${treatmentName}`;
+        } else if (event.type === "internal_deworming") {
+            title = `💊 Desparasitación Interna: ${treatmentName}`;
+        } else if (event.type === "external_deworming") {
+            title = `🧴 Desparasitación Externa: ${treatmentName}`;
+        } else {
+            title = `🛡️ Tratamiento: ${treatmentName}`;
+        }
     } else if (event.timeline_type === "surgery") {
         badgeColor = "text-blue-500 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800";
         badgeType = "✂️ Cirugía";
@@ -112,37 +121,57 @@ const TimelineItem = ({ event }) => {
                 </div>
             </div>
 
-            {/* Expansible Content for Vaccines / Preventatives */}
-            {isExpanded && event.timeline_type === "vaccine" && (
-                <div className="pb-5 pt-1 text-sm animate-fade-in">
-                    <div className="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
-                            <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Marca / Lote</p>
-                                <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.brand || "N/A"}{event.lot_number ? ` (Lote: ${event.lot_number})` : ''}</p>
+            {isExpanded && event.timeline_type === "vaccine" && (() => {
+                const typeLabels = {
+                    vaccine: '💉 Vacuna',
+                    internal_deworming: '💊 Desparasitación Interna',
+                    external_deworming: '🧴 Desparasitación Externa',
+                    other: '🛡️ Otro Tratamiento'
+                };
+                const formatSafeDate = (d) => {
+                    if (!d) return null;
+                    const clean = d.toString().split('T')[0];
+                    return new Date(clean + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+                };
+                return (
+                    <div className="pb-5 pt-1 text-sm animate-fade-in">
+                        <div className="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-3">
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Categoría</p>
+                                    <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400">{typeLabels[event.type] || event.type || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Fecha de Aplicación</p>
+                                    <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{formatSafeDate(event.application_date) || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Próxima Dosis</p>
+                                    <p className={`text-xs font-bold ${event.next_due_date && new Date(event.next_due_date.split('T')[0] + 'T12:00:00') < new Date() ? 'text-red-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                                        {event.next_due_date ? formatSafeDate(event.next_due_date) : 'No requerida'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Marca / Lote</p>
+                                    <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.brand || 'N/A'}{event.lot_number ? ` (Lote: ${event.lot_number})` : ''}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Peso</p>
+                                    <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.weight_at_time ? `${event.weight_at_time} kg` : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Aplicador</p>
+                                    <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.veterinarian ? `${event.veterinarian.name} (${roleLabels[event.veterinarian.role] || event.veterinarian.role})` : 'Desconocido'}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Próxima Dosis</p>
-                                <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.next_due_date ? new Date(event.next_due_date).toLocaleDateString() : 'No requerida'}</p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Peso</p>
-                                <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.weight_at_time ? `${event.weight_at_time} kg` : 'N/A'}</p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5 tracking-wider">Aplicador</p>
-                                <p className="text-xs font-bold text-gray-900 dark:text-gray-100">{event.veterinarian ? `${event.veterinarian.name} (${roleLabels[event.veterinarian.role] || event.veterinarian.role})` : "Desconocido"}</p>
+                            <div className="pt-3 mt-1 border-t border-emerald-200/50 dark:border-emerald-800/30">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1 tracking-wider">Observaciones / Notas</p>
+                                <p className="text-[11px] text-gray-600 dark:text-gray-400 italic">{event.notes || 'Sin observaciones registradas.'}</p>
                             </div>
                         </div>
-                        {event.notes && (
-                            <div className="pt-3 mt-1 border-t border-emerald-200/50 dark:border-emerald-800/30">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1 tracking-wider">Notas</p>
-                                <p className="text-[11px] text-gray-600 dark:text-gray-400 italic">{event.notes}</p>
-                            </div>
-                        )}
                     </div>
-                </div>
-            )}
+                );
+            })()}
         </div>
     );
 };

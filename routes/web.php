@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function () {
     Route::put('preventive-records/{preventiveRecord}', [PreventiveRecordController::class, 'update'])->name('preventive-records.update');
     Route::delete('preventive-records/{preventiveRecord}', [PreventiveRecordController::class, 'destroy'])->name('preventive-records.destroy');
     Route::post('preventive-records/{id}/dismiss', [PreventiveRecordController::class, 'dismiss'])->name('preventive-records.dismiss');
+    Route::post('preventive-records/{preventiveRecord}/booster', [PreventiveRecordController::class, 'applyBooster'])->name('preventive-records.booster');
 
     // Gestión Web y Sistema
     Route::get('/settings/web', [\App\Http\Controllers\SiteSettingController::class, 'index'])->name('settings.web.index');

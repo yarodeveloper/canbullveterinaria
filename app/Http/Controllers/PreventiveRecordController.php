@@ -258,4 +258,49 @@ class PreventiveRecordController extends Controller
 
         return back()->with('message', 'Registro descartado del monitor.');
     }
+
+    /**
+     * Aplicar un refuerzo/nueva dosis a un registro preventivo existente.
+     * Crea un nuevo registro para la nueva aplicación y limpia el anterior.
+     */
+    public function applyBooster(Request $request, PreventiveRecord $preventiveRecord)
+    {
+        if ($preventiveRecord->branch_id !== Auth::user()->branch_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'application_date'  => 'required|date',
+            'next_due_date'     => 'nullable|date|after_or_equal:application_date',
+            'lot_number'        => 'nullable|string|max:255',
+            'brand'             => 'nullable|string|max:255',
+            'weight_at_time'    => 'nullable|numeric',
+            'notes'             => 'nullable|string',
+            'veterinarian_id'   => 'nullable|exists:users,id',
+        ]);
+
+        // Crear el nuevo registro (la nueva aplicación / refuerzo)
+        PreventiveRecord::create([
+            'pet_id'           => $preventiveRecord->pet_id,
+            'type'             => $preventiveRecord->type,
+            'name'             => $preventiveRecord->name,
+            'application_date' => $validated['application_date'],
+            'next_due_date'    => $validated['next_due_date'] ?? null,
+            'lot_number'       => $validated['lot_number'] ?? null,
+            'brand'            => $validated['brand'] ?? $preventiveRecord->brand,
+            'weight_at_time'   => $validated['weight_at_time'] ?? null,
+            'notes'            => $validated['notes'] ?? null,
+            'veterinarian_id'  => $validated['veterinarian_id'] ?? Auth::id(),
+            'branch_id'        => Auth::user()->branch_id,
+        ]);
+
+        // Limpiar el registro anterior: ya fue atendido, se descarta del monitor
+        $preventiveRecord->update([
+            'next_due_date' => null,
+            'is_dismissed'  => true,
+        ]);
+
+        return back()->with('message', 'Refuerzo aplicado y registrado con éxito.');
+    }
 }
+

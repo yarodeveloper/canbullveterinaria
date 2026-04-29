@@ -138,6 +138,10 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
     const [editingRecord, setEditingRecord] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
 
+    // Estado y form para modal de Refuerzo
+    const [boosterRecord, setBoosterRecord] = useState(null);
+    const [showBoosterModal, setShowBoosterModal] = useState(false);
+
     const { data: editData, setData: setEditData, put: putUpdate, processing: processingUpdate, reset: resetEdit, errors: editErrors } = useForm({
         type: 'vaccine',
         name: '',
@@ -148,6 +152,16 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
         weight_at_time: '',
         notes: '',
         veterinarian_id: '',
+    });
+
+    const { data: boosterData, setData: setBoosterData, post: postBooster, processing: processingBooster, reset: resetBooster, errors: boosterErrors } = useForm({
+        application_date: new Date().toISOString().split('T')[0],
+        next_due_date: '',
+        lot_number: '',
+        brand: '',
+        weight_at_time: pet.weight || '',
+        notes: '',
+        veterinarian_id: auth.user.id,
     });
 
     const openEditModal = (record) => {
@@ -173,6 +187,42 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                 setShowEditModal(false);
                 setEditingRecord(null);
                 resetEdit();
+            }
+        });
+    };
+
+    const openBoosterModal = (record) => {
+        setBoosterRecord(record);
+        // Pre-calcular próximo refuerzo basado en el intervalo original
+        let nextDate = '';
+        if (record.next_due_date) {
+            // Si ya hay una fecha de refuerzo, calculamos el intervalo que tuvo el registro anterior
+            const applied = new Date(record.application_date?.split('T')[0] + 'T12:00:00');
+            const due = new Date(record.next_due_date?.split('T')[0] + 'T12:00:00');
+            const diffDays = Math.round((due - applied) / (1000 * 60 * 60 * 24));
+            const newNext = new Date();
+            newNext.setDate(newNext.getDate() + diffDays);
+            nextDate = newNext.toISOString().split('T')[0];
+        }
+        setBoosterData({
+            application_date: new Date().toISOString().split('T')[0],
+            next_due_date: nextDate,
+            lot_number: '',
+            brand: record.brand || '',
+            weight_at_time: pet.weight || record.weight_at_time || '',
+            notes: '',
+            veterinarian_id: auth.user.id,
+        });
+        setShowBoosterModal(true);
+    };
+
+    const handleBoosterSubmit = (e) => {
+        e.preventDefault();
+        postBooster(route('preventive-records.booster', boosterRecord.id), {
+            onSuccess: () => {
+                setShowBoosterModal(false);
+                setBoosterRecord(null);
+                resetBooster();
             }
         });
     };
@@ -235,29 +285,45 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                                         <span>{typeIcons[type]}</span> {label}
                                     </h4>
                                     <div className="space-y-4">
-                                        {records.map(record => (
-                                            <div key={record.id} className="group flex justify-between items-start">
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="font-extrabold text-sm text-gray-900 dark:text-gray-100">{record.name}</p>
-                                                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-all">
-                                                            <button onClick={() => openEditModal(record)} className="text-gray-300 hover:text-indigo-500 transition-all" title="Editar">
-                                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                                            </button>
-                                                            <button onClick={() => deleteRecord(record.id)} className="text-gray-300 hover:text-red-500 transition-all" title="Eliminar">
-                                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                            </button>
+                                        {records.map(record => {
+                                            const appDateStr = record.application_date ? record.application_date.split('T')[0] : null;
+                                            const dueDateStr = record.next_due_date ? record.next_due_date.split('T')[0] : null;
+                                            const isOverdue = dueDateStr && new Date(dueDateStr + 'T12:00:00') < new Date();
+                                            return (
+                                                <div key={record.id} className="group flex justify-between items-start">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <p className="font-extrabold text-sm text-gray-900 dark:text-gray-100">{record.name}</p>
+                                                            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-all">
+                                                                <button onClick={() => openEditModal(record)} className="text-gray-300 hover:text-indigo-500 transition-all" title="Editar">
+                                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                                </button>
+                                                                <button onClick={() => deleteRecord(record.id)} className="text-gray-300 hover:text-red-500 transition-all" title="Eliminar">
+                                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                                </button>
+                                                            </div>
                                                         </div>
+                                                        <p className="text-[11px] text-gray-400 mt-0.5">Última: <span className="text-gray-500 dark:text-gray-300">{appDateStr ? new Date(appDateStr + 'T12:00:00').toLocaleDateString('es-ES') : 'N/A'}</span></p>
                                                     </div>
-                                                    <p className="text-[11px] text-gray-400 mt-0.5">Última: <span className="text-gray-500 dark:text-gray-300">{new Date(record.application_date).toLocaleDateString('es-ES')}</span></p>
+                                                    {dueDateStr && (
+                                                        <div className="text-right ml-2 shrink-0 flex flex-col items-end gap-1.5">
+                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded shadow-sm ${isOverdue ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : 'bg-gray-800 text-yellow-400 dark:bg-gray-900'}`}>
+                                                                {isOverdue ? '❗Vencida' : 'Próx'}: {new Date(dueDateStr + 'T12:00:00').toLocaleDateString('es-ES')}
+                                                            </span>
+                                                            {pet.status !== 'deceased' && (
+                                                                <button
+                                                                    onClick={() => openBoosterModal(record)}
+                                                                    className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${isOverdue ? 'bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/30' : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-md shadow-emerald-500/30'}`}
+                                                                    title="Registrar refuerzo / nueva dosis"
+                                                                >
+                                                                    ↻ Aplicar Refuerzo
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {record.next_due_date && (
-                                                    <div className="text-right">
-                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded shadow-sm ${new Date(record.next_due_date) < new Date() ? 'text-red-500 bg-red-50' : 'bg-gray-800 text-yellow-400 dark:bg-gray-900'}`}>{new Date(record.next_due_date) < new Date() ? 'Vencida' : 'Próx'}: {new Date(record.next_due_date).toLocaleDateString('es-ES')}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             );
@@ -527,6 +593,83 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
                                 <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 py-3 border border-slate-200 dark:border-gray-700 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition">Cancelar</button>
                                 <button type="submit" disabled={processingUpdate} className="flex-[2] py-3 bg-brand-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-primary/20">
                                     {processingUpdate ? 'Guardando...' : 'Actualizar Aplicación'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Aplicar Refuerzo */}
+            {showBoosterModal && boosterRecord && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-emerald-600 text-white">
+                            <div>
+                                <h3 className="font-black uppercase tracking-widest text-xs">↻ Aplicar Refuerzo / Nueva Dosis</h3>
+                                <p className="text-[9px] text-white/70 uppercase font-black tracking-tighter mt-0.5">{boosterRecord.name} — {pet.name}</p>
+                            </div>
+                            <button onClick={() => setShowBoosterModal(false)} className="text-xl font-black transition hover:scale-110">×</button>
+                        </div>
+
+                        {/* Info del registro original */}
+                        <div className="px-6 pt-4">
+                            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 rounded-xl p-3 text-xs flex gap-4">
+                                <div>
+                                    <p className="text-[9px] font-black text-emerald-600 uppercase tracking-wider">Registro anterior</p>
+                                    <p className="font-bold text-gray-700 dark:text-gray-300">{boosterRecord.name}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] font-black text-emerald-600 uppercase tracking-wider">Aplicado el</p>
+                                    <p className="font-bold text-gray-700 dark:text-gray-300">
+                                        {boosterRecord.application_date ? new Date(boosterRecord.application_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-ES') : 'N/A'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] font-black text-red-500 uppercase tracking-wider">Vencía</p>
+                                    <p className="font-bold text-red-600">
+                                        {boosterRecord.next_due_date ? new Date(boosterRecord.next_due_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-ES') : 'N/A'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleBoosterSubmit} className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Fecha de Aplicación (Hoy)</label>
+                                    <input type="date" value={boosterData.application_date} onChange={e => setBoosterData('application_date', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-xs font-bold p-3" required />
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Próximo Refuerzo</label>
+                                    <input type="date" value={boosterData.next_due_date} onChange={e => setBoosterData('next_due_date', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-xs font-bold p-3" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Lote</label>
+                                    <input type="text" value={boosterData.lot_number} onChange={e => setBoosterData('lot_number', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-[10px] p-3" />
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Marca</label>
+                                    <input type="text" value={boosterData.brand} onChange={e => setBoosterData('brand', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-[10px] p-3" />
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Peso (kg)</label>
+                                    <input type="number" step="0.01" value={boosterData.weight_at_time} onChange={e => setBoosterData('weight_at_time', e.target.value)} className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-[10px] p-3" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5 px-1">Observaciones / Notas Clínicas</label>
+                                <textarea value={boosterData.notes} onChange={e => setBoosterData('notes', e.target.value)} rows="2" placeholder="Reacciones, lote de vacuna, peso del paciente..." className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 shadow-sm text-xs p-3"></textarea>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button type="button" onClick={() => setShowBoosterModal(false)} className="flex-1 py-3 border border-slate-200 dark:border-gray-700 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition">Cancelar</button>
+                                <button type="submit" disabled={processingBooster} className="flex-[2] py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
+                                    {processingBooster ? 'Guardando...' : '✓ Confirmar Aplicación del Refuerzo'}
                                 </button>
                             </div>
                         </form>

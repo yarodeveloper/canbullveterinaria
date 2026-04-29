@@ -206,6 +206,16 @@ class AppointmentController extends Controller
         $appointment->status = 'scheduled';
         $appointment->save();
 
+        // Si es cita de Estética/Grooming, auto-descartar el monitor de estética para esta mascota
+        if ($validated['type'] === 'grooming') {
+            \App\Models\GroomingOrder::where('pet_id', $validated['pet_id'])
+                ->where('is_dismissed', false)
+                ->whereNotNull('next_visit_date')
+                ->latest()
+                ->first()
+                ?->update(['is_dismissed' => true]);
+        }
+
         return redirect()->route('appointments.index')
             ->with('message', 'Cita agendada correctamente.');
     }
