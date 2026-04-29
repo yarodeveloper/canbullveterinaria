@@ -109,6 +109,33 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                normalizeString(pet.owner?.name).includes(normalizedSearch);
     }).slice(0, 10); // Aumentado a 10 para mejor visibilidad
 
+    // Leer prefill params de la URL (ej: ?prefill_pet_id=2&prefill_type=grooming)
+    // Se usa para abrir el modal de cita desde el monitor de estética.
+    React.useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const prefillPetId = urlParams.get('prefill_pet_id');
+        const prefillType = urlParams.get('prefill_type');
+        if (prefillPetId) {
+            const pet = pets.find(p => String(p.id) === String(prefillPetId));
+            const defaultTime = `${selectedDate}T09:00`;
+            // Inertia useForm: setData acepta objeto completo para actualizar múltiples campos
+            setCreateData({
+                pet_id: prefillPetId,
+                type: prefillType || 'grooming',
+                start_time: defaultTime,
+                duration: '30',
+                veterinarian_id: '',
+                reason: '',
+            });
+            if (pet) {
+                setSearchTerm(`${pet.name} (${pet.owner?.name || '---'})`);
+            }
+            setIsCreateModalOpen(true);
+            // Limpiar los params de la URL sin recargar la página
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+    }, []);
+
     const openCreateModal = (dateStr) => {
         const defaultTime = `${dateStr}T09:00`;
         setCreateData('start_time', defaultTime);

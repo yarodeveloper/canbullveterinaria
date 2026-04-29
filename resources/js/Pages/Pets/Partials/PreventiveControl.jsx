@@ -128,6 +128,15 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
         return acc;
     }, {});
 
+    // Ordenar cada grupo por fecha de aplicación descendente (más reciente primero)
+    Object.keys(groupedRecords).forEach(type => {
+        groupedRecords[type].sort((a, b) => {
+            const dateA = a.application_date ? new Date(a.application_date.split('T')[0]) : new Date(0);
+            const dateB = b.application_date ? new Date(b.application_date.split('T')[0]) : new Date(0);
+            return dateB - dateA;
+        });
+    });
+
     const typeLabels = {
         vaccine: 'Vacuna',
         internal_deworming: 'Desparasitación Interna',
@@ -604,7 +613,7 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
             {showBoosterModal && boosterRecord && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="bg-white dark:bg-gray-800 rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-emerald-600 text-white">
+                        <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-brand-primary text-white">
                             <div>
                                 <h3 className="font-black uppercase tracking-widest text-xs">↻ Aplicar Refuerzo / Nueva Dosis</h3>
                                 <p className="text-[9px] text-white/70 uppercase font-black tracking-tighter mt-0.5">{boosterRecord.name} — {pet.name}</p>
@@ -614,13 +623,13 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
 
                         {/* Info del registro original */}
                         <div className="px-6 pt-4">
-                            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 rounded-xl p-3 text-xs flex gap-4">
+                            <div className="bg-brand-primary/5 dark:bg-brand-primary/10 border border-brand-primary/10 dark:border-brand-primary/20 rounded-xl p-3 text-xs flex gap-4">
                                 <div>
-                                    <p className="text-[9px] font-black text-emerald-600 uppercase tracking-wider">Registro anterior</p>
+                                    <p className="text-[9px] font-black text-brand-primary uppercase tracking-wider">Registro anterior</p>
                                     <p className="font-bold text-gray-700 dark:text-gray-300">{boosterRecord.name}</p>
                                 </div>
                                 <div>
-                                    <p className="text-[9px] font-black text-emerald-600 uppercase tracking-wider">Aplicado el</p>
+                                    <p className="text-[9px] font-black text-brand-primary uppercase tracking-wider">Aplicado el</p>
                                     <p className="font-bold text-gray-700 dark:text-gray-300">
                                         {boosterRecord.application_date ? new Date(boosterRecord.application_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-ES') : 'N/A'}
                                     </p>
@@ -668,7 +677,7 @@ export default function PreventiveControl({ pet, auth, protocols = [] }) {
 
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setShowBoosterModal(false)} className="flex-1 py-3 border border-slate-200 dark:border-gray-700 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition">Cancelar</button>
-                                <button type="submit" disabled={processingBooster} className="flex-[2] py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
+                                <button type="submit" disabled={processingBooster} className="flex-[2] py-3 bg-brand-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-primary/20 flex items-center justify-center gap-2">
                                     {processingBooster ? 'Guardando...' : '✓ Confirmar Aplicación del Refuerzo'}
                                 </button>
                             </div>
