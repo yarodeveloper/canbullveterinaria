@@ -165,8 +165,8 @@ export default function Create({ auth, clients, products, pets, selectedClientId
         if (percent <= 0) return false;
         
         const today = new Date().toISOString().split('T')[0];
-        const start = product.discount_start_date;
-        const end = product.discount_end_date;
+        const start = product.discount_start_date ? product.discount_start_date.substring(0, 10) : null;
+        const end = product.discount_end_date ? product.discount_end_date.substring(0, 10) : null;
 
         if (start && today < start) return false;
         if (end && today > end) return false;

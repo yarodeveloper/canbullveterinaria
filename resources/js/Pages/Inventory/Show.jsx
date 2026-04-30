@@ -232,21 +232,25 @@ export default function Show({ auth, product, transactions, categories }) {
                                     </div>
 
                                     {parseFloat(product.discount_percent) > 0 && (
-                                        <div className={`mt-3 p-3 rounded-2xl border ${product.has_active_discount ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-slate-100 border-slate-200 opacity-60'} transition-all`}>
+                                        <div className={`mt-4 p-4 rounded-2xl border-2 ${product.has_active_discount ? 'bg-red-50 border-red-200' : 'bg-slate-200 border-slate-300 opacity-80'} transition-all`}>
                                             <div className="flex justify-between items-center mb-2">
-                                                <p className={`text-[9px] font-black uppercase tracking-widest ${product.has_active_discount ? 'text-emerald-600' : 'text-slate-500'}`}>
-                                                    {product.has_active_discount ? '⚡ Descuento Activo' : '⌛ Descuento Programado/Vencido'}
+                                                <p className={`text-[10px] font-black uppercase tracking-[0.15em] ${product.has_active_discount ? 'text-red-600' : 'text-slate-700'}`}>
+                                                    {product.has_active_discount ? '🔥 OFERTA ACTIVA' : '⛔ DESCUENTO VENCIDO/INACTIVO'}
                                                 </p>
-                                                <span className={`text-xs font-black ${product.has_active_discount ? 'text-emerald-700' : 'text-slate-600'}`}>{product.discount_percent}%</span>
+                                                <span className={`text-lg font-black ${product.has_active_discount ? 'text-red-600' : 'text-slate-800'}`}>
+                                                    -{product.discount_percent}%
+                                                </span>
                                             </div>
-                                            <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-6">
                                                 <div className="flex-1">
-                                                    <p className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter">Desde</p>
-                                                    <p className="text-[10px] font-black text-slate-700 dark:text-slate-300">{product.discount_start_date || 'N/A'}</p>
+                                                    <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Válido Hasta</p>
+                                                    <p className="text-xs font-black text-slate-800 dark:text-slate-200">{product.discount_end_date || 'SIN FECHA LÍMITE'}</p>
                                                 </div>
-                                                <div className="flex-1 border-l dark:border-slate-800 pl-4">
-                                                    <p className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter">Hasta</p>
-                                                    <p className="text-[10px] font-black text-slate-700 dark:text-slate-300">{product.discount_end_date || 'N/A'}</p>
+                                                <div className="flex-1 border-l border-slate-300 dark:border-slate-700 pl-6">
+                                                    <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Precio Final</p>
+                                                    <p className="text-sm font-black text-red-600">
+                                                        ${parseFloat(product.discounted_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>

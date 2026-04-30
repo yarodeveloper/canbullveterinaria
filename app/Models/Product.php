@@ -60,10 +60,10 @@ class Product extends Model
         if ($percent <= 0) return false;
         
         $today = date('Y-m-d');
-        $start = $this->discount_start_date; // Ya viene como YYYY-MM-DD
-        $end = $this->discount_end_date;
+        $start = $this->discount_start_date ? substr($this->discount_start_date, 0, 10) : null;
+        $end = $this->discount_end_date ? substr($this->discount_end_date, 0, 10) : null;
 
-        // Validaciones simples de fecha (string comparison es segura para YYYY-MM-DD)
+        // Validaciones de rango
         if ($start && $today < $start) return false;
         if ($end && $today > $end) return false;
 
