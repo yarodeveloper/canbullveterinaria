@@ -160,9 +160,24 @@ export default function Create({ auth, clients, products, pets, selectedClientId
         else loadClientFromPet(option);
     };
 
+    const checkActiveDiscount = (product) => {
+        const percent = parseFloat(product.discount_percent || 0);
+        if (percent <= 0) return false;
+        
+        const today = new Date().toISOString().split('T')[0];
+        const start = product.discount_start_date;
+        const end = product.discount_end_date;
+
+        if (start && today < start) return false;
+        if (end && today > end) return false;
+
+        return true;
+    };
+
     const handleProductSelect = (product) => {
-        const finalPrice = product.has_active_discount ? Number(product.discounted_price) : Number(product.price);
-        const discountAmount = product.has_active_discount ? Number(product.price) - Number(product.discounted_price) : 0;
+        const hasDiscount = checkActiveDiscount(product);
+        const finalPrice = hasDiscount ? Number(product.discounted_price || (product.price * (1 - product.discount_percent / 100))) : Number(product.price);
+        const discountAmount = hasDiscount ? Number(product.price) - finalPrice : 0;
         
         // Buscar si ya existe en el carrito
         const existingItemIndex = data.items.findIndex(item => item.product_id === product.id && item.type === 'product');

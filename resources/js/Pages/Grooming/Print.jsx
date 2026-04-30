@@ -124,9 +124,16 @@ export default function Print({ auth, order, type }) {
                             <div className="text-center text-[9px] uppercase space-y-1">
                                 <p>Por favor pase a caja para realizar su pago.</p>
                                 <p className="font-bold mt-2 pt-2">¡Gracias por su preferencia!</p>
+                                {/* Forzado de avance de papel físico */}
+                                <div style={{ height: `${settings?.paper_feed || 30}mm`, overflow: 'hidden' }}>
+                                    {Array.from({ length: Math.ceil((settings?.paper_feed || 30) / 4) }).map((_, i) => (
+                                        <div key={i} style={{ height: '4mm' }}>&nbsp;</div>
+                                    ))}
+                                </div>
+
+                                {/* Comando de corte para impresoras compatibles */}
+                                <div className="page-break-auto-cut" style={{ pageBreakAfter: 'always', clear: 'both' }}></div>
                             </div>
-                            {/* Disparador para auto-corte */}
-                            <div className="hidden print:block text-transparent" style={{ pageBreakAfter: 'always' }}>&nbsp;</div>
                         </div>
                     ) : (
                         /* STANDARD A4 FORMAT */

@@ -193,12 +193,18 @@ export default function Print({ receipt, posPrinterName, posTicketPreview }) {
                     }
                     .ticket-container {
                         box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
-                        padding-bottom: ${settings.pos_ticket_paper_feed || 30}mm !important;
                     }
                 `}} />
 
-                {/* Espacio para el corte (Paper Feed) - Forzado con contenido invisible y salto de página */}
-                <div className="hidden print:block text-transparent" style={{ pageBreakAfter: 'always' }}>&nbsp;</div>
+                {/* Forzado de avance de papel físico */}
+                <div style={{ height: `${settings?.paper_feed || 30}mm`, overflow: 'hidden' }}>
+                    {Array.from({ length: Math.ceil((settings?.paper_feed || 30) / 4) }).map((_, i) => (
+                        <div key={i} style={{ height: '4mm' }}>&nbsp;</div>
+                    ))}
+                </div>
+
+                {/* Comando de corte para impresoras compatibles */}
+                <div className="page-break-auto-cut" style={{ pageBreakAfter: 'always', clear: 'both' }}></div>
             </div>
         </div>
     );
