@@ -151,15 +151,21 @@ export default function Index({ auth, quotes, filters }) {
                                                 {[
                                                     { status: 'Enviada',   icon: '/icons/envelope-svgrepo-com.svg' },
                                                     { status: 'Aceptada',  icon: '/icons/thumb-up-svgrepo-com.svg' },
-                                                    { status: 'Rechazada', icon: '/icons/delete-svgrepo-com.svg' },
-                                                ].filter(a => a.status !== quote.status && quote.status !== 'Cobrada').map(({ status, icon }) => (
+                                                    { status: 'Rechazada', icon: null, isX: true },
+                                                ].filter(a => a.status !== quote.status && quote.status !== 'Cobrada').map(({ status, icon, isX }) => (
                                                     <button
                                                         key={status}
                                                         onClick={(e) => changeStatus(e, quote.id, status)}
                                                         title={`Marcar como ${status}`}
-                                                        className="w-8 h-8 rounded-xl bg-white/20 hover:bg-white flex items-center justify-center text-white hover:text-brand-primary transition border border-white/30 hover:border-white"
+                                                        className={`w-8 h-8 rounded-xl bg-white/20 hover:bg-white flex items-center justify-center text-white hover:text-brand-primary transition border border-white/30 hover:border-white ${status === 'Rechazada' ? 'hover:text-red-500 hover:bg-red-50' : ''}`}
                                                     >
-                                                        <img src={icon} className="w-4 h-4 brightness-0 invert group-hover:brightness-100 group-hover:invert-0" alt={status} />
+                                                        {isX ? (
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                                            </svg>
+                                                        ) : (
+                                                            <img src={icon} className="w-4 h-4 brightness-0 invert group-hover:brightness-100 group-hover:invert-0" alt={status} />
+                                                        )}
                                                     </button>
                                                 ))}
 

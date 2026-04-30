@@ -51,7 +51,7 @@ export default function Print({ auth, order, type }) {
                             .print\\:border-none { border: none !important; }
                             main { padding: 0 !important; margin: 0 !important; }
                             .print\\:p-0 { padding: 0 !important; }
-                            ${isTicket ? '.ticket-container { width: 100% !important; padding: 10px !important; box-shadow: none !important; }' : ''}
+                            ${isTicket ? `.ticket-container { width: 100% !important; padding: 10px !important; box-shadow: none !important; padding-bottom: ${settings.pos_ticket_paper_feed || 30}mm !important; }` : ''}
                         }
                     `}} />
 
@@ -125,11 +125,8 @@ export default function Print({ auth, order, type }) {
                                 <p>Por favor pase a caja para realizar su pago.</p>
                                 <p className="font-bold mt-2 pt-2">¡Gracias por su preferencia!</p>
                             </div>
-                            {/* Espacio para el corte (Paper Feed) */}
-                            <div 
-                                className="hidden print:block" 
-                                style={{ height: `${settings.pos_ticket_paper_feed || 30}mm` }}
-                            ></div>
+                            {/* Disparador para auto-corte */}
+                            <div className="hidden print:block text-transparent" style={{ pageBreakAfter: 'always' }}>&nbsp;</div>
                         </div>
                     ) : (
                         /* STANDARD A4 FORMAT */

@@ -63,7 +63,7 @@ export default function Index({ auth, products, categories, filters }) {
         is_controlled: false,
         is_service: false,
         discount_percent: 0,
-        discount_start_date: '',
+        discount_start_date: new Date().toISOString().split('T')[0],
         discount_end_date: '',
     });
 
@@ -81,6 +81,23 @@ export default function Index({ auth, products, categories, filters }) {
 
     const submitProduct = (e) => {
         e.preventDefault();
+
+        // Validación de fechas de descuento
+        if (parseFloat(data.discount_percent) > 0) {
+            if (!data.discount_start_date) {
+                alert('La fecha de inicio del descuento es requerida.');
+                return;
+            }
+            if (!data.discount_end_date) {
+                alert('La fecha de fin del descuento es requerida para aplicar el porcentaje.');
+                return;
+            }
+            if (new Date(data.discount_end_date) < new Date(data.discount_start_date)) {
+                alert('La fecha de fin no puede ser menor a la fecha de inicio.');
+                return;
+            }
+        }
+
         if (editingProduct) {
             router.put(route('inventory.update', editingProduct.id), data, {
                 onSuccess: () => {

@@ -193,14 +193,12 @@ export default function Print({ receipt, posPrinterName, posTicketPreview }) {
                     }
                     .ticket-container {
                         box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+                        padding-bottom: ${settings.pos_ticket_paper_feed || 30}mm !important;
                     }
                 `}} />
 
-                {/* Espacio para el corte (Paper Feed) */}
-                <div 
-                    className="hidden print:block" 
-                    style={{ height: `${settings.pos_ticket_paper_feed || 30}mm` }}
-                ></div>
+                {/* Espacio para el corte (Paper Feed) - Forzado con contenido invisible y salto de página */}
+                <div className="hidden print:block text-transparent" style={{ pageBreakAfter: 'always' }}>&nbsp;</div>
             </div>
         </div>
     );
