@@ -171,13 +171,13 @@ export default function Print({ receipt, posPrinterName, posTicketPreview }) {
                         )}
                     </div>
 
-                    <div className="mt-3 text-[7px] text-gray-500 italic text-left px-2">
+                    <div className="mt-3 text-[9px] text-black font-bold text-left px-2 italic">
                         <p>* Producto con impuestos desglosados (IVA/IEPS)</p>
                     </div>
 
                     <div className="mt-4 border-t border-dashed border-black pt-4">
-                        <p className="font-bold italic">¡Gracias por su preferencia!</p>
-                        <p className="text-[9px] mt-1 text-gray-600 uppercase">Salud y bienestar para tu mejor amigo</p>
+                        <p className="font-black italic text-black uppercase">¡Gracias por su preferencia!</p>
+                        <p className="text-[10px] mt-1 text-black font-black uppercase">Salud y bienestar para tu mejor amigo</p>
                     </div>
                 </div>
 
@@ -205,10 +205,13 @@ export default function Print({ receipt, posPrinterName, posTicketPreview }) {
                     }
                 `}} />
 
-                {/* Forzado de avance de papel físico */}
-                <div style={{ height: `${settings?.paper_feed || 30}mm`, overflow: 'hidden' }}>
-                    {Array.from({ length: Math.ceil((settings?.paper_feed || 30) / 4) }).map((_, i) => (
-                        <div key={i} style={{ height: '4mm' }}>&nbsp;</div>
+                {/* Forzado de avance de papel físico con caracteres reales */}
+                <div className="print-feed-area" style={{ marginTop: '5mm' }}>
+                    {Array.from({ length: Math.ceil((settings?.paper_feed || 30) / 5) }).map((_, i) => (
+                        <div key={i} className="text-[10px] text-black/10 flex justify-between overflow-hidden h-[5mm]">
+                            <span>.</span>
+                            <span>.</span>
+                        </div>
                     ))}
                 </div>
 

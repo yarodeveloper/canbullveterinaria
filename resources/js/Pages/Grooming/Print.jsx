@@ -124,10 +124,13 @@ export default function Print({ auth, order, type }) {
                             <div className="text-center text-[9px] uppercase space-y-1">
                                 <p>Por favor pase a caja para realizar su pago.</p>
                                 <p className="font-bold mt-2 pt-2">¡Gracias por su preferencia!</p>
-                                {/* Forzado de avance de papel físico */}
-                                <div style={{ height: `${settings?.paper_feed || 30}mm`, overflow: 'hidden' }}>
-                                    {Array.from({ length: Math.ceil((settings?.paper_feed || 30) / 4) }).map((_, i) => (
-                                        <div key={i} style={{ height: '4mm' }}>&nbsp;</div>
+                                {/* Forzado de avance de papel físico con caracteres reales */}
+                                <div className="print-feed-area" style={{ marginTop: '5mm' }}>
+                                    {Array.from({ length: Math.ceil((settings?.paper_feed || 30) / 5) }).map((_, i) => (
+                                        <div key={i} className="text-[10px] text-black/10 flex justify-between overflow-hidden h-[5mm]">
+                                            <span>.</span>
+                                            <span>.</span>
+                                        </div>
                                     ))}
                                 </div>
 
