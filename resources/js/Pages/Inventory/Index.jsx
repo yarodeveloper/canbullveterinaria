@@ -62,6 +62,9 @@ export default function Index({ auth, products, categories, filters }) {
         tax_ieps: 0,
         is_controlled: false,
         is_service: false,
+        discount_percent: 0,
+        discount_start_date: '',
+        discount_end_date: '',
     });
 
     const getBasePrice = (final, iva, ieps) => {
@@ -117,6 +120,9 @@ export default function Index({ auth, products, categories, filters }) {
             tax_ieps: product.tax_ieps || 0,
             is_controlled: !!product.is_controlled,
             is_service: !!product.is_service,
+            discount_percent: product.discount_percent || 0,
+            discount_start_date: product.discount_start_date || '',
+            discount_end_date: product.discount_end_date || '',
         });
         setShowCreateModal(true);
     };
@@ -447,6 +453,56 @@ export default function Index({ auth, products, categories, filters }) {
                                     />
                                     {errors.tax_ieps && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.tax_ieps}</p>}
                                 </div>
+                            </div>
+
+                            <div className="p-4 bg-brand-primary/5 dark:bg-brand-primary/10 rounded-2xl border border-brand-primary/10 space-y-4">
+                                <p className="text-[10px] font-black text-brand-primary uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                    <span className="text-sm">🏷️</span> Configuración de Descuento
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Porcentaje (%)</label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                value={data.discount_percent}
+                                                onChange={e => setData('discount_percent', e.target.value)}
+                                                className="w-full bg-white dark:bg-slate-900 border-none rounded-xl py-2 px-4 focus:ring-2 focus:ring-brand-primary font-black text-sm text-center shadow-sm"
+                                                placeholder="0"
+                                                min="0"
+                                                max="100"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">%</span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha Inicio</label>
+                                        <input
+                                            type="date"
+                                            value={data.discount_start_date}
+                                            onChange={e => setData('discount_start_date', e.target.value)}
+                                            className="w-full bg-white dark:bg-slate-900 border-none rounded-xl py-2 px-3 focus:ring-2 focus:ring-brand-primary font-bold text-[10px] shadow-sm uppercase"
+                                            disabled={parseFloat(data.discount_percent) <= 0}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha Fin</label>
+                                        <input
+                                            type="date"
+                                            value={data.discount_end_date}
+                                            onChange={e => setData('discount_end_date', e.target.value)}
+                                            className="w-full bg-white dark:bg-slate-900 border-none rounded-xl py-2 px-3 focus:ring-2 focus:ring-brand-primary font-bold text-[10px] shadow-sm uppercase"
+                                            disabled={parseFloat(data.discount_percent) <= 0}
+                                        />
+                                    </div>
+                                </div>
+                                {parseFloat(data.discount_percent) > 0 && (
+                                    <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 text-center">
+                                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-tight">
+                                            Precio con Descuento: <span className="text-sm ml-1">${(parseFloat(data.price || 0) * (1 - parseFloat(data.discount_percent) / 100)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex gap-4">

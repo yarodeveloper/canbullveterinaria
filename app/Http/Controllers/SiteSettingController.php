@@ -52,6 +52,7 @@ class SiteSettingController extends Controller
         $request->validate([
             'pos_printer_name' => 'required|string|max:255',
             'pos_ticket_preview' => 'nullable|boolean',
+            'pos_ticket_paper_feed' => 'nullable|integer|min:0|max:200',
         ]);
 
         SiteSetting::updateOrCreate(
@@ -73,6 +74,18 @@ class SiteSettingController extends Controller
                 'label' => 'Mostrar vista previa del ticket'
             ]
         );
+
+        if ($request->has('pos_ticket_paper_feed')) {
+            SiteSetting::updateOrCreate(
+                ['key' => 'pos_ticket_paper_feed'],
+                [
+                    'value' => $request->pos_ticket_paper_feed,
+                    'type' => 'number',
+                    'group' => 'finances',
+                    'label' => 'Salto de Papel (Paper Feed) en mm'
+                ]
+            );
+        }
 
         return redirect()->back()->with('success', 'Configuración de impresora PDV actualizada.');
     }

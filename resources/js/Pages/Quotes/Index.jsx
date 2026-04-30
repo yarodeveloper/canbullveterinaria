@@ -38,6 +38,12 @@ export default function Index({ auth, quotes, filters }) {
         );
     };
 
+    const handleDelete = (e, quoteId) => {
+        e.stopPropagation();
+        if (confirm('¿Estás seguro de que deseas eliminar esta cotización? Esta acción no se puede deshacer.')) {
+            router.delete(route('quotes.destroy', quoteId), { preserveScroll: true });
+        }
+    };
 
     return (
         <AuthenticatedLayout
@@ -141,7 +147,7 @@ export default function Index({ auth, quotes, filters }) {
                                             </div>
 
                                             {/* Acciones rápidas */}
-                                            <div className="w-52 flex-shrink-0 flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="w-64 flex-shrink-0 flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 {[
                                                     { status: 'Enviada',   icon: '/icons/envelope-svgrepo-com.svg' },
                                                     { status: 'Aceptada',  icon: '/icons/thumb-up-svgrepo-com.svg' },
@@ -151,9 +157,9 @@ export default function Index({ auth, quotes, filters }) {
                                                         key={status}
                                                         onClick={(e) => changeStatus(e, quote.id, status)}
                                                         title={`Marcar como ${status}`}
-                                                        className="w-7 h-7 rounded-lg bg-white/20 hover:bg-white flex items-center justify-center text-white hover:text-brand-primary transition border border-white/30 hover:border-white"
+                                                        className="w-8 h-8 rounded-xl bg-white/20 hover:bg-white flex items-center justify-center text-white hover:text-brand-primary transition border border-white/30 hover:border-white"
                                                     >
-                                                        <img src={icon} className="w-3.5 h-3.5 brightness-0 invert group-hover:brightness-100 group-hover:invert-0" alt={status} />
+                                                        <img src={icon} className="w-4 h-4 brightness-0 invert group-hover:brightness-100 group-hover:invert-0" alt={status} />
                                                     </button>
                                                 ))}
 
@@ -161,23 +167,45 @@ export default function Index({ auth, quotes, filters }) {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        const phone = quote.pet?.owner?.phone || '';
-                                                        const siteName = auth.user?.branch?.name || 'Clínica Veterinaria';
-                                                        const petName = quote.pet?.name || quote.guest_pet_name || '—';
-                                                        const text = encodeURIComponent(`Hola, le envío la cotización *${quote.folio}* de *${siteName}* para la mascota *${petName}*.\nPuede ver los detalles aquí: ${window.location.origin}/quotes/${quote.id}`);
+                                                        const phone = quote.pet?.owner?.phone || quote.guest_client_phone || '';
+                                                        const siteName = auth.user?.branch?.name || 'CanBull Veterinaria';
+                                                        const petName = quote.pet?.name || quote.guest_pet_name || 'su mascota';
+                                                        const total = Number(quote.total).toLocaleString('es-MX', { minimumFractionDigits: 2 });
+                                                        
+                                                        const text = encodeURIComponent(
+                                                            `*COTIZACIÓN: ${quote.folio}*\n\n` +
+                                                            `Hola, le compartimos el presupuesto de *${siteName}* para *${petName}*.\n\n` +
+                                                            `*Total:* $${total}\n\n` +
+                                                            `Puede revisar el detalle completo en el siguiente enlace:\n` +
+                                                            `${window.location.origin}/quotes/${quote.id}\n\n` +
+                                                            `Quedamos a sus órdenes para cualquier duda.`
+                                                        );
+                                                        
                                                         const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
                                                         window.open(url, '_blank');
                                                     }}
                                                     title="Enviar por WhatsApp"
-                                                    className="w-7 h-7 rounded-lg bg-white/20 hover:bg-emerald-500 flex items-center justify-center text-white transition border border-white/30 hover:border-white"
+                                                    className="w-8 h-8 rounded-xl bg-white/20 hover:bg-emerald-500 flex items-center justify-center text-white transition border border-white/30 hover:border-white"
                                                 >
-                                                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                                                     </svg>
                                                 </button>
+
+                                                {/* Delete Action */}
+                                                <button
+                                                    onClick={(e) => handleDelete(e, quote.id)}
+                                                    title="Eliminar Cotización"
+                                                    className="w-8 h-8 rounded-xl bg-white/20 hover:bg-red-500 flex items-center justify-center text-white transition border border-white/30 hover:border-white"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                                    </svg>
+                                                </button>
+
                                                 <div className="flex-shrink-0 ml-1">
-                                                    <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-white border border-white/30">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white border border-white/30">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                                                             <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                                                         </svg>
                                                     </div>

@@ -88,18 +88,27 @@ export default function Print({ receipt, posPrinterName, posTicketPreview }) {
                         {receipt.items?.map((item, idx) => {
                             const hasTax = parseFloat(item.tax_iva || 0) > 0 || parseFloat(item.tax_ieps || 0) > 0;
                             return (
-                                <tr key={idx} className="align-top">
-                                    <td className="py-1 pr-1 uppercase font-bold text-[9px] leading-tight max-w-[50mm] break-words">
-                                        {item.concept} {hasTax ? '*' : ''}
-                                        {item.assigned_user && (
-                                            <div className="text-[7px] font-normal lowercase italic text-gray-700">
-                                                atendió: {item.assigned_user.name}
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="py-1 text-center text-[9px]">{parseFloat(item.quantity)}</td>
-                                    <td className="py-1 text-right text-[9px] font-bold">${parseFloat(item.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-                                </tr>
+                                <React.Fragment key={idx}>
+                                    <tr className="align-top">
+                                        <td className="py-1 pr-1 uppercase font-bold text-[9px] leading-tight max-w-[50mm] break-words">
+                                            {item.concept} {hasTax ? '*' : ''}
+                                            {item.assigned_user && (
+                                                <div className="text-[7px] font-normal lowercase italic text-gray-700">
+                                                    atendió: {item.assigned_user.name}
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="py-1 text-center text-[9px]">{parseFloat(item.quantity)}</td>
+                                        <td className="py-1 text-right text-[9px] font-bold">${parseFloat(item.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                                    </tr>
+                                    {item.discount_amount > 0 && (
+                                        <tr>
+                                            <td colSpan="3" className="text-[8px] italic text-gray-600 pb-1">
+                                                * Descuento: ${parseFloat(item.discount_amount).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
                             );
                         })}
                     </tbody>
@@ -186,6 +195,12 @@ export default function Print({ receipt, posPrinterName, posTicketPreview }) {
                         box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
                     }
                 `}} />
+
+                {/* Espacio para el corte (Paper Feed) */}
+                <div 
+                    className="hidden print:block" 
+                    style={{ height: `${settings.pos_ticket_paper_feed || 30}mm` }}
+                ></div>
             </div>
         </div>
     );

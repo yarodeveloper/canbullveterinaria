@@ -161,10 +161,19 @@ export default function Create({ auth, clients, products, pets, selectedClientId
     };
 
     const handleProductSelect = (product) => {
+        const finalPrice = product.has_active_discount ? Number(product.discounted_price) : Number(product.price);
+        const discountAmount = product.has_active_discount ? Number(product.price) - Number(product.discounted_price) : 0;
+        
         setData('items', [
             ...data.items,
             {
-                product_id: product.id, concept: product.name, unit_price: Number(product.price), quantity: 1,
+                product_id: product.id, 
+                concept: product.name, 
+                unit_price: finalPrice, 
+                original_price: Number(product.price),
+                discount_percent: product.has_active_discount ? parseFloat(product.discount_percent) : 0,
+                discount_amount: discountAmount,
+                quantity: 1,
                 tax_iva: (product.tax_iva !== null && product.tax_iva !== undefined) ? parseFloat(product.tax_iva) : (product.is_service ? 0 : 16),
                 tax_ieps: (product.tax_ieps !== null && product.tax_ieps !== undefined) ? parseFloat(product.tax_ieps) : 0,
                 type: product.is_service ? 'service' : 'product',
@@ -346,15 +355,14 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                     <button onClick={() => { setSearchType('pet'); setGeneralSearch(''); }} className={`flex-1 sm:flex-none px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition ${searchType === 'pet' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-purple-600'}`}>Mascota</button>
                                 </div>
                                 <div className="flex-1 relative w-full">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">🔍</div>
-                                    <input type="text" className="w-full bg-transparent border-none py-2 pl-9 pr-4 text-sm font-bold text-gray-800 dark:text-white focus:ring-0 placeholder-gray-400" placeholder={`Buscar ${searchType === 'client' ? 'cliente' : 'mascota'}...`} value={generalSearch} onChange={e => { setGeneralSearch(e.target.value); setIsSearchOpen(true); }} onFocus={() => setIsSearchOpen(true)} onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)} />
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-event                                    <input type="text" className="w-full bg-transparent border-none py-2 pl-9 pr-4 text-sm font-bold text-gray-800 dark:text-white focus:ring-0 placeholder-gray-400" placeholder={`Buscar ${searchType === 'client' ? 'cliente' : 'mascota'}...`} value={generalSearch} onChange={e => { setGeneralSearch(e.target.value); setIsSearchOpen(true); }} onFocus={() => setIsSearchOpen(true)} onBlur={() => setTimeout(() => setIsSearchOpen(false), 500)} />
                                     {isSearchOpen && filteredSearchOptions.length > 0 && (
                                         <div className="absolute z-50 top-full right-0 mt-3 w-[400px] bg-white dark:bg-[#1A2131] border border-gray-200 dark:border-[#2A3347] shadow-2xl rounded-2xl p-2 max-h-80 overflow-y-auto">
                                             {filteredSearchOptions.map(opt => {
                                                 const ownerName = opt.owner?.name || (opt.owners && opt.owners[0]?.name);
                                                 const petsList = opt.pets || [];
                                                 return (
-                                                    <div key={opt.id} onClick={() => handleGeneralSelect(opt)} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2A3347] rounded-xl cursor-pointer transition border-b border-gray-50 dark:border-gray-800 last:border-0">
+                                                    <div key={opt.id} onMouseDown={() => handleGeneralSelect(opt)} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2A3347] rounded-xl cursor-pointer transition border-b border-gray-50 dark:border-gray-800 last:border-0">
                                                         <div className="flex justify-between items-center">
                                                             <div className="min-w-0 flex-1">
                                                                 <p className="font-bold text-gray-900 dark:text-white leading-tight truncate">
@@ -369,7 +377,6 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                                                             ? `${opt.species || 'Mascota'} • ${opt.breed || 'Sin Raza'} • ${ownerName || 'Público General'}` 
                                                                             : `${opt.phone || 'Sin Teléfono'}`}
                                                                     </p>
-
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-2 shrink-0 ml-3">
@@ -406,13 +413,28 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                             <div className="p-5 border-b border-gray-200 dark:border-[#2A3347] shrink-0 bg-gray-50 dark:bg-[#111623]/20">
                                     <div className="relative z-[100]">
                                         <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg">🛒</span>
-                                        <input ref={searchInputRef} type="text" className="w-full bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-[#2A3347] rounded-xl py-4 pl-14 pr-6 text-gray-900 dark:text-white font-bold focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors placeholder-gray-400" placeholder="Escanea o busca productos..." value={productSearch} onChange={e => { setProductSearch(e.target.value); setIsProductSearchOpen(true); }} onFocus={() => setIsProductSearchOpen(true)} onBlur={() => setTimeout(() => setIsProductSearchOpen(false), 200)} onKeyDown={handleProductKeyDown} autoFocus />
+                                        <input ref={searchInputRef} type="text" className="w-full bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-[#2A3347] rounded-xl py-4 pl-14 pr-6 text-gray-900 dark:text-white font-bold focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors placeholder-gray-400" placeholder="Escanea o busca productos..." value={productSearch} onChange={e => { setProductSearch(e.target.value); setIsProductSearchOpen(true); }} onFocus={() => setIsProductSearchOpen(true)} onBlur={() => setTimeout(() => setIsProductSearchOpen(false), 500)} onKeyDown={handleProductKeyDown} autoFocus />
                                         {isProductSearchOpen && filteredProducts.length > 0 && (
                                             <div className="absolute z-[200] top-full left-0 right-0 mt-2 bg-white dark:bg-[#1A2131] border border-gray-200 dark:border-[#2A3347] shadow-2xl rounded-2xl p-2 max-h-80 overflow-y-auto backdrop-blur-md">
                                             {filteredProducts.map(p => (
-                                                <div key={p.id} onClick={() => handleProductSelect(p)} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2A3347] rounded-xl cursor-pointer flex justify-between items-center group transition">
-                                                    <div><p className="font-bold text-gray-700 dark:text-gray-200 uppercase leading-tight">{p.name}</p><p className="text-[10px] text-gray-500 uppercase mt-1">SKU: {p.sku || p.barcode || 'S/C'}</p></div>
-                                                    <p className="font-black text-gray-900 dark:text-white px-3 py-1 bg-gray-100 dark:bg-[#111623] rounded-lg">${parseFloat(p.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                                                <div key={p.id} onMouseDown={() => handleProductSelect(p)} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#2A3347] rounded-xl cursor-pointer flex justify-between items-center group transition">
+                                                    <div>
+                                                        <p className="font-bold text-gray-700 dark:text-gray-200 uppercase leading-tight">{p.name}</p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <p className="text-[10px] text-gray-500 uppercase">SKU: {p.sku || p.barcode || 'S/C'}</p>
+                                                            {p.has_active_discount && (
+                                                                <span className="bg-emerald-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">-{p.discount_percent}%</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="font-black text-gray-900 dark:text-white px-3 py-1 bg-gray-100 dark:bg-[#111623] rounded-lg">
+                                                            ${(p.has_active_discount ? p.discounted_price : p.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                        </p>
+                                                        {p.has_active_discount && (
+                                                            <p className="text-[9px] text-gray-400 line-through mt-0.5">${parseFloat(p.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -423,6 +445,7 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                 <div className="flex-[3]">Descripción</div><div className="w-32 text-center">Cant.</div><div className="w-32 text-right">Precio</div><div className="w-32 text-right">Total</div><div className="w-12"></div>
                             </div>
                             <div className="flex-1 overflow-y-auto px-4 py-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-[#2A3347]">
+r-thumb-gray-200 dark:scrollbar-thumb-[#2A3347]">
                                 {/* Cargos Pendientes Alert */}
                                 {clientPendingCharges.length > 0 && (
                                     <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl animate-in zoom-in-95 duration-300">
@@ -463,7 +486,12 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                         {data.items.map((item, idx) => (
                                             <div key={idx} className={`flex items-center px-4 py-3 border rounded-2xl transition-all group ${item.type === 'service' ? 'bg-purple-50 dark:bg-purple-500/5 border-purple-100 dark:border-purple-500/20' : 'hover:bg-gray-50 border-transparent dark:hover:bg-white/5'}`}>
                                                 <div className="flex-[3] pr-4">
-                                                    <p className="font-bold text-sm uppercase text-gray-900 dark:text-white">{item.concept}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-bold text-sm uppercase text-gray-900 dark:text-white">{item.concept}</p>
+                                                        {item.discount_percent > 0 && (
+                                                            <span className="bg-emerald-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">-{item.discount_percent}%</span>
+                                                        )}
+                                                    </div>
                                                     {item.type === 'service' && (
                                                         <select className="bg-white dark:bg-[#111623] text-gray-800 dark:text-white border border-gray-200 dark:border-[#2A3347] rounded p-1 text-[10px] mt-1" value={item.assigned_user_id} onChange={(e) => updateAssignedUser(idx, e.target.value)}>
                                                             <option value="">Persona...</option>{staff?.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}
@@ -475,7 +503,12 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                                     <span className="font-black w-7 text-center text-gray-900 dark:text-white">{item.quantity}</span>
                                                     <button type="button" onClick={() => updateQuantity(idx, 1)} className="w-7 h-7 rounded-lg border text-gray-400 hover:border-purple-500 hover:text-purple-600 transition-colors">+</button>
                                                 </div>
-                                                <div className="w-32 text-right font-black text-gray-900 dark:text-white text-base">${(item.quantity * item.unit_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</div>
+                                                <div className="w-32 text-right">
+                                                    <p className="font-black text-gray-900 dark:text-white text-base leading-none">${(item.quantity * item.unit_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                                                    {item.discount_percent > 0 && (
+                                                        <p className="text-[10px] text-gray-400 line-through mt-1">${(item.quantity * item.original_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                                                    )}
+                                                </div>
                                                 <div className="w-12 text-right"><button type="button" onClick={() => removeItem(idx)} className="text-gray-200 hover:text-red-500 transition-colors">✖</button></div>
                                             </div>
                                         ))}

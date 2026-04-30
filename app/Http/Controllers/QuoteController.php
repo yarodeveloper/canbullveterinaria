@@ -241,4 +241,10 @@ class QuoteController extends Controller
 
         return back()->with('message', 'Envío a PDV revertido exitosamente.');
     }
+
+    public function destroy(Quote $quote)
+    {
+        $quote->delete();
+        return redirect()->route('quotes.index')->with('success', 'Cotización eliminada correctamente.');
+    }
 }

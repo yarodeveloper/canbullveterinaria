@@ -125,6 +125,11 @@ export default function Print({ auth, order, type }) {
                                 <p>Por favor pase a caja para realizar su pago.</p>
                                 <p className="font-bold mt-2 pt-2">¡Gracias por su preferencia!</p>
                             </div>
+                            {/* Espacio para el corte (Paper Feed) */}
+                            <div 
+                                className="hidden print:block" 
+                                style={{ height: `${settings.pos_ticket_paper_feed || 30}mm` }}
+                            ></div>
                         </div>
                     ) : (
                         /* STANDARD A4 FORMAT */

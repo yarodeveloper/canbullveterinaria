@@ -15,6 +15,9 @@ class Product extends Model
         'product_category_id',
         'name',
         'sku',
+        'discount_percent',
+        'discount_start_date',
+        'discount_end_date',
         'barcode',
         'description',
         'unit',
@@ -27,7 +30,7 @@ class Product extends Model
         'is_service',
     ];
 
-    protected $appends = ['selling_price', 'base_price'];
+    protected $appends = ['selling_price', 'base_price', 'has_active_discount', 'discounted_price'];
 
     /**
      * El 'price' en la base de datos ahora representa el PRECIO FINAL AL PÚBLICO.
@@ -49,6 +52,28 @@ class Product extends Model
         // Formula Inversa: Base = Total / ((1 + IEPS/100) * (1 + IVA/100))
         $divisor = (1 + $ieps / 100) * (1 + $iva / 100);
         return $divisor > 0 ? $final / $divisor : $final;
+    }
+
+    public function getHasActiveDiscountAttribute()
+    {
+        if ($this->discount_percent <= 0) return false;
+        
+        $today = now()->startOfDay();
+        $start = $this->discount_start_date ? \Carbon\Carbon::parse($this->discount_start_date)->startOfDay() : null;
+        $end = $this->discount_end_date ? \Carbon\Carbon::parse($this->discount_end_date)->endOfDay() : null;
+
+        if ($start && $today->lt($start)) return false;
+        if ($end && $today->gt($end)) return false;
+
+        return true;
+    }
+
+    public function getDiscountedPriceAttribute()
+    {
+        if (!$this->has_active_discount) return (float) $this->price;
+        
+        $discount = (float) $this->price * ($this->discount_percent / 100);
+        return max(0, (float) $this->price - $discount);
     }
 
     public function category()

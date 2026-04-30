@@ -15,6 +15,8 @@ class ReceiptItem extends Model
         'concept',
         'quantity',
         'unit_price',
+        'discount_percent',
+        'discount_amount',
         'subtotal',
         'tax',
         'tax_iva',
