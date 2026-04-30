@@ -355,7 +355,8 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                     <button onClick={() => { setSearchType('pet'); setGeneralSearch(''); }} className={`flex-1 sm:flex-none px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition ${searchType === 'pet' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-purple-600'}`}>Mascota</button>
                                 </div>
                                 <div className="flex-1 relative w-full">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-event                                    <input type="text" className="w-full bg-transparent border-none py-2 pl-9 pr-4 text-sm font-bold text-gray-800 dark:text-white focus:ring-0 placeholder-gray-400" placeholder={`Buscar ${searchType === 'client' ? 'cliente' : 'mascota'}...`} value={generalSearch} onChange={e => { setGeneralSearch(e.target.value); setIsSearchOpen(true); }} onFocus={() => setIsSearchOpen(true)} onBlur={() => setTimeout(() => setIsSearchOpen(false), 500)} />
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">🔍</div>
+                                    <input type="text" className="w-full bg-transparent border-none py-2 pl-9 pr-4 text-sm font-bold text-gray-800 dark:text-white focus:ring-0 placeholder-gray-400" placeholder={`Buscar ${searchType === 'client' ? 'cliente' : 'mascota'}...`} value={generalSearch} onChange={e => { setGeneralSearch(e.target.value); setIsSearchOpen(true); }} onFocus={() => setIsSearchOpen(true)} onBlur={() => setTimeout(() => setIsSearchOpen(false), 500)} />
                                     {isSearchOpen && filteredSearchOptions.length > 0 && (
                                         <div className="absolute z-50 top-full right-0 mt-3 w-[400px] bg-white dark:bg-[#1A2131] border border-gray-200 dark:border-[#2A3347] shadow-2xl rounded-2xl p-2 max-h-80 overflow-y-auto">
                                             {filteredSearchOptions.map(opt => {
@@ -445,7 +446,6 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                 <div className="flex-[3]">Descripción</div><div className="w-32 text-center">Cant.</div><div className="w-32 text-right">Precio</div><div className="w-32 text-right">Total</div><div className="w-12"></div>
                             </div>
                             <div className="flex-1 overflow-y-auto px-4 py-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-[#2A3347]">
-r-thumb-gray-200 dark:scrollbar-thumb-[#2A3347]">
                                 {/* Cargos Pendientes Alert */}
                                 {clientPendingCharges.length > 0 && (
                                     <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl animate-in zoom-in-95 duration-300">
