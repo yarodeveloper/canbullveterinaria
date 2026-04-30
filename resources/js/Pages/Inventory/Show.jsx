@@ -230,6 +230,27 @@ export default function Show({ auth, product, transactions, categories }) {
                                             <p className="font-black text-xs text-slate-600 dark:text-slate-300">{parseFloat(product.min_stock)}</p>
                                         </div>
                                     </div>
+
+                                    {parseFloat(product.discount_percent) > 0 && (
+                                        <div className={`mt-3 p-3 rounded-2xl border ${product.has_active_discount ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-slate-100 border-slate-200 opacity-60'} transition-all`}>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <p className={`text-[9px] font-black uppercase tracking-widest ${product.has_active_discount ? 'text-emerald-600' : 'text-slate-500'}`}>
+                                                    {product.has_active_discount ? '⚡ Descuento Activo' : '⌛ Descuento Programado/Vencido'}
+                                                </p>
+                                                <span className={`text-xs font-black ${product.has_active_discount ? 'text-emerald-700' : 'text-slate-600'}`}>{product.discount_percent}%</span>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex-1">
+                                                    <p className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter">Desde</p>
+                                                    <p className="text-[10px] font-black text-slate-700 dark:text-slate-300">{product.discount_start_date || 'N/A'}</p>
+                                                </div>
+                                                <div className="flex-1 border-l dark:border-slate-800 pl-4">
+                                                    <p className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter">Hasta</p>
+                                                    <p className="text-[10px] font-black text-slate-700 dark:text-slate-300">{product.discount_end_date || 'N/A'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-center pt-2">
                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic opacity-70">Controlado</span>
                                         <span className={`px-2 py-0.5 rounded text-[8px] font-black border tracking-widest ${product.is_controlled ? 'bg-red-50 text-red-600 border-red-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
