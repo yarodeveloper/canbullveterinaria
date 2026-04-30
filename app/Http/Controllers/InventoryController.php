@@ -164,6 +164,9 @@ class InventoryController extends Controller
             'tax_ieps' => 'required|numeric|min:0|max:100',
             'is_controlled' => 'boolean',
             'is_service' => 'boolean',
+            'discount_percent' => 'nullable|numeric|min:0|max:100',
+            'discount_start_date' => 'nullable|date',
+            'discount_end_date' => 'nullable|date',
         ]);
 
         $validated['is_active'] = true;
@@ -193,6 +196,9 @@ class InventoryController extends Controller
             'is_controlled' => 'boolean',
             'is_service' => 'boolean',
             'is_active' => 'boolean',
+            'discount_percent' => 'nullable|numeric|min:0|max:100',
+            'discount_start_date' => 'nullable|date',
+            'discount_end_date' => 'nullable|date',
         ]);
 
         $product->update($validated);
