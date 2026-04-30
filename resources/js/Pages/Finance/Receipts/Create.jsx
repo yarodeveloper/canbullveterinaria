@@ -164,22 +164,33 @@ export default function Create({ auth, clients, products, pets, selectedClientId
         const finalPrice = product.has_active_discount ? Number(product.discounted_price) : Number(product.price);
         const discountAmount = product.has_active_discount ? Number(product.price) - Number(product.discounted_price) : 0;
         
-        setData('items', [
-            ...data.items,
-            {
-                product_id: product.id, 
-                concept: product.name, 
-                unit_price: finalPrice, 
-                original_price: Number(product.price),
-                discount_percent: product.has_active_discount ? parseFloat(product.discount_percent) : 0,
-                discount_amount: discountAmount,
-                quantity: 1,
-                tax_iva: (product.tax_iva !== null && product.tax_iva !== undefined) ? parseFloat(product.tax_iva) : (product.is_service ? 0 : 16),
-                tax_ieps: (product.tax_ieps !== null && product.tax_ieps !== undefined) ? parseFloat(product.tax_ieps) : 0,
-                type: product.is_service ? 'service' : 'product',
-                assigned_user_id: '',
-            }
-        ]);
+        // Buscar si ya existe en el carrito
+        const existingItemIndex = data.items.findIndex(item => item.product_id === product.id && item.type === 'product');
+
+        if (existingItemIndex > -1) {
+            // Incrementar cantidad
+            const newItems = [...data.items];
+            newItems[existingItemIndex].quantity += 1;
+            setData('items', newItems);
+        } else {
+            // Agregar nuevo
+            setData('items', [
+                ...data.items,
+                {
+                    product_id: product.id, 
+                    concept: product.name, 
+                    unit_price: finalPrice, 
+                    original_price: Number(product.price),
+                    discount_percent: product.has_active_discount ? parseFloat(product.discount_percent) : 0,
+                    discount_amount: discountAmount,
+                    quantity: 1,
+                    tax_iva: (product.tax_iva !== null && product.tax_iva !== undefined) ? parseFloat(product.tax_iva) : (product.is_service ? 0 : 16),
+                    tax_ieps: (product.tax_ieps !== null && product.tax_ieps !== undefined) ? parseFloat(product.tax_ieps) : 0,
+                    type: product.is_service ? 'service' : 'product',
+                    assigned_user_id: '',
+                }
+            ]);
+        }
         setProductSearch('');
         setIsProductSearchOpen(false);
         if (searchInputRef.current) searchInputRef.current.focus();

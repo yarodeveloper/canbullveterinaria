@@ -270,9 +270,19 @@ export default function Index({ auth, products, categories, filters }) {
 
                                                 <div className="text-right w-24">
                                                     <p className="text-[9px] font-black text-slate-400 group-hover:text-white/60 uppercase tracking-widest mb-0.5 leading-none">P. Público</p>
-                                                    <p className="text-xs font-black text-brand-primary group-hover:text-white tracking-tighter">
-                                                        ${parseFloat(product.selling_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                                    </p>
+                                                    <div className="text-right">
+                                                        <p className={`font-black text-xs ${product.has_active_discount ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}>
+                                                            ${parseFloat(product.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                        </p>
+                                                        {product.has_active_discount && (
+                                                            <div className="flex flex-col items-end">
+                                                                <p className="text-emerald-500 font-black text-sm">
+                                                                    ${parseFloat(product.discounted_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                                </p>
+                                                                <span className="bg-emerald-500 text-white text-[7px] font-black px-1 rounded uppercase mt-0.5">-{product.discount_percent}%</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
 
                                                 <div className="flex items-center gap-3">

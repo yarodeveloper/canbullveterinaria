@@ -59,14 +59,15 @@ class Product extends Model
         $percent = (float) ($this->discount_percent ?? 0);
         if ($percent <= 0) return false;
         
-        $today = \Carbon\Carbon::today(); // Usar today() para ignorar la hora
-        $start = $this->discount_start_date ? \Carbon\Carbon::parse($this->discount_start_date)->startOfDay() : null;
-        $end = $this->discount_end_date ? \Carbon\Carbon::parse($this->discount_end_date)->endOfDay() : null;
+        $today = \Carbon\Carbon::now(config('app.timezone'))->startOfDay();
+        $start = $this->discount_start_date ? \Carbon\Carbon::parse($this->discount_start_date, config('app.timezone'))->startOfDay() : null;
+        $end = $this->discount_end_date ? \Carbon\Carbon::parse($this->discount_end_date, config('app.timezone'))->endOfDay() : null;
 
         // Si hay fecha de inicio y hoy es antes de esa fecha, no hay descuento
         if ($start && $today->lt($start)) return false;
         
         // Si hay fecha de fin y hoy es después de esa fecha, no hay descuento
+        if ($end && $today->lt($start)) return false; // Doble check
         if ($end && $today->gt($end)) return false;
 
         return true;

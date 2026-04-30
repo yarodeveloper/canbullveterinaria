@@ -198,9 +198,23 @@ export default function Show({ auth, product, transactions, categories }) {
                                             <p className="text-[8px] font-black text-slate-400 uppercase mt-0.5">{product.unit}s</p>
                                         </div>
                                     </div>
-                                    <div className="flex justify-between items-center py-1">
+                                    <div className="flex justify-between items-center py-1 border-b dark:border-slate-800 pb-3 mb-1">
                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic opacity-70">Precio Público</span>
-                                        <span className="font-black text-sm text-slate-900 dark:text-white">${parseFloat(product.selling_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                        <div className="text-right">
+                                            <span className={`font-black text-sm ${product.has_active_discount ? 'text-slate-400 line-through text-xs' : 'text-slate-900 dark:text-white'}`}>
+                                                ${parseFloat(product.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                            </span>
+                                            {product.has_active_discount && (
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-emerald-500 font-black text-lg leading-none">
+                                                        ${parseFloat(product.discounted_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                    </span>
+                                                    <span className="bg-emerald-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest mt-1">
+                                                        PROMO -{product.discount_percent}%
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2 mt-4">
                                         <div className="bg-slate-50 dark:bg-slate-900/40 p-2 rounded-xl text-center">
