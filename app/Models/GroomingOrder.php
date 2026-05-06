@@ -10,6 +10,22 @@ class GroomingOrder extends Model
     /** @use HasFactory<\Database\Factories\GroomingOrderFactory> */
     use HasFactory;
 
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->branch_id)) {
+                $model->branch_id = auth()->user()->branch_id ?? \App\Models\Branch::first()?->id;
+            }
+            if (!$model->folio) {
+                do {
+                    $folio = 'GRM-' . date('ymd') . '-' . strtoupper(substr(uniqid(), -4));
+                } while (self::where('folio', $folio)->exists());
+                $model->folio = $folio;
+            }
+        });
+    }
+
     protected $fillable = [
         'folio',
         'branch_id',
@@ -30,16 +46,4 @@ class GroomingOrder extends Model
     public function user() { return $this->belongsTo(User::class, 'user_id'); }
     public function items() { return $this->hasMany(GroomingOrderItem::class); }
 
-    protected static function boot()
-    {
-        parent::boot();
-        static::creating(function ($order) {
-            if (!$order->folio) {
-                do {
-                    $folio = 'GRM-' . date('ymd') . '-' . strtoupper(substr(uniqid(), -4));
-                } while (self::where('folio', $folio)->exists());
-                $order->folio = $folio;
-            }
-        });
-    }
 }

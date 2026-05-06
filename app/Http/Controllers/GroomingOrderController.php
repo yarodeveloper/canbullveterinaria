@@ -43,15 +43,8 @@ class GroomingOrderController extends Controller
 
         // Pre-load data for create modal
         // Datos globales para facilitar atención cruzada
-        $clients = \App\Models\User::where('role', 'client')
-            ->where('email', '!=', 'publico@general.com')
-            ->where('name', 'NOT LIKE', '%Sin Asignar%')
-            ->get(['id', 'name', 'phone']);
-
-        $pets = Pet::query()
-            ->with(['owner', 'branch'])
-            ->limit(100)
-            ->get(['id', 'name', 'user_id', 'breed', 'species', 'branch_id']);
+        $clients = [];
+        $pets = [];
 
         $groomers = User::where('branch_id', $branchId)
             ->where(function ($q) {

@@ -178,6 +178,7 @@ const TimelineItem = ({ event }) => {
 
 export default function Show({ auth, pet, protocols, clients, documentTemplates = [] }) {
     const [timelineFilter, setTimelineFilter] = useState('all');
+    const [localClients, setLocalClients] = useState(clients || []);
     const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [showPrintModal, setShowPrintModal] = useState(false);
 
@@ -359,52 +360,56 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
         <AuthenticatedLayout
             user={auth.user}
             header={
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                    <h2 className="font-semibold text-lg sm:text-xl text-gray-800 dark:text-gray-200 leading-tight truncate w-full">
-                        Expediente: {pet.name}
-                    </h2>
-                    <div className="flex w-full sm:w-auto overflow-x-auto hide-scrollbar pb-1 sm:pb-0 gap-1.5 bg-gray-100 dark:bg-gray-800/50 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner">
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 w-full">
+                    <div className="flex items-center gap-3 shrink-0">
+                        <div className="bg-brand-primary/10 p-2 rounded-xl hidden sm:block">
+                            <svg className="w-5 h-5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        </div>
+                        <h2 className="font-black text-xl sm:text-2xl text-slate-800 dark:text-white leading-tight tracking-tight">
+                            {pet.name} <span className="text-slate-400 font-medium text-sm sm:text-base ml-1">/ Kardex</span>
+                        </h2>
+                    </div>
+                    
+                    <div className="flex w-full xl:w-auto overflow-x-auto xl:overflow-visible hide-scrollbar pb-2 xl:pb-0 gap-2 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-[1.25rem] border border-slate-200 dark:border-slate-700 shadow-inner items-center">
                         <Link
                             href={route('medical-records.create', pet.id)}
-                            className={`inline-flex items-center px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm shrink-0 ${pet.status === 'deceased' ? 'bg-white dark:bg-gray-900 text-red-600 hover:bg-red-500 hover:text-white border-2 border-red-100 group' : 'bg-white dark:bg-gray-900 text-brand-primary hover:bg-brand-primary hover:text-white border-2 border-brand-primary/10 group'}`}
-                            title={pet.status === 'deceased' ? 'Consulta Post-mortem' : 'Nueva Consulta'}
+                            className={`inline-flex items-center px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm shrink-0 border-2 ${pet.status === 'deceased' ? 'bg-white dark:bg-slate-900 text-red-600 border-red-100 hover:bg-red-500 hover:text-white group' : 'bg-white dark:bg-slate-900 text-brand-primary border-brand-primary/10 hover:border-brand-primary/30 hover:bg-brand-primary hover:text-white group'}`}
                         >
-                            <img src={pet.status === 'deceased' ? "/icons/leaf-svgrepo-com.svg" : "/icons/vet-with-cat-svgrepo-com.svg"} className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" />
+                            <img src={pet.status === 'deceased' ? "/icons/leaf-svgrepo-com.svg" : "/icons/vet-with-cat-svgrepo-com.svg"} className="w-4 h-4 mr-2 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" />
                             {pet.status === 'deceased' ? 'Post-mortem' : 'Consulta'}
                         </Link>
+                        
                         <Link
                             href={route('hospitalizations.create', { pet_id: pet.id })}
-                            className={`inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm shrink-0 ${pet.status === 'deceased' ? 'opacity-50 grayscale cursor-not-allowed bg-gray-50' : 'bg-white dark:bg-gray-900 text-purple-600 hover:bg-purple-600 hover:text-white border-2 border-purple-100 group'}`}
-                            title="Hospitalización"
+                            className={`inline-flex items-center px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm shrink-0 border-2 ${pet.status === 'deceased' ? 'opacity-50 grayscale cursor-not-allowed bg-slate-50 border-transparent' : 'bg-white dark:bg-slate-900 text-purple-600 border-purple-100 hover:border-purple-300 hover:bg-purple-600 hover:text-white group'}`}
                             onClick={pet.status === 'deceased' ? (e) => e.preventDefault() : undefined}
                         >
-                            <img src="/icons/med-kit-svgrepo-com.svg" className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Hosp.
+                            <img src="/icons/med-kit-svgrepo-com.svg" className="w-4 h-4 mr-2 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Hosp.
                         </Link>
+                        
                         <Link
                             href={route('surgeries.create', { pet_id: pet.id })}
-                            className={`inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm shrink-0 ${pet.status === 'deceased' ? 'opacity-50 grayscale cursor-not-allowed bg-gray-50' : 'bg-white dark:bg-gray-900 text-blue-600 hover:bg-blue-600 hover:text-white border-2 border-blue-100 group'}`}
-                            title="Programar Cirugía"
+                            className={`inline-flex items-center px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm shrink-0 border-2 ${pet.status === 'deceased' ? 'opacity-50 grayscale cursor-not-allowed bg-slate-50 border-transparent' : 'bg-white dark:bg-slate-900 text-blue-600 border-blue-100 hover:border-blue-300 hover:bg-blue-600 hover:text-white group'}`}
                             onClick={pet.status === 'deceased' ? (e) => e.preventDefault() : undefined}
                         >
-                            <img src="/icons/band-aid-svgrepo-com.svg" className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Cirugía
+                            <img src="/icons/band-aid-svgrepo-com.svg" className="w-4 h-4 mr-2 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Cirugía
                         </Link>
+                        
+                        <Link
+                            href={route('grooming-orders.create', { pet_id: pet.id })}
+                            className={`inline-flex items-center px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm shrink-0 border-2 ${pet.status === 'deceased' ? 'opacity-50 grayscale cursor-not-allowed bg-slate-50 border-transparent' : 'bg-white dark:bg-slate-900 text-brand-primary border-brand-primary/10 hover:border-brand-primary/30 hover:bg-brand-primary hover:text-white group'}`}
+                            onClick={pet.status === 'deceased' ? (e) => e.preventDefault() : undefined}
+                        >
+                            <img src="/icons/scissors-svgrepo-com.svg" className="w-4 h-4 mr-2 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Estética
+                        </Link>
+
                         {pet.status !== 'deceased' && (
-                            <>
-                                <Link
-                                    href={route('grooming-orders.create', { pet_id: pet.id })}
-                                    className="inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm shrink-0 bg-white dark:bg-gray-900 text-brand-primary hover:bg-brand-primary hover:text-white border-2 border-brand-primary/10 dark:border-brand-primary/40 group"
-                                    title="Servicio de Estética / Grooming"
-                                >
-                                    <img src="/icons/scissors-svgrepo-com.svg" className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Estética
-                                </Link>
-                                <Link
-                                    href={route('euthanasias.create', { pet_id: pet.id })}
-                                    className="inline-flex items-center px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm shrink-0 bg-white dark:bg-gray-900 text-slate-500 hover:bg-slate-800 hover:text-white border-2 border-slate-200 dark:border-slate-700 group"
-                                    title="Registrar Eutanasia"
-                                >
-                                    <img src="/icons/leaf-svgrepo-com.svg" className="w-4 h-4 mr-1.5 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Eutanasia
-                                </Link>
-                            </>
+                            <Link
+                                href={route('euthanasias.create', { pet_id: pet.id })}
+                                className="inline-flex items-center px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm shrink-0 bg-white dark:bg-slate-900 text-slate-500 border-2 border-slate-200 dark:border-slate-700 hover:bg-slate-800 hover:text-white group"
+                            >
+                                <img src="/icons/leaf-svgrepo-com.svg" className="w-4 h-4 mr-2 brightness-0 opacity-70 dark:invert dark:opacity-80 group-hover:invert group-hover:opacity-100 transition-all" alt="" /> Eutanasia
+                            </Link>
                         )}
                     </div>
                 </div>
@@ -591,17 +596,54 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Buscar Cliente</label>
-                                            <select
-                                                value={data.new_owner_user_id}
-                                                onChange={e => setData('new_owner_user_id', e.target.value)}
-                                                className="w-full text-xs rounded border-gray-300 dark:bg-gray-800 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500"
-                                                required
-                                            >
-                                                <option value="">-- Seleccionar --</option>
-                                                {clients?.map((c) => (
-                                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                                ))}
-                                            </select>
+                                            <div className="relative">
+                                                {data.new_owner_user_id ? (
+                                                    <div className="flex items-center justify-between px-2 py-1.5 rounded border bg-indigo-50 dark:bg-indigo-900/20 dark:border-indigo-800">
+                                                        <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                                                            {localClients.find(c => c.id == data.new_owner_user_id)?.name || 'Cliente Seleccionado'}
+                                                        </span>
+                                                        <button type="button" onClick={() => setData('new_owner_user_id', '')} className="text-[9px] text-red-500 font-bold hover:underline">
+                                                            Cambiar
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Buscar por nombre, teléfono..."
+                                                            onChange={e => {
+                                                                if (e.target.value.length > 2) {
+                                                                    fetch(route('clients.search', { q: e.target.value }))
+                                                                        .then(res => res.json())
+                                                                        .then(json => setLocalClients(json));
+                                                                } else {
+                                                                    setLocalClients([]);
+                                                                }
+                                                            }}
+                                                            className="w-full text-xs rounded border-gray-300 dark:bg-gray-800 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500"
+                                                            autoComplete="off"
+                                                        />
+                                                        {localClients.length > 0 && (
+                                                            <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-xl max-h-40 overflow-y-auto">
+                                                                {localClients.map(c => (
+                                                                    <button
+                                                                        key={c.id}
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setData('new_owner_user_id', c.id);
+                                                                            setLocalClients([c]);
+                                                                        }}
+                                                                        className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700 last:border-b-0"
+                                                                    >
+                                                                        <div className="font-bold text-xs">{c.name}</div>
+                                                                        <div className="text-[9px] text-gray-500">{c.phone || c.email || 'Sin contacto extra'}</div>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
                                             <div className="mt-1 text-right">
                                                 <Link href={route('clients.create')} className="text-[9px] text-indigo-500 hover:text-indigo-600 font-bold underline">
                                                     ¿No está en la lista? Registrar nuevo

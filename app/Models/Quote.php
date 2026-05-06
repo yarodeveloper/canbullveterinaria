@@ -8,6 +8,16 @@ class Quote extends Model
 {
     use \Illuminate\Database\Eloquent\Factories\HasFactory, \Illuminate\Database\Eloquent\SoftDeletes;
 
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->branch_id)) {
+                $model->branch_id = auth()->user()->branch_id ?? \App\Models\Branch::first()?->id;
+            }
+        });
+    }
+
     protected $fillable = [
         'folio',
         'pet_id',

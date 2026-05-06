@@ -33,20 +33,9 @@ class MedicalRecordController extends Controller
 
         $medicalRecords = $query->latest()->paginate(15);
 
-        // Pre-load clients and pets for the "Create" button flow
-        // Directorio global de clientes y mascotas para permitir atención cruzada
-        $clients = \App\Models\User::where('role', 'client')
-            ->where(function($q) use($branchId) {
-                if ($branchId) $q->where('branch_id', $branchId)->orWhereNull('branch_id');
-            })
-            ->where('email', '!=', 'publico@general.com')
-            ->limit(100)
-            ->get(['id', 'name', 'phone']);
-
-        $pets = Pet::query()
-            ->with(['owner', 'branch'])
-            ->limit(100)
-            ->get(['id', 'name', 'user_id', 'breed', 'species', 'branch_id']);
+        // Clients and pets are now searched asynchronously via API
+        $clients = [];
+        $pets = [];
 
         $veterinarians = \App\Models\User::where('branch_id', $branchId)
             ->whereIn('role', ['vet', 'admin'])
@@ -69,7 +58,7 @@ class MedicalRecordController extends Controller
 
         return Inertia::render('MedicalRecords/Create', [
             'pet' => $medicalRecord->pet->load('owner'),
-            'record' => $medicalRecord,
+            'record' => $medicalRecord->load('attachments'),
             'isEditing' => true,
             'products' => \App\Models\Product::where('is_active', true)
                 ->get(['id', 'name', 'unit', 'is_controlled', 'price', 'is_service'])
@@ -154,13 +143,16 @@ class MedicalRecordController extends Controller
 
         // Handle Attachments
         if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
+            $files = $request->file('attachments');
+            $descriptions = $request->input('attachment_descriptions', []);
+            foreach ($files as $index => $file) {
                 $path = $file->store('medical-records/' . $medicalRecord->id, 'public');
                 $medicalRecord->attachments()->create([
                     'file_path' => $path,
                     'file_name' => $file->getClientOriginalName(),
                     'file_type' => $file->getClientMimeType(),
                     'file_size' => $file->getSize(),
+                    'description' => $descriptions[$index] ?? null,
                 ]);
             }
         }
@@ -267,15 +259,36 @@ class MedicalRecordController extends Controller
             }
         }
 
-        // Handle Attachments
+        // Handle Deletions
+        if ($request->filled('deleted_attachments')) {
+            foreach ($request->input('deleted_attachments') as $id) {
+                $attachment = \App\Models\MedicalRecordAttachment::find($id);
+                if ($attachment) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($attachment->file_path);
+                    $attachment->delete();
+                }
+            }
+        }
+
+        // Handle Existing Description Updates
+        if ($request->filled('existing_attachment_descriptions')) {
+            foreach ($request->input('existing_attachment_descriptions') as $id => $description) {
+                \App\Models\MedicalRecordAttachment::where('id', $id)->update(['description' => $description]);
+            }
+        }
+
+        // Handle New Attachments
         if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
+            $files = $request->file('attachments');
+            $descriptions = $request->input('attachment_descriptions', []);
+            foreach ($files as $index => $file) {
                 $path = $file->store('medical-records/' . $medicalRecord->id, 'public');
                 $medicalRecord->attachments()->create([
                     'file_path' => $path,
                     'file_name' => $file->getClientOriginalName(),
                     'file_type' => $file->getClientMimeType(),
                     'file_size' => $file->getSize(),
+                    'description' => $descriptions[$index] ?? null,
                 ]);
             }
         }

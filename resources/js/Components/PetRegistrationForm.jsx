@@ -46,13 +46,7 @@ export default function PetRegistrationForm({ initialClients, onSuccess, onCance
         chronic_conditions: pet?.chronic_conditions || '',
     });
 
-    // Auto-select Sin Asignar if list changes and nothing selected
-    useEffect(() => {
-        if (!data.user_id && localClients.length > 0) {
-            const unassigned = localClients.find(c => c.name === '<< Sin Asignar >>');
-            if (unassigned) setData('user_id', unassigned.id);
-        }
-    }, [localClients]);
+
 
     const [photoPreview, setPhotoPreview] = useState(pet?.photo_path ? `/storage/${pet.photo_path}` : null);
 
@@ -227,7 +221,7 @@ export default function PetRegistrationForm({ initialClients, onSuccess, onCance
                                         onChange={e => {
                                             setData('name', e.target.value);
                                             if (e.target.value.length > 2) {
-                                                fetch(route('pets.search', { q: e.target.value }))
+                                                fetch(route('pets.search', { q: e.target.value, strict_name: 1 }))
                                                     .then(res => res.json())
                                                     .then(json => setSimilarPets(json));
                                             } else {
@@ -243,7 +237,7 @@ export default function PetRegistrationForm({ initialClients, onSuccess, onCance
                                             <ul className="mt-1 list-disc ml-4">
                                                 {similarPets.map(p => (
                                                     <li key={p.id}>
-                                                        {p.name} ({p.species}) - Dueño: {p.owner?.name}
+                                                        {p.name} ({p.pet?.species}) - Dueño: {p.owner_name}
                                                     </li>
                                                 ))}
                                             </ul>
@@ -361,17 +355,56 @@ export default function PetRegistrationForm({ initialClients, onSuccess, onCance
                                             + Nuevo Cliente
                                         </button>
                                     </div>
-                                    <select
-                                        value={data.user_id}
-                                        onChange={e => setData('user_id', e.target.value)}
-                                        className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-                                        required
-                                    >
-                                        <option value="">Seleccionar Cliente...</option>
-                                        {localClients.map(client => (
-                                            <option key={client.id} value={client.id}>{client.name}</option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        {data.user_id ? (
+                                            <div className="flex items-center justify-between px-4 py-2.5 rounded-xl border border-brand-primary/30 bg-brand-primary/5 dark:bg-brand-primary/10">
+                                                <div className="truncate pr-4">
+                                                    <span className="text-sm font-bold text-brand-primary">
+                                                        {localClients.find(c => c.id == data.user_id)?.name || 'Cliente Seleccionado'}
+                                                    </span>
+                                                </div>
+                                                <button type="button" onClick={() => setData('user_id', '')} className="text-[10px] font-black uppercase text-red-500 hover:text-red-700 transition">
+                                                    Cambiar
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Buscar por nombre, teléfono..."
+                                                    onChange={e => {
+                                                        if (e.target.value.length > 2) {
+                                                            fetch(route('clients.search', { q: e.target.value }))
+                                                                .then(res => res.json())
+                                                                .then(json => setLocalClients(json));
+                                                        } else {
+                                                            setLocalClients([]);
+                                                        }
+                                                    }}
+                                                    className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                                                    autoComplete="off"
+                                                />
+                                                {localClients.length > 0 && (
+                                                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                                                        {localClients.map(c => (
+                                                            <button
+                                                                key={c.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setData('user_id', c.id);
+                                                                    setLocalClients([c]);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700 last:border-b-0 transition"
+                                                            >
+                                                                <div className="font-bold text-sm text-gray-900 dark:text-white">{c.name}</div>
+                                                                <div className="text-[10px] text-gray-500 font-medium">{c.phone || c.email || 'Sin contacto extra'}</div>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
                                     {errors.user_id && <div className="text-red-500 text-xs mt-1">{errors.user_id}</div>}
                                 </div>
                             </div>

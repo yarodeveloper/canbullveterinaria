@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import Pagination from '@/Components/Pagination';
 
 export default function Index({ auth, staff }) {
     const { delete: destroy } = useForm();
@@ -102,6 +103,10 @@ export default function Index({ auth, staff }) {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                        {/* Pagination */}
+                        <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-900/40">
+                            <Pagination links={staff.links} />
                         </div>
                     </div>
                 </div>

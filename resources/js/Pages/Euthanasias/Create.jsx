@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import MedicationsEditor from '@/Components/MedicationsEditor';
 import PendingChargesEditor from '@/Components/PendingChargesEditor';
+import PetAsyncSearch from '@/Components/PetAsyncSearch';
 
 const REASONS = [
     'Enfermedad terminal / sin pronóstico favorable',
@@ -25,10 +26,6 @@ const DISPOSITION_OPTIONS = [
 
 export default function Create({ auth, pet: initialPet, veterinarians, products, selectedPetId }) {
     const [selectedPet, setSelectedPet] = useState(initialPet || null);
-    const [petSearch, setPetSearch]     = useState('');
-    const [petResults, setPetResults]   = useState([]);
-    const [showPetDropdown, setShowPetDropdown] = useState(false);
-    const petSearchRef = useRef(null);
 
     // Medicamentos
     const [medications, setMedications] = useState([]);
@@ -59,19 +56,7 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
 
     const [showPreviewModal, setShowPreviewModal] = useState(false);
 
-    // Búsqueda de paciente
-    useEffect(() => {
-        if (petSearch.length > 2) {
-            const t = setTimeout(() => {
-                axios.get(route('pets.search', { q: petSearch }))
-                    .then(r => { setPetResults(r.data); setShowPetDropdown(true); });
-            }, 300);
-            return () => clearTimeout(t);
-        } else {
-            setPetResults([]);
-            setShowPetDropdown(false);
-        }
-    }, [petSearch]);
+    // Pet search handled asynchronously via PetAsyncSearch
 
     const selectPet = (pet) => {
         setSelectedPet(pet);
@@ -81,8 +66,6 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
             weight: pet.weight || d.weight,
             owner_authorization: d.owner_authorization || defaultAuthText(pet.name, pet.owner?.name)
         }));
-        setPetSearch('');
-        setShowPetDropdown(false);
     };
 
     const submit = (e) => {
@@ -140,40 +123,8 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="relative" ref={petSearchRef}>
-                                            <input
-                                                type="text"
-                                                value={petSearch}
-                                                onChange={e => setPetSearch(e.target.value)}
-                                                placeholder="Buscar paciente por nombre..."
-                                                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            />
-                                            {showPetDropdown && petResults.length > 0 && (
-                                                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-h-60 overflow-auto">
-                                                    {petResults.map(p => (
-                                                        <button key={p.id} type="button" onClick={() => selectPet(p)}
-                                                            className="w-full text-left px-4 py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition flex items-center gap-3 text-sm">
-                                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm ${p.owner?.name === '<< Sin Asignar >>' ? 'bg-orange-100 text-orange-600 border border-orange-200' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
-                                                                {p.name?.charAt(0)}
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="font-bold text-sm text-slate-800 dark:text-white truncate">
-                                                                    {p.pet?.name || p.name} 
-                                                                    {p.owner_name === '<< Sin Asignar >>' || p.owner?.name === '<< Sin Asignar >>' ? (
-                                                                        <span className="text-[9px] bg-orange-500 text-white px-1.5 py-0.5 rounded ml-2 font-black uppercase tracking-tighter shrink-0">SIN DUEÑO</span>
-                                                                    ) : null}
-                                                                </p>
-                                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1 truncate">
-                                                                    {(p.pet?.species || p.species)} • {(p.pet?.breed || p.breed) || 'Sin Raza'} • {p.owner_name === '<< Sin Asignar >>' || p.owner?.name === '<< Sin Asignar >>' ? 'S/A' : (p.owner_name || p.owner?.name)}
-                                                                </p>
-                                                            </div>
-                                                            <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${(p.pet?.species || p.species) === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
-                                                                {(p.pet?.species || p.species) || 'Mascota'}
-                                                            </span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
+                                        <div className="relative">
+                                            <PetAsyncSearch onSelect={selectPet} />
                                             <p className="mt-2 text-xs text-slate-400">
                                                 ¿No está registrado?{' '}
                                                 <Link

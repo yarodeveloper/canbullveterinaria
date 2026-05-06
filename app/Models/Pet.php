@@ -18,6 +18,9 @@ class Pet extends Model
             if (empty($model->uuid)) {
                 $model->uuid = (string) \Illuminate\Support\Str::uuid();
             }
+            if (empty($model->branch_id)) {
+                $model->branch_id = auth()->user()->branch_id ?? \App\Models\Branch::first()?->id;
+            }
         });
     }
 

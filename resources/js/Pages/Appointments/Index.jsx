@@ -4,6 +4,8 @@ import { getWhatsAppLink } from '@/Utils/formatters';
 import React, { useState } from 'react';
 import Modal from '@/Components/Modal';
 import PetAlertIcons from '@/Components/PetAlertIcons';
+import PetAvatar from '@/Components/PetAvatar';
+import PetAsyncSearch from '@/Components/PetAsyncSearch';
 import { IconPlay } from '@/Components/Icons';
 
 const roleLabels = {
@@ -99,15 +101,7 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
         recurrence_weeks: 1,
     });
 
-    const normalizeString = (str) => {
-        return (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    };
-
-    const filteredPets = pets.filter(pet => {
-        const normalizedSearch = normalizeString(searchTerm);
-        return normalizeString(pet.name).includes(normalizedSearch) ||
-               normalizeString(pet.owner?.name).includes(normalizedSearch);
-    }).slice(0, 10); // Aumentado a 10 para mejor visibilidad
+    // Pets are searched asynchronously
 
     // Leer prefill params de la URL (ej: ?prefill_pet_id=2&prefill_type=grooming)
     // Se usa para abrir el modal de cita desde el monitor de estética.
@@ -128,7 +122,7 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                 reason: '',
             });
             if (pet) {
-                setSearchTerm(`${pet.name} (${pet.owner?.name || '---'})`);
+                // handle prefill
             }
             setIsCreateModalOpen(true);
             // Limpiar los params de la URL sin recargar la página
@@ -146,7 +140,10 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
         setIsCreateModalOpen(false);
         resetCreate();
         setSearchTerm('');
+        setSelectedPetObj(null);
     };
+
+    const [selectedPetObj, setSelectedPetObj] = useState(null);
 
     const submitCreate = (e) => {
         e.preventDefault();
@@ -526,7 +523,10 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                                                                 {dayEvents.map(e => (
                                                                     <div key={`${e.eventType}-${e.id}`} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-bold ${e.eventType === 'task' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-brand-primary text-white border-transparent shadow-sm'}`}>
                                                                         <span className="opacity-70">{new Date(e.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-                                                                        <span className="truncate max-w-[120px]">{e.eventType === 'task' ? e.title : e.pet.name}</span>
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            {e.eventType === 'appointment' && <PetAvatar pet={e.pet} className="h-4 w-4" />}
+                                                                            <span className="truncate max-w-[120px]">{e.eventType === 'task' ? e.title : e.pet.name}</span>
+                                                                        </div>
                                                                         {e.status === 'completed' && <span>✓</span>}
                                                                     </div>
                                                                 ))}
@@ -591,10 +591,11 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
 
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <span className="text-base font-black text-gray-900 dark:text-gray-100 group-hover:text-brand-primary transition flex items-center gap-2">
-                                                                    {apt.pet.name}
-                                                                    <PetAlertIcons pet={apt.pet} size="sm" />
-                                                                </span>
+                                                                <span className="text-base font-black text-gray-900 dark:text-gray-100 group-hover:text-brand-primary transition flex items-center gap-3">
+                                                                     <PetAvatar pet={apt.pet} className="h-8 w-8" />
+                                                                     {apt.pet.name}
+                                                                     <PetAlertIcons pet={apt.pet} size="sm" />
+                                                                 </span>
                                                                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-500 uppercase font-black tracking-widest">
                                                                     {apt.pet.species}
                                                                 </span>
@@ -1028,49 +1029,32 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                         <div className="space-y-5">
                             <div className="space-y-2">
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">1. Localizar Paciente</label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="🔍 Escribe nombre de mascota o dueño..."
-                                        value={searchTerm}
-                                        onChange={e => {
-                                            setSearchTerm(e.target.value);
-                                            setShowDropdown(true);
-                                        }}
-                                        onFocus={() => setShowDropdown(true)}
-                                        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                                        className="w-full rounded-xl border-gray-200 py-3 focus:border-brand-primary focus:ring-0 dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-                                    />
-
-                                    {showDropdown && searchTerm && (
-                                        <div className="absolute z-[110] w-full mt-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl max-h-60 overflow-auto animate-in fade-in slide-in-from-top-2">
-                                            {filteredPets.length > 0 ? filteredPets.map(pet => (
-                                                <button
-                                                    key={pet.id}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setCreateData('pet_id', pet.id);
-                                                        setSearchTerm(`${pet.name} (${pet.owner?.name || '---'})`);
-                                                        setShowDropdown(false);
-                                                    }}
-                                                    className={`w-full text-left px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between border-b dark:border-gray-700 last:border-0 ${createData.pet_id === pet.id ? 'bg-brand-primary/5 dark:bg-brand-primary/10' : ''}`}
-                                                >
-                                                    <div className="flex-1 min-w-0">
-                                                        <span className="font-black text-gray-900 dark:text-gray-100 uppercase text-xs truncate block">{pet.name}</span>
-                                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight mt-0.5 truncate">
-                                                            {pet.species} • {pet.breed || 'Sin Raza'} • {pet.owner?.name || 'No registrado'}
-                                                        </p>
-                                                    </div>
-                                                    <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${pet.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
-                                                        {pet.species || 'Mascota'}
-                                                    </span>
-                                                </button>
-                                            )) : (
-                                                <div className="p-6 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Sin coincidencias</div>
-                                            )}
+                                {!createData.pet_id ? (
+                                    <PetAsyncSearch onSelect={(pet) => {
+                                        setCreateData('pet_id', pet.id);
+                                        setSelectedPetObj(pet);
+                                    }} />
+                                ) : (
+                                    <div className="flex items-center justify-between p-3 bg-brand-primary/5 border border-brand-primary/20 rounded-2xl">
+                                        <div className="flex items-center gap-3">
+                                            <PetAvatar pet={selectedPetObj} className="h-8 w-8" />
+                                            <div>
+                                                <p className="font-black text-sm uppercase text-gray-900 dark:text-gray-100">{selectedPetObj?.name}</p>
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase">{selectedPetObj?.owner?.name}</p>
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => {
+                                                setCreateData('pet_id', '');
+                                                setSelectedPetObj(null);
+                                            }}
+                                            className="text-[10px] text-red-500 font-black uppercase hover:underline"
+                                        >
+                                            Cambiar
+                                        </button>
+                                    </div>
+                                )}
                                 {createErrors.pet_id && <p className="text-red-500 text-[10px] font-bold uppercase mt-1">{createErrors.pet_id}</p>}
                             </div>
 

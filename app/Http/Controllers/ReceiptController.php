@@ -44,7 +44,7 @@ class ReceiptController extends Controller
             return redirect()->route('cash-register.index')->withErrors(['error' => 'Debes abrir el turno de caja antes de poder realizar cobros.']);
         }
 
-        $clients = User::where('role', 'client')->where('email', '!=', 'publico@general.com')->with('pets')->get();
+        $clients = [];
         // Cargar productos con su categoría y listos para calcular el stock en RAM (o con subquery si prefiere)
         $products = Product::where('is_active', true)->with(['category', 'lots' => function($query) use ($branchId) {
             $query->where('branch_id', $branchId)->where('status', 'active');
@@ -53,8 +53,7 @@ class ReceiptController extends Controller
             return $product;
         });
         
-        // Cargar mascotas con sus dueños (considerando múltiples dueños con owners()) y también owner() por compatibilidad
-        $pets = \App\Models\Pet::with(['owners', 'owner'])->get();
+        $pets = [];
 
         $generalPublicClient = User::firstOrCreate(
             ['email' => 'publico@general.com'],

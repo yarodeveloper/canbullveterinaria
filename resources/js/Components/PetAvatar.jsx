@@ -1,25 +1,47 @@
 import React from 'react';
 
 export default function PetAvatar({ pet, className = "w-20 h-20" }) {
-    const photo = pet.photo_path ? `/storage/${pet.photo_path}` : null;
-    const species = (pet.species || '').toLowerCase();
+    if (!pet) return null;
 
-    // Fallback cute avatars based on species
-    const avatars = {
-        canino: 'https://cdn-icons-png.flaticon.com/512/616/616408.png', // Cute Dog
-        felino: 'https://cdn-icons-png.flaticon.com/512/616/616430.png', // Cute Cat
-        otros: 'https://cdn-icons-png.flaticon.com/512/616/616611.png',  // Cute Rabbit/General
+    let photo = null;
+    if (pet.photo_path) {
+        if (pet.photo_path.startsWith('http')) {
+            photo = pet.photo_path;
+        } else if (pet.photo_path.startsWith('/')) {
+            photo = pet.photo_path;
+        } else {
+            photo = `/storage/${pet.photo_path}`;
+        }
+    }
+
+    const getSpeciesIcon = (species) => {
+        const s = species?.toLowerCase() || '';
+        if (s.includes('perro') || s.includes('canino') || s.includes('dog')) return '🐶';
+        if (s.includes('gato') || s.includes('felino') || s.includes('cat')) return '🐱';
+        if (s.includes('ave') || s.includes('pajaro') || s.includes('bird')) return '🦜';
+        if (s.includes('conejo') || s.includes('rabbit')) return '🐰';
+        return '🐾';
     };
 
-    const defaultAvatar = avatars[species] || avatars.otros;
-
     return (
-        <div className={`${className} rounded-full overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center`}>
+        <div className={`${className} rounded-full overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-slate-800 border dark:border-gray-700 shrink-0`}>
             {photo ? (
-                <img src={photo} alt={pet.name} className="w-full h-full object-cover" />
-            ) : (
-                <img src={defaultAvatar} alt="Default Avatar" className="w-4/5 h-4/5 object-contain opacity-80" />
-            )}
+                <img 
+                    src={photo} 
+                    alt={pet.name} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                    }}
+                />
+            ) : null}
+            <div 
+                className="w-full h-full flex items-center justify-center text-xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900"
+                style={{ display: photo ? 'none' : 'flex' }}
+            >
+                {getSpeciesIcon(pet.species)}
+            </div>
         </div>
     );
 }

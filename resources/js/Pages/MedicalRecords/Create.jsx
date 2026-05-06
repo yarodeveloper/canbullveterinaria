@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import MedicationsEditor from '@/Components/MedicationsEditor';
 import PendingChargesEditor from '@/Components/PendingChargesEditor';
 import PetAlertIcons from '@/Components/PetAlertIcons';
+import MedicalRecordAttachmentManager from '@/Components/MedicalRecordAttachmentManager';
 
 const formatDate = (dateString) => {
     if (!dateString) return "Desconocida";
@@ -99,7 +100,6 @@ const PillSelector = ({ options, value, onChange, colorClass = "bg-brand-primary
 );
 
 export default function Create({ auth, pet, products, prefill, record, isEditing = false }) {
-    const [previews, setPreviews] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const { data, setData, post, put, processing, errors } = useForm({
         appointment_id: prefill?.appointment_id || '',
@@ -146,10 +146,15 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
         },
         physical_state: record?.physical_state || 'Ideal',
         attachments: [],
+        attachment_descriptions: [],
+        deleted_attachments: [],
+        existing_attachment_descriptions: {},
         pending_charges: [],
         medications: record?.medications || [],
         applied_medications: record?.applied_medications || [],
     });
+
+    const [existingAttachments, setExistingAttachments] = useState(record?.attachments || []);
 
     const [medSearchQuery, setMedSearchQuery] = useState('');
     const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -176,16 +181,19 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
         setData('anamnesis', { ...data.anamnesis, [field]: value });
     };
 
-    const handleFileChange = (e) => {
-        const files = Array.from(e.target.files);
-        setData('attachments', files);
-        const newPreviews = files.map(file => {
-            if (file.type.startsWith('image/')) {
-                return URL.createObjectURL(file);
-            }
-            return null;
+    const handleExistingAttachmentUpdate = (id, description) => {
+        setExistingAttachments(prev => prev.map(a => a.id === id ? { ...a, description } : a));
+        setData('existing_attachment_descriptions', {
+            ...data.existing_attachment_descriptions,
+            [id]: description
         });
-        setPreviews(newPreviews);
+    };
+
+    const handleExistingAttachmentDelete = (id) => {
+        if (confirm('¿Estás seguro de eliminar este archivo permanentemente?')) {
+            setExistingAttachments(prev => prev.filter(a => a.id !== id));
+            setData('deleted_attachments', [...data.deleted_attachments, id]);
+        }
     };
 
     const addCharge = (product) => {
@@ -721,30 +729,24 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                                     </div>
                                 </div>
 
-                            {/* Subida de Archivos */}
-                            <div className={`${cardBase} border border-dashed border-slate-600 hover:border-slate-500 hover:bg-slate-100 dark:bg-slate-800/30 transition-all relative text-center py-12 my-8 group cursor-pointer`}>
-                                <input type="file" multiple onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                                <div className="absolute inset-0 bg-brand-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-
-                                <svg className="w-12 h-12 mx-auto text-slate-500 group-hover:text-brand-primary group-hover:scale-110 transition-all mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-
-                                <h4 className="text-slate-700 dark:text-slate-300 font-bold mt-2 mb-1 uppercase tracking-widest text-[11px]">Subir Imágenes o PDF</h4>
-                                <p className="text-[10px] text-slate-500 tracking-wide uppercase font-medium">Rayos X, Ultrasonido, Laboratorio...</p>
-
-                                {data.attachments.length > 0 && (
-                                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 mt-8 px-10 relative z-20">
-                                        {previews.map((preview, idx) => (
-                                            preview ? (
-                                                <img key={idx} src={preview} className="w-full aspect-square object-cover rounded-xl border-2 border-slate-600 shadow-lg" alt="Preview" />
-                                            ) : (
-                                                <div key={idx} className="w-full aspect-square bg-slate-100 dark:bg-slate-800 rounded-xl border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 shadow-lg uppercase">DOC</div>
-                                            )
-                                        ))}
-                                    </div>
-                                )}
+                            {/* Subida de Archivos Avanzada */}
+                            <div className={cardBase}>
+                                <h3 className={`${headerTitle} text-slate-500 dark:text-slate-400 mb-6`}>
+                                    📁 Archivos Adjuntos y Documentación
+                                </h3>
+                                <MedicalRecordAttachmentManager 
+                                    existingAttachments={existingAttachments}
+                                    onAttachmentsChange={(files, descriptions) => {
+                                        setData(prev => ({
+                                            ...prev,
+                                            attachments: files,
+                                            attachment_descriptions: descriptions
+                                        }));
+                                    }}
+                                    onExistingAttachmentUpdate={handleExistingAttachmentUpdate}
+                                    onExistingAttachmentDelete={handleExistingAttachmentDelete}
+                                />
                             </div>
-
-                            {/* Enviar a Caja */}
                             <PendingChargesEditor 
                                 charges={data.pending_charges}
                                 products={products}

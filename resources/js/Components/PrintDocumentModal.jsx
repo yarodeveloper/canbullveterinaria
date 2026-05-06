@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
+import PetAvatar from '@/Components/PetAvatar';
 
 export default function PrintDocumentModal({ 
     isOpen, 
@@ -24,9 +25,12 @@ export default function PrintDocumentModal({
             <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] w-full max-w-4xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border dark:border-gray-700">
                 <div className="p-8 border-b dark:border-gray-700 flex justify-between items-center bg-slate-50 dark:bg-gray-900/50 relative">
                     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-primary to-indigo-500"></div>
-                    <div>
-                        <h3 className="font-black uppercase tracking-tight text-2xl text-gray-900 dark:text-gray-100">Centro de Impresión</h3>
-                        <p className="text-xs text-slate-500 uppercase font-bold tracking-widest mt-1">Selecciona la plantilla para {pet.name}</p>
+                    <div className="flex items-center gap-4">
+                        <PetAvatar pet={pet} className="h-14 w-14 border-2 border-white dark:border-gray-700 shadow-lg" />
+                        <div>
+                            <h3 className="font-black uppercase tracking-tight text-2xl text-gray-900 dark:text-gray-100">Centro de Impresión</h3>
+                            <p className="text-xs text-slate-500 uppercase font-bold tracking-widest mt-1">Selecciona la plantilla para {pet.name}</p>
+                        </div>
                     </div>
                     <button onClick={onClose} className="bg-white dark:bg-gray-700 text-gray-400 hover:text-red-500 transition rounded-full p-2 shadow-sm border dark:border-gray-600">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>

@@ -65,19 +65,8 @@ class EuthanasiaController extends Controller
             ->whereIn('role', ['admin', 'veterinarian'])
             ->get(['id', 'name']);
 
-        $clients = User::where('role', 'client')
-            ->where(function($q) use ($branchId) {
-                if ($branchId) {
-                    $q->where('branch_id', $branchId)->orWhereNull('branch_id');
-                }
-            })
-            ->where('email', '!=', 'publico@general.com')
-            ->get(['id', 'name']);
-
-        $pets = Pet::query()
-            ->with(['owner', 'branch'])
-            ->limit(100)
-            ->get(['id', 'name', 'user_id', 'breed', 'species', 'branch_id']);
+        $clients = [];
+        $pets = [];
 
         // Productos del inventario para medicamentos (solo físicos, sin importar stock para registro médico)
         $products = Product::where('is_active', true)

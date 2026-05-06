@@ -42,8 +42,8 @@ class QuoteController extends Controller
 
         $templates = \App\Models\ServiceTemplate::with('items.product')->where('is_active', true)->get();
         $products = \App\Models\Product::where('is_active', true)->get(['id', 'name', 'price', 'unit', 'is_service']);
-        $clients = \App\Models\User::where('role', 'client')->limit(100)->get(['id', 'name']);
-        $petsList = \App\Models\Pet::with('owner')->limit(100)->get();
+        $clients = [];
+        $petsList = [];
         $settings = \App\Models\SiteSetting::first();
 
         return \Inertia\Inertia::render('Quotes/Create', [

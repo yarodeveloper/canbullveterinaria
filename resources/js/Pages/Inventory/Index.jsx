@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import React, { useState, useEffect } from 'react';
+import Pagination from '@/Components/Pagination';
 
 export default function Index({ auth, products, categories, filters }) {
     const [searchTerm, setSearchTerm] = useState(filters?.search_term || '');
@@ -334,23 +335,11 @@ export default function Index({ auth, products, categories, filters }) {
                                 <p className="text-slate-400 text-sm">Prueba ajustando los filtros o creando un nuevo registro.</p>
                             </div>
                         )}
-                        {/* Paginación */}
-                        {products.links && products.links.length > 3 && (
-                            <div className="p-4 border-t dark:border-slate-700/50 bg-slate-50/50 dark:bg-gray-900/30 flex justify-center">
-                                <div className="flex flex-wrap gap-1">
-                                    {products.links.map((link, index) => (
-                                        <Link
-                                            key={index}
-                                            href={link.url || '#'}
-                                            className={`px-3 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all ${!link.url ? 'text-slate-300 cursor-not-allowed' :
-                                                link.active ? 'bg-brand-primary text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-500 hover:bg-brand-primary hover:text-white'
-                                                }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        
+                        {/* Paginación Standard */}
+                        <div className="p-6 border-t border-slate-100 dark:border-slate-700/50 bg-slate-50/30 dark:bg-gray-900/40">
+                            <Pagination links={products.links} />
+                        </div>
                     </div>
                 </div>
             </div>

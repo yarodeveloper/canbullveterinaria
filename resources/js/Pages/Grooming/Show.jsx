@@ -2,6 +2,7 @@ import { Head, Link, useForm, router } from '@inertiajs/react';
 import React, { useState, useEffect, useRef } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PetAlertIcons from '@/Components/PetAlertIcons';
+import PetAvatar from '@/Components/PetAvatar';
 
 const roleLabels = {
     admin: 'Adm.',
@@ -151,9 +152,7 @@ export default function Show({ auth, order, services, groomingStyles = [], defau
                             {/* Pet Banner - Compact */}
                             <div className="bg-brand-primary/5 dark:bg-brand-primary/10 px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center text-3xl shadow-md border dark:border-gray-700 shrink-0">
-                                        {order.pet?.species === 'Canino' ? '🐕' : '🐈'}
-                                    </div>
+                                    <PetAvatar pet={order.pet} className="w-14 h-14 border dark:border-gray-700 shadow-md flex-shrink-0" />
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2">
                                             <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase truncate">{order.pet.name}</h3>

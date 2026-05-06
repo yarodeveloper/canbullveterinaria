@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { IconEye, IconEdit, IconPlus } from '@/Components/Icons';
+import Pagination from '@/Components/Pagination';
 import { BehaviorBadge } from '@/Components/BehaviorSelector';
 import { useState, useEffect } from 'react';
 
@@ -135,6 +136,11 @@ export default function Index({ auth, clients, filters }) {
                                         )}
                                     </div>
                                 )}
+                            </div>
+
+                            {/* Pagination */}
+                            <div className="p-6 border-t border-slate-100 dark:border-slate-700/50 bg-slate-50/30 dark:bg-gray-900/40">
+                                <Pagination links={clients.links} />
                             </div>
                         </div>
                     </div>

@@ -1,6 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import React, { useState } from 'react';
+import { format, differenceInDays } from 'date-fns';
+import { es } from 'date-fns/locale';
+import Pagination from '@/Components/Pagination';
+import PetAvatar from '@/Components/PetAvatar';
 import { getWhatsAppLink } from '@/Utils/formatters';
 
 export default function Index({ auth, records, filters }) {
@@ -202,11 +206,9 @@ export default function Index({ auth, records, filters }) {
                                                         }
                                                     }}
                                                 >
-                                                    <td className="px-4 py-2.5">
+                                                    <td className="px-6 py-5">
                                                         <div className="flex items-center gap-4">
-                                                            <div className="w-9 h-9 bg-slate-100 dark:bg-gray-700 rounded-xl flex items-center justify-center text-lg group-hover:bg-white transition-all group-hover:scale-110">
-                                                                {item.pet.species === 'Canino' ? '🐕' : '🐈'}
-                                                            </div>
+                                                            <PetAvatar pet={item.pet} className="h-10 w-10 border-2 border-slate-100 dark:border-gray-700 shadow-sm" />
                                                             <div>
                                                                 <p className="text-sm font-black text-gray-900 dark:text-white transition">
                                                                     {item.pet.name}
@@ -272,19 +274,9 @@ export default function Index({ auth, records, filters }) {
                         </div>
 
                         {/* Pagination */}
-                        {records.links.length > 3 && (
-                            <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-slate-50/30 dark:bg-gray-900/40 flex justify-center gap-1">
-                                {records.links.map((link, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => link.url && router.visit(link.url)}
-                                        disabled={!link.url || link.active}
-                                        className={`px-4 py-2 text-[10px] font-black rounded-xl transition ${link.active ? (activeMonitor === 'health' ? 'bg-indigo-600' : 'bg-brand-primary') + ' text-white shadow-md' : 'bg-white dark:bg-gray-800 text-gray-500 hover:bg-opacity-10 border'}`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
-                            </div>
-                        )}
+                        <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-slate-50/30 dark:bg-gray-900/40">
+                            <Pagination links={records.links} />
+                        </div>
                     </div>
                     
                     {/* Small Legend at bottom */}

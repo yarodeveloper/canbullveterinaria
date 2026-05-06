@@ -138,11 +138,7 @@ class AppointmentController extends Controller
                 ];
             });
 
-        $pets = Pet::query()
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-            ->where('status', '!=', 'deceased')
-            ->with('owner')
-            ->get();
+        $pets = [];
 
         return Inertia::render('Appointments/Index', [
             'appointments' => $appointments,
@@ -163,7 +159,7 @@ class AppointmentController extends Controller
     {
         $branchId = Auth::user()->branch_id;
         
-        $pets = Pet::query()->with(['owner', 'branch'])->limit(100)->get();
+        $pets = [];
         $veterinarians = User::where('branch_id', $branchId)
             ->where(function($q) {
                 $q->whereHas('roles', function($r) {
@@ -201,7 +197,7 @@ class AppointmentController extends Controller
         
         $appointment = new Appointment($validated);
         $appointment->user_id = $pet->user_id; // Primary owner
-        $appointment->branch_id = Auth::user()->branch_id;
+        $appointment->branch_id = Auth::user()->branch_id ?? $pet->branch_id ?? \App\Models\Branch::first()?->id;
         $appointment->end_time = Carbon::parse($validated['start_time'])->addMinutes((int)$validated['duration']);
         $appointment->status = 'scheduled';
         $appointment->save();

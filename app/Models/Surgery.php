@@ -11,6 +11,16 @@ class Surgery extends Model
 {
     use HasFactory, SoftDeletes, Auditable;
 
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->branch_id)) {
+                $model->branch_id = auth()->user()->branch_id ?? \App\Models\Branch::first()?->id;
+            }
+        });
+    }
+
     protected $fillable = [
         'pet_id',
         'branch_id',

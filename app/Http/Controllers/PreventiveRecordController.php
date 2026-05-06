@@ -121,7 +121,6 @@ class PreventiveRecordController extends Controller
 
     private function export($query)
     {
-        $records = $query->orderBy('next_due_date', 'asc')->get();
         $filename = "Salud_Preventiva_" . date('Y-m-d') . ".csv";
         
         $headers = [
@@ -134,22 +133,24 @@ class PreventiveRecordController extends Controller
 
         $columns = ['Mascota', 'Propietario', 'Telefono', 'Tratamiento', 'Tipo', 'Ultima Aplicacion', 'Proximo Refuerzo'];
 
-        $callback = function() use($records, $columns) {
+        $callback = function() use($query, $columns) {
             $file = fopen('php://output', 'w');
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
             fputcsv($file, $columns);
 
-            foreach ($records as $r) {
-                fputcsv($file, [
-                    $r->pet->name,
-                    $r->pet->owner->name ?? 'N/A',
-                    $r->pet->owner->phone ?? 'N/A',
-                    $r->name,
-                    $r->type,
-                    $r->application_date,
-                    $r->next_due_date
-                ]);
-            }
+            $query->orderBy('next_due_date', 'asc')->chunk(500, function($records) use ($file) {
+                foreach ($records as $r) {
+                    fputcsv($file, [
+                        $r->pet->name,
+                        $r->pet->owner->name ?? 'N/A',
+                        $r->pet->owner->phone ?? 'N/A',
+                        $r->name,
+                        $r->type,
+                        $r->application_date,
+                        $r->next_due_date
+                    ]);
+                }
+            });
 
             fclose($file);
         };

@@ -40,6 +40,29 @@ class ClientController extends Controller
         ]);
     }
 
+    public function search(Request $request)
+    {
+        $query = $request->get('q');
+
+        $clients = User::query()
+            ->where('role', 'client')
+            ->where(function($q) {
+                $q->where('email', '!=', 'publico@general.com')
+                  ->orWhereNull('email');
+            })
+            ->where('name', 'NOT LIKE', '%Sin Asignar%')
+            ->where(function($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                  ->orWhere('phone', 'like', "%{$query}%")
+                  ->orWhere('email', 'like', "%{$query}%");
+            })
+            ->with('pets:id,name,user_id')
+            ->limit(15)
+            ->get(['id', 'name', 'phone', 'email']);
+
+        return response()->json($clients);
+    }
+
     public function create()
     {
         return Inertia::render('Clients/Create');
@@ -60,7 +83,7 @@ class ClientController extends Controller
         ]);
 
         $validated['role'] = 'client';
-        $validated['branch_id'] = Auth::user()->branch_id;
+        $validated['branch_id'] = Auth::user()->branch_id ?? \App\Models\Branch::first()?->id;
         $validated['password'] = Hash::make($request->phone ?? 'welcome123'); // Default password
 
         $client = User::create($validated);

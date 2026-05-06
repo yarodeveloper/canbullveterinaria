@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import BehaviorSelector, { BehaviorBadge } from '@/Components/BehaviorSelector';
+import PetAvatar from '@/Components/PetAvatar';
 import PrintDocumentModal from '@/Components/PrintDocumentModal';
 import { getWhatsAppLink } from '@/Utils/formatters';
 
@@ -304,9 +305,7 @@ export default function Show({ auth, client, documentTemplates = [], financialSu
                                             className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-100 dark:border-gray-700/60 rounded-xl hover:border-indigo-200 dark:hover:border-indigo-800 transition-all hover:shadow-sm bg-white dark:bg-gray-800"
                                         >
                                             <div className="flex items-center">
-                                                <div className="h-12 w-12 bg-indigo-50 dark:bg-indigo-900/20 rounded-full flex items-center justify-center text-indigo-500 font-black italic shadow-inner">
-                                                    {pet.name.charAt(0)}
-                                                </div>
+                                                <PetAvatar pet={pet} className="h-12 w-12" />
                                                 <div className="ml-4">
                                                     <div className="flex items-center gap-2">
                                                         <p className="font-bold text-gray-700 dark:text-gray-200 group-hover:text-indigo-600 transition">{pet.name}</p>
@@ -414,9 +413,12 @@ export default function Show({ auth, client, documentTemplates = [], financialSu
                                                     <div className="space-y-2">
                                                         {financialSummary.pending_charges.map(c => (
                                                             <div key={c.id} className="flex justify-between items-center p-3 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
-                                                                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                                                                    {c.pet?.name}: {c.product?.name || c.concept}
-                                                                </span>
+                                                                <div className="flex items-center gap-3">
+                                                                    <PetAvatar pet={c.pet} className="h-6 w-6" />
+                                                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                                                                        {c.pet?.name}: {c.product?.name || c.concept}
+                                                                    </span>
+                                                                </div>
                                                                 <span className="text-xs font-black text-amber-600">${(Number(c.product?.price || 0) * Number(c.quantity || 1)).toLocaleString()}</span>
                                                             </div>
                                                         ))}

@@ -1,5 +1,6 @@
 import { Head, useForm, Link, usePage, router } from '@inertiajs/react';
 import React, { useState, useMemo, useEffect } from 'react';
+import axios from 'axios';
 
 export default function Create({ auth, clients, products, pets, selectedClientId, activeRegister, currentStats, generalPublicClient, staff, pendingCharges, posPrinterName, posTicketPreview }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -97,25 +98,29 @@ export default function Create({ auth, clients, products, pets, selectedClientId
     const [receivedAmount, setReceivedAmount] = useState('');
     const [showBalance, setShowBalance] = useState(false);
 
-    const filteredSearchOptions = useMemo(() => {
-        if (!generalSearch) return [];
-        const query = generalSearch.toLowerCase();
-        if (searchType === 'client') {
-            return clients.filter(c => 
-                c.name.toLowerCase().includes(query) || 
-                (c.phone && c.phone.includes(query)) ||
-                c.pets?.some(p => p.name.toLowerCase().includes(query))
-            ).slice(0, 8);
-        } else {
-            return pets?.filter(p => {
-                const nameMatch = p.name.toLowerCase().includes(query);
-                const ownerMatch = p.owner?.name?.toLowerCase().includes(query) || 
-                                 p.owners?.some(o => o.name?.toLowerCase().includes(query));
-                const breedMatch = p.breed?.toLowerCase().includes(query);
-                return nameMatch || ownerMatch || breedMatch;
-            }).slice(0, 8) || [];
+    const [filteredSearchOptions, setFilteredSearchOptions] = useState([]);
+
+    useEffect(() => {
+        if (!generalSearch || generalSearch.length < 2) {
+            setFilteredSearchOptions([]);
+            return;
         }
-    }, [generalSearch, searchType, clients, pets]);
+
+        const timer = setTimeout(() => {
+            const endpoint = searchType === 'client' ? route('clients.search') : route('pets.search');
+            axios.get(endpoint, { params: { q: generalSearch } })
+                .then(res => {
+                    if (searchType === 'pet') {
+                        setFilteredSearchOptions(res.data.map(p => p.pet || p));
+                    } else {
+                        setFilteredSearchOptions(res.data);
+                    }
+                })
+                .catch(err => console.error(err));
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [generalSearch, searchType]);
 
     const filteredProducts = useMemo(() => {
         if (!productSearch) return [];

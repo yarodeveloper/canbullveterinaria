@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import React, { useState, useEffect } from 'react';
+import PetAsyncSearch from '@/Components/PetAsyncSearch';
 
 const DEFAULT_NOTES = `Los precios indicados son una estimación basada en una evaluación preliminar del caso y están sujetos a cambios. En caso de requerir insumos, medicamentos o procedimientos adicionales como consecuencia de hallazgos médicos imprevistos durante el servicio, el responsable de la mascota será notificado oportunamente antes de proceder.
 
@@ -165,24 +166,12 @@ export default function Create({ auth, pet, templates, products, clients, petsLi
                                 <>
                                     <div className="md:col-span-2">
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Paciente (Mascota) *</label>
-                                        <select
-                                            value={data.pet_id}
-                                            onChange={e => {
-                                                const pId = e.target.value;
-                                                const selected = petsList?.find(p => p.id === parseInt(pId));
-                                                if (selected) {
-                                                    setData(prev => ({ ...prev, pet_id: pId, client_id: selected.user_id || selected.owner?.id }));
-                                                    setPetWeight(selected.weight || 0);
-                                                } else {
-                                                    setData('pet_id', pId);
-                                                }
+                                        <PetAsyncSearch 
+                                            onSelect={pet => {
+                                                setData(prev => ({ ...prev, pet_id: String(pet.id), client_id: String(pet.user_id || pet.owner?.id || '') }));
+                                                setPetWeight(pet.weight || 0);
                                             }}
-                                            required={!isGuest}
-                                            className={inputCls}
-                                        >
-                                            <option value="">Seleccione un paciente...</option>
-                                            {petsList?.map(p => <option key={p.id} value={p.id}>{p.name} ({p.owner?.name})</option>)}
-                                        </select>
+                                        />
                                         {errors.pet_id && <p className="text-red-500 text-xs mt-1">{errors.pet_id}</p>}
                                     </div>
                                     <div>

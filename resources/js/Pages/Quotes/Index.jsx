@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import React, { useState } from 'react';
+import Pagination from '@/Components/Pagination';
 
 const STATUS_CONFIG = {
     Borrador:  { color: 'bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300', dot: 'bg-slate-400' },
@@ -228,19 +229,9 @@ export default function Index({ auth, quotes, filters }) {
                             </ul>
 
                     </div>
-                    {quotes.links && quotes.links.length > 3 && (
-                        <div className="p-4 border-t dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-center gap-1">
-                            {quotes.links.map((link, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => link.url && router.visit(link.url)}
-                                    disabled={!link.url || link.active}
-                                    className={`px-4 py-2 text-[10px] font-black rounded-xl transition ${link.active ? 'bg-brand-primary text-white shadow-md' : 'bg-white dark:bg-gray-800 text-gray-500 hover:bg-opacity-10 border dark:border-gray-700'}`}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                />
-                            ))}
-                        </div>
-                    )}
+                    <div className="p-4 border-t dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                        <Pagination links={quotes.links} />
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

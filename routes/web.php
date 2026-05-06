@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/pets/{pet}/link-owner', [\App\Http\Controllers\PetController::class, 'linkOwner'])->name('pets.link-owner');
     Route::post('/pets/{pet}/photo', [\App\Http\Controllers\PetController::class, 'updatePhoto'])->name('pets.update-photo');
     Route::resource('pets', \App\Http\Controllers\PetController::class);
+    Route::get('/clients/search', [\App\Http\Controllers\ClientController::class, 'search'])->name('clients.search');
     Route::resource('clients', \App\Http\Controllers\ClientController::class);
 
     Route::get('/breeds/search', [\App\Http\Controllers\PetBreedController::class, 'search'])->name('breeds.search');

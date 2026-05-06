@@ -41,7 +41,7 @@ class HospitalizationController extends Controller
             $query->where('status', $request->input('status'));
         }
 
-        $hospitalizations = $query->latest()->get();
+        $hospitalizations = $query->latest()->paginate(15)->withQueryString();
 
         return Inertia::render('Hospitalizations/Index', [
             'hospitalizations' => $hospitalizations,
@@ -61,11 +61,7 @@ class HospitalizationController extends Controller
         }
 
         $branchId = Auth::user()->branch_id;
-        $clients = \App\Models\User::where('role', 'client')
-            ->where('email', '!=', 'publico@general.com')
-            ->where('name', 'NOT LIKE', '%Sin Asignar%')
-            ->limit(100)
-            ->get(['id', 'name']);
+        $clients = [];
 
         $products = \App\Models\Product::where('is_active', true)
             ->orderBy('is_controlled', 'desc')

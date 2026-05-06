@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import React from 'react';
 import MedicationsEditor from '@/Components/MedicationsEditor';
+import PetAvatar from '@/Components/PetAvatar';
 
 const roleLabels = {
     admin: 'Adm.',
@@ -120,15 +121,7 @@ export default function Show({ auth, record, templates = [], prevRecordId, nextR
                                     <span className="text-indigo-500">🐾</span> Paciente
                                 </h3>
                                 <div className="flex items-center gap-4 mt-4 mb-6 relative z-10">
-                                    <div className="w-14 h-14 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-500 border-2 border-indigo-500/30 shadow-lg shadow-indigo-500/20 flex-shrink-0 overflow-hidden">
-                                        {pet.photo_path ? (
-                                            <img src={`/storage/${pet.photo_path}`} alt={pet.name} className="w-full h-full object-cover" />
-                                        ) : pet.species?.toLowerCase() === 'felino' || pet.species?.toLowerCase() === 'gato' ? (
-                                            <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M19 4L16 6.5L13 4L12 8L11 4L8 6.5L5 4V13C5 17.4183 8.58172 21 13 21C17.4183 21 21 17.4183 21 13V4H19Z" /></svg>
-                                        ) : (
-                                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" /></svg>
-                                        )}
-                                    </div>
+                                    <PetAvatar pet={pet} className="w-14 h-14 border-2 border-indigo-500/30 shadow-lg shadow-indigo-500/20 flex-shrink-0" />
                                     <div>
                                         <h4 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{pet.name}</h4>
                                         <p className="text-[11px] text-indigo-300 font-semibold">{pet.species} • {pet.breed?.name || pet.breed || 'Mestizo'}</p>

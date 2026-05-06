@@ -17,7 +17,7 @@ class InventoryController extends Controller
     {
         Gate::authorize('manage inventory');
 
-        $branchId = Auth::user()->branch_id;
+        $branchId = Auth::user()->branch_id ?? \App\Models\Branch::first()?->id;
         $searchTerm = $request->input('search_term', '');
         $selectedCategory = $request->input('selected_category', 'all');
 
@@ -61,7 +61,7 @@ class InventoryController extends Controller
     public function audit()
     {
         Gate::authorize('manage inventory');
-        $branchId = Auth::user()->branch_id;
+        $branchId = Auth::user()->branch_id ?? \App\Models\Branch::first()?->id;
         
         $products = Product::where('is_active', true)->where('is_service', false)->with(['category', 'lots' => function($query) use ($branchId) {
             $query->where('branch_id', $branchId)->where('status', 'active');
@@ -99,7 +99,7 @@ class InventoryController extends Controller
     public function movements(Request $request)
     {
         Gate::authorize('manage inventory');
-        $branchId = Auth::user()->branch_id;
+        $branchId = Auth::user()->branch_id ?? \App\Models\Branch::first()?->id;
 
         $startDate = $request->input('start_date', now()->subDays(30)->toDateString());
         $endDate = $request->input('end_date', now()->toDateString());
@@ -221,7 +221,7 @@ class InventoryController extends Controller
     {
         Gate::authorize('manage inventory');
         
-        $branchId = Auth::user()->branch_id;
+        $branchId = Auth::user()->branch_id ?? \App\Models\Branch::first()?->id;
         $product->load(['category', 'lots' => function($query) use ($branchId) {
             $query->where('branch_id', $branchId);
         }]);
@@ -230,7 +230,8 @@ class InventoryController extends Controller
             ->where('branch_id', $branchId)
             ->with(['user', 'lot'])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(20)
+            ->withQueryString();
 
         $product->current_stock = $product->lots->where('status', 'active')->sum('current_quantity');
 
@@ -259,7 +260,7 @@ class InventoryController extends Controller
             return back()->withErrors(['notes' => 'Es obligatorio justificar e ingresar datos (receta/médico) al registrar lotes de medicamentos controlados.']);
         }
 
-        $branchId = Auth::user()->branch_id;
+        $branchId = Auth::user()->branch_id ?? \App\Models\Branch::first()?->id;
 
         $lot = Lot::create([
             'product_id' => $product->id,

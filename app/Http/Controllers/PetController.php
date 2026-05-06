@@ -39,13 +39,9 @@ class PetController extends Controller
     public function create()
     {
         $branchId = Auth::user()->branch_id;
-        
-        $clients = User::where('role', 'client')
-            ->orderBy('name')
-            ->get(['id', 'name']);
 
         return Inertia::render('Pets/Create', [
-            'clients' => $clients
+            'clients' => []
         ]);
     }
 
@@ -77,7 +73,7 @@ class PetController extends Controller
             $validated['photo_path'] = $path;
         }
 
-        $validated['branch_id'] = Auth::user()->branch_id;
+        $validated['branch_id'] = Auth::user()->branch_id ?? \App\Models\Branch::first()?->id;
 
         $pet = Pet::create($validated);
         
@@ -114,10 +110,7 @@ class PetController extends Controller
             'protocols' => \App\Models\HealthProtocol::whereNull('branch_id')
                 ->orWhere('branch_id', Auth::user()->branch_id)
                 ->get(),
-            'clients' => User::where('role', 'client')
-                ->orderBy('name')
-                ->limit(20) // Limit to avoid performance issues
-                ->get(['id', 'name']),
+            'clients' => [],
             'documentTemplates' => \App\Models\DocumentTemplate::where('is_active', true)
                 ->where(function($query) {
                     $query->whereNull('branch_id')
@@ -132,9 +125,8 @@ class PetController extends Controller
         $this->authorizeBranch($pet);
         $branchId = Auth::user()->branch_id;
 
-        $clients = User::where('role', 'client')
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        // Sólo cargar el dueño actual para evitar saturar la memoria
+        $clients = $pet->owners()->get(['users.id', 'users.name']);
 
         return Inertia::render('Pets/Edit', [
             'pet' => $pet,
@@ -212,16 +204,20 @@ class PetController extends Controller
     {
         $query = $request->get('q');
         $branchId = Auth::user()->branch_id;
+        $strictName = $request->boolean('strict_name');
 
         // Búsqueda global de mascotas para permitir pacientes móviles entre sucursales
         $results = Pet::query()
-            ->where(function($q) use ($query) {
-                $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('microchip', 'like', "%{$query}%")
-                  ->orWhereHas('owner', function($q2) use ($query) {
-                      $q2->where('name', 'like', "%{$query}%")
-                         ->orWhere('phone', 'like', "%{$query}%");
-                  });
+            ->where(function($q) use ($query, $strictName) {
+                $q->where('name', 'like', "%{$query}%");
+                
+                if (!$strictName) {
+                    $q->orWhere('microchip', 'like', "%{$query}%")
+                      ->orWhereHas('owner', function($q2) use ($query) {
+                          $q2->where('name', 'like', "%{$query}%")
+                             ->orWhere('phone', 'like', "%{$query}%");
+                      });
+                }
             })
             ->with(['owner', 'branch'])
             ->limit(15)

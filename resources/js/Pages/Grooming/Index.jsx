@@ -5,6 +5,9 @@ import Modal from '@/Components/Modal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import PetAlertIcons from '@/Components/PetAlertIcons';
+import Pagination from '@/Components/Pagination';
+import PetAvatar from '@/Components/PetAvatar';
+import PetAsyncSearch from '@/Components/PetAsyncSearch';
 
 const roleLabels = {
     admin: 'Adm.',
@@ -19,7 +22,6 @@ const roleLabels = {
 export default function Index({ auth, groomingOrders, clients, pets: allPets, groomers, services = [], groomingStyles = [], defaultNextVisitDate = '', filters }) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [clientSearch, setClientSearch] = useState('');
     const [selectedPet, setSelectedPet] = useState(null);
     const [selectedService, setSelectedService] = useState('');
 
@@ -48,30 +50,13 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
         return () => clearTimeout(timeoutId);
     }, [searchTerm]);
 
-    const searchResults = useMemo(() => {
-        if (!clientSearch) return { clients: [], pets: [] };
-        const query = clientSearch.toLowerCase();
-        
-        const filteredClients = clients.filter(c => 
-            c.name.toLowerCase().includes(query) || 
-            (c.phone && c.phone.includes(query))
-        ).slice(0, 5);
-
-        const filteredPets = allPets.filter(p => 
-            p.name.toLowerCase().includes(query) ||
-            (p.owner?.name && p.owner.name.toLowerCase().includes(query)) ||
-            (p.breed && p.breed.toLowerCase().includes(query))
-        ).slice(0, 10);
-
-        return { clients: filteredClients, pets: filteredPets };
-    }, [clientSearch, clients, allPets]);
+    // Pet search is handled asynchronously via PetAsyncSearch
 
     const handlePetSelect = (pet) => handlePetSelectAndSet(pet);
 
     const resetModal = () => {
         setShowCreateModal(false);
         setSelectedPet(null);
-        setClientSearch('');
         setSelectedService('');
         reset();
         setData('user_id', String(auth.user.id));
@@ -81,8 +66,7 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
     const handlePetSelectAndSet = (pet) => {
         setSelectedPet(pet);
         setData('pet_id', String(pet.id));
-        setData('client_id', String(pet.owner?.id || ''));
-        setClientSearch('');
+        setData('client_id', String(pet.owner?.id || pet.user_id || ''));
     };
 
     const addServiceToOrder = () => {
@@ -180,8 +164,8 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                                             <Link href={route('grooming-orders.show', order.id)} className="block px-6 py-2.5">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center min-w-0 gap-4 flex-1">
-                                                        <div className="flex-shrink-0 w-9 h-9 bg-white/10 dark:bg-gray-800 rounded-xl flex items-center justify-center text-lg group-hover:scale-110 transition-transform shadow-inner border dark:border-gray-700">
-                                                            {order.pet.species === 'Canino' ? '🐕' : '🐈'}
+                                                        <div className="flex-shrink-0 group-hover:scale-110 transition-transform">
+                                                            <PetAvatar pet={order.pet} className="h-9 w-9 border-2 border-slate-100 dark:border-gray-700 group-hover:border-white shadow-sm" />
                                                         </div>
                                                         <div className="min-w-0 flex-1">
                                                             <div className="flex items-center gap-3">
@@ -244,20 +228,9 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                         </div>
 
                         {/* Paginación */}
-                        {groomingOrders.total > groomingOrders.per_page && (
-                            <div className="p-6 border-t border-slate-200 dark:border-slate-700/50 flex justify-center gap-2">
-                                {groomingOrders.links.map((link, idx) => (
-                                    <Link
-                                        key={idx}
-                                        href={link.url || '#'}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                        className={`px-4 py-2 text-xs font-black rounded-xl border transition-all ${link.active 
-                                            ? 'bg-brand-primary border-brand-primary text-white shadow-lg' 
-                                            : 'bg-white dark:bg-[#111822] border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50'}`}
-                                    />
-                                ))}
-                            </div>
-                        )}
+                        <div className="p-6 border-t border-slate-200 dark:border-slate-700/50 bg-slate-50/30 dark:bg-gray-900/40">
+                            <Pagination links={groomingOrders.links} />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -285,86 +258,14 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                     <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                         {!selectedPet ? (
                             <div className="space-y-3">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest italic">1. BUSCAR PACIENTE O DUEÑO</label>
-                                <div className="relative group">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors text-lg">🔍</span>
-                                    <input
-                                        type="text"
-                                        autoFocus
-                                        placeholder="Escribe el nombre aquí..."
-                                        value={clientSearch}
-                                        onChange={(e) => setClientSearch(e.target.value)}
-                                        className="w-full bg-slate-100 dark:bg-slate-900/50 border-transparent focus:bg-white dark:focus:bg-[#1B2132] border-slate-300 dark:border-slate-700 focus:border-brand-primary focus:ring-brand-primary rounded-2xl pl-12 pr-4 py-3.5 text-base font-bold text-slate-900 dark:text-white transition-all shadow-inner"
-                                    />
-
-                                    {clientSearch && (searchResults.clients.length > 0 || searchResults.pets.length > 0) && (
-                                        <div className="relative z-10 w-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-1.5 max-h-56 overflow-y-auto custom-scrollbar">
-                                            {searchResults.pets.map(pet => (
-                                                <button
-                                                    key={`p-${pet.id}`}
-                                                    onClick={() => handlePetSelect(pet)}
-                                                    className="w-full text-left px-4 py-3 rounded-xl hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 group transition-all flex justify-between items-center border-b border-gray-50 dark:border-gray-800 last:border-0"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-xl">{pet.species === 'Canino' ? '🐕' : '🐈'}</span>
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <p className="font-black text-slate-900 dark:text-white uppercase text-xs group-hover:text-brand-primary transition-colors">{pet.name}</p>
-                                                                <PetAlertIcons pet={pet} size="sm" />
-                                                            </div>
-                                                            <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider truncate">
-                                                                {pet.species} • {pet.breed || 'Sin Raza'} • {pet.owner?.name || 'S/A'}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <span className={`text-[8px] px-1.5 py-0.5 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${pet.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
-                                                        {pet.species || 'Mascota'}
-                                                    </span>
-                                                </button>
-                                            ))}
-                                            
-                                            {searchResults.clients.length > 0 && (
-                                                <div className="px-4 py-1.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] bg-gray-50 dark:bg-gray-800/30 my-1 rounded-lg italic">Resultados por Dueño</div>
-                                            )}
-
-                                            {searchResults.clients.map(client => {
-                                                const clientPets = allPets.filter(p => p.user_id === client.id);
-                                                return clientPets.map(pet => (
-                                                    <button
-                                                        key={`cp-${pet.id}`}
-                                                        onClick={() => handlePetSelect(pet)}
-                                                        className="w-full text-left px-4 py-3 rounded-xl hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 group transition-all flex justify-between items-center border-b border-gray-50 dark:border-gray-800 last:border-0"
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="text-xl">{pet.species === 'Canino' ? '🐕' : '🐈'}</span>
-                                                            <div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <p className="font-black text-slate-900 dark:text-white uppercase text-xs group-hover:text-brand-primary transition-colors">{pet.name}</p>
-                                                                    <PetAlertIcons pet={pet} size="sm" />
-                                                                </div>
-                                                                <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider truncate">
-                                                                    {pet.species} • {pet.breed || 'Sin Raza'} • {client.name}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        <span className={`text-[8px] px-1.5 py-0.5 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${pet.species === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
-                                                            {pet.species || 'Mascota'}
-                                                        </span>
-                                                    </button>
-                                                ));
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
+                                <PetAsyncSearch onSelect={handlePetSelectAndSet} />
                             </div>
                         ) : (
                             <div className="space-y-3 animate-in slide-in-from-bottom-4 duration-300">
                                 {/* Paciente */}
                                 <div className="flex items-center justify-between bg-brand-primary/5 border border-brand-primary/20 rounded-2xl px-4 py-3 shadow-sm">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center text-xl shadow-md border dark:border-slate-700">
-                                            {selectedPet.species === 'Canino' ? '🐕' : '🐈'}
-                                        </div>
+                                        <PetAvatar pet={selectedPet} className="h-10 w-10" />
                                         <div>
                                             <div className="flex items-center gap-2">
                                                 <p className="text-sm font-black text-slate-900 dark:text-white uppercase">{selectedPet.name}</p>

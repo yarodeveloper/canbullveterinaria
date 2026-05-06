@@ -3,6 +3,8 @@ import { Head, Link, router } from '@inertiajs/react';
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Pagination from '@/Components/Pagination';
+import PetAvatar from '@/Components/PetAvatar';
 
 export default function Index({ auth, surgeries, filters }) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
@@ -99,16 +101,16 @@ export default function Index({ auth, surgeries, filters }) {
 
                         {/* Listado / Tabla compacta */}
                         <div className="p-0">
-                            {surgeries.length > 0 ? (
+                            {surgeries.data.length > 0 ? (
                                 <ul className="divide-y divide-gray-100 dark:divide-gray-800 text-slate-700 dark:text-slate-300">
-                                    {surgeries.map((surgery) => (
+                                    {surgeries.data.map((surgery) => (
                                         <li key={surgery.id} className="group hover:bg-brand-primary transition-all duration-150">
                                             <Link href={route('surgeries.show', surgery.id)} className="block px-5 py-2.5">
                                                 <div className="flex items-center justify-between">
                                                     {/* Info Paciente y Cirugía */}
                                                     <div className="flex items-center min-w-0 gap-4 flex-1">
-                                                        <div className="flex-shrink-0 w-10 h-10 bg-slate-100 dark:bg-slate-800 group-hover:bg-white/20 rounded-xl flex items-center justify-center text-xl shadow-inner border dark:border-gray-700 transition-all group-hover:scale-110">
-                                                            {surgery.pet.species === 'Canino' ? '🐕' : '🐈'}
+                                                        <div className="flex-shrink-0 group-hover:scale-110 transition-transform">
+                                                            <PetAvatar pet={surgery.pet} className="h-10 w-10 border-2 border-slate-100 dark:border-gray-700 group-hover:border-white shadow-sm" />
                                                         </div>
                                                         <div className="min-w-0 flex-1">
                                                             <div className="flex items-center gap-2">
@@ -175,6 +177,11 @@ export default function Index({ auth, surgeries, filters }) {
                                     )}
                                 </div>
                             )}
+                        </div>
+
+                        {/* Pagination */}
+                        <div className="p-6 border-t border-slate-100 dark:border-slate-700/50 bg-slate-50/30 dark:bg-gray-900/40">
+                            <Pagination links={surgeries.links} />
                         </div>
                     </div>
                 </div>

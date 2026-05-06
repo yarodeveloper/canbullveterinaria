@@ -44,7 +44,7 @@ class SurgeryController extends Controller
             $query->where('status', $request->input('status'));
         }
 
-        $surgeries = $query->orderBy('scheduled_at', 'desc')->get();
+        $surgeries = $query->orderBy('scheduled_at', 'desc')->paginate(15)->withQueryString();
 
         return Inertia::render('Surgeries/Index', [
             'surgeries' => $surgeries,
@@ -68,11 +68,7 @@ class SurgeryController extends Controller
             ->whereIn('role', ['admin', 'veterinarian'])
             ->get(['id', 'name', 'role']);
         
-        $clients = User::where('role', 'client')
-            ->where('email', '!=', 'publico@general.com')
-            ->where('name', 'NOT LIKE', '%Sin Asignar%')
-            ->limit(100)
-            ->get(['id', 'name']);
+        $clients = [];
 
         $products = \App\Models\Product::where('is_active', true)
             ->orderBy('is_controlled', 'desc')
@@ -116,7 +112,7 @@ class SurgeryController extends Controller
 
         $pet = Pet::findOrFail($validated['pet_id']);
 
-        $validated['branch_id'] = Auth::user()->branch_id;
+        $validated['branch_id'] = Auth::user()->branch_id ?? $pet->branch_id ?? \App\Models\Branch::first()?->id;
         $validated['status'] = 'scheduled';
         
         // Initial checklist template

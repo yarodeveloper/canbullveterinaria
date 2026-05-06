@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { IconEye, IconEdit, IconPlus } from '@/Components/Icons';
 import PetAvatar from '@/Components/PetAvatar';
+import Pagination from '@/Components/Pagination';
 import { useState, useEffect } from 'react';
 
 export default function Index({ auth, pets, filters }) {
@@ -157,6 +158,11 @@ export default function Index({ auth, pets, filters }) {
                                         )}
                                     </div>
                                 )}
+                            </div>
+                            
+                            {/* Pagination */}
+                            <div className="p-6 border-t border-slate-100 dark:border-slate-700/50 bg-slate-50/30 dark:bg-gray-900/40">
+                                <Pagination links={pets.links} />
                             </div>
                         </div>
                     </div>

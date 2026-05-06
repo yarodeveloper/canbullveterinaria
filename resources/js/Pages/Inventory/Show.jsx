@@ -3,6 +3,7 @@ import { Head, usePage, router, Link, useForm } from '@inertiajs/react';
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Pagination from '@/Components/Pagination';
 
 export default function Show({ auth, product, transactions, categories }) {
     const [showLotModal, setShowLotModal] = useState(false);
@@ -270,7 +271,7 @@ export default function Show({ auth, product, transactions, categories }) {
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Kardex de Operaciones</h4>
                                 </div>
                                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {transactions.map(t => (
+                                    {transactions.data.map(t => (
                                         <div key={t.id} className="p-4 flex items-start gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black border shadow-sm ${t.type === 'in' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
                                                 }`}>
@@ -292,6 +293,9 @@ export default function Show({ auth, product, transactions, categories }) {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                                <div className="p-4 border-t border-slate-100 dark:border-slate-700/50 bg-slate-50/30 dark:bg-gray-900/40">
+                                    <Pagination links={transactions.links} />
                                 </div>
                             </div>
                         </div>

@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Pagination from '@/Components/Pagination';
 
 export default function Index({ auth, receipts }) {
     const getStatusStyle = (status) => {
@@ -86,27 +87,9 @@ export default function Index({ auth, receipts }) {
                                 </table>
                             </div>
 
-                            {/* Paginación (Simple) */}
-                            <div className="mt-8 flex justify-center gap-2">
-                                {receipts.links.map((link, i) => (
-                                    link.url ? (
-                                        <Link
-                                            key={i}
-                                            href={link.url}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                            className={`px-4 py-2 rounded-xl text-xs font-black ${link.active
-                                                ? 'bg-brand-primary text-white'
-                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200'
-                                                }`}
-                                        />
-                                    ) : (
-                                        <span
-                                            key={i}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                            className="px-4 py-2 rounded-xl text-xs font-black bg-gray-50 dark:bg-gray-800 text-gray-300 cursor-not-allowed"
-                                        />
-                                    )
-                                ))}
+                            {/* Paginación Standard */}
+                            <div className="mt-8 border-t border-slate-100 dark:border-slate-700/50 pt-8">
+                                <Pagination links={receipts.links} />
                             </div>
                         </div>
                     </div>
