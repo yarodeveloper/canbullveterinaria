@@ -400,17 +400,30 @@ export default function Show({ auth, record, templates = [], prevRecordId, nextR
                                     </h3>
                                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                         {attachments.map(att => (
-                                            <div key={att.id} className="group relative rounded-xl border-2 border-slate-300 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-800 hover:border-indigo-500 transition-colors cursor-pointer block">
-                                                {att.file_type.startsWith('image/') ? (
-                                                    <a href={att.url} target="_blank" rel="noreferrer" className="block w-full h-full">
-                                                        <img src={att.url} alt={att.file_name} className="w-full aspect-square object-cover" />
-                                                    </a>
-                                                ) : (
-                                                    <a href={att.url} target="_blank" rel="noreferrer" className="w-full aspect-square flex flex-col items-center justify-center p-3 text-center">
-                                                        <span className="text-2xl mb-1 text-slate-500 dark:text-slate-400">📄</span>
-                                                        <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase break-all line-clamp-2">{att.file_name}</p>
-                                                    </a>
-                                                )}
+                                            <div key={att.id} className="group bg-white dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                                <div className="aspect-square bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+                                                    {att.file_type.startsWith('image/') ? (
+                                                        <a href={att.url} target="_blank" rel="noreferrer" className="block w-full h-full">
+                                                            <img src={att.url} alt={att.description || att.file_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                                        </a>
+                                                    ) : (
+                                                        <a href={att.url} target="_blank" rel="noreferrer" className="w-full h-full flex flex-col items-center justify-center p-3 text-center">
+                                                            <span className="text-3xl mb-2">📄</span>
+                                                            <p className="text-[9px] font-bold text-slate-500 uppercase break-all line-clamp-1">{att.file_name}</p>
+                                                        </a>
+                                                    )}
+                                                </div>
+                                                <div className="p-3">
+                                                    <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase truncate mb-1" title={att.description || att.file_name}>
+                                                        {att.description || 'Sin título'}
+                                                    </p>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[8px] font-bold text-slate-500 uppercase">
+                                                            {att.created_at ? new Date(att.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '--'}
+                                                        </span>
+                                                        <a href={att.url} target="_blank" rel="noreferrer" className="text-[8px] font-black text-brand-primary uppercase hover:underline">Ver completo</a>
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>

@@ -6,6 +6,7 @@ import { es } from 'date-fns/locale';
 import PrintDocumentModal from '@/Components/PrintDocumentModal';
 import MedicationsEditor from '@/Components/MedicationsEditor';
 import PendingChargesEditor from '@/Components/PendingChargesEditor';
+import PetAvatar from '@/Components/PetAvatar';
 
 const VITAL_RANGES = {
     Canino: {
@@ -189,9 +190,9 @@ export default function Show({ auth, surgery, templates, veterinarians, branches
                             <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border dark:border-gray-700 overflow-hidden shadow-xl">
                                 <div className="p-8">
                                     <div className="text-center mb-8">
-                                        <div className="w-24 h-24 bg-brand-primary/10 rounded-[2.5rem] flex items-center justify-center text-5xl mx-auto mb-4 border-2 border-brand-primary/20">
-                                            {surgery.pet.species === 'Canino' ? '🐕' : '🐈'}
-                                        </div>
+                                    <div className="flex justify-center mb-4">
+                                        <PetAvatar pet={surgery.pet} className="w-24 h-24 rounded-[2.5rem] border-2 border-brand-primary/20 shadow-lg shadow-brand-primary/10" />
+                                    </div>
                                         <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">{surgery.pet.name}</h3>
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">{surgery.pet.breed} • {surgery.pet.gender === 'male' ? 'MACHO' : 'HEMBRA'}</p>
                                     </div>

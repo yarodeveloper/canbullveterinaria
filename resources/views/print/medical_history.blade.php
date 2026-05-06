@@ -56,7 +56,8 @@
 
         .report-header h1 { font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px; }
         .report-header .meta { text-align: right; }
-        .report-header .meta p { font-size: 9px; font-weight: 700; opacity: 0.8; margin-top: 2px; }
+        .report-header .meta p { font-size: 9px; font-weight: 800; color: #1e293b; margin-top: 2px; background: rgba(255,255,255,0.7); padding: 1px 5px; border-radius: 4px; display: inline-block; clear: both; }
+        .report-header .clinic-name { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #1e293b; background: rgba(255,255,255,0.7); padding: 2px 6px; border-radius: 4px; }
 
         .section {
             border: 1px solid #e5e7eb;
@@ -145,18 +146,18 @@
     <header class="report-header">
         <div style="display: flex; align-items: center; gap: 15px;">
             @if($logoUrl)
-                <img src="{{ Str::startsWith($logoUrl, 'http') ? $logoUrl : asset($logoUrl) }}" style="max-height: 45px; width: auto; filter: brightness(0) invert(1);">
+                <img src="{{ Str::startsWith($logoUrl, 'http') ? $logoUrl : asset($logoUrl) }}" style="max-height: 55px; width: auto; border-radius: 8px;">
             @else
                 <div style="background: white; padding: 5px; border-radius: 8px;">
                     <img src="{{ asset('icons/pet-svgrepo-com.svg') }}" style="max-height: 30px;">
                 </div>
             @endif
             <div>
-                <h1>Historial Clínico</h1>
-                <p style="font-size: 10px; font-weight: 700; text-transform: uppercase;">{{ $record->branch?->name ?? $siteName }}</p>
+                <h1 style="color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">Historial Clínico</h1>
+                <p class="clinic-name">{{ $record->branch?->name ?? $siteName }}</p>
             </div>
         </div>
-        <div class="meta">
+        <div class="meta" style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
             <p>Folio: MR-{{ str_pad($record->id, 6, '0', STR_PAD_LEFT) }}</p>
             <p>Fecha: {{ $record->created_at->format('d/m/Y H:i') }}</p>
             <p>Médico: {{ $record->veterinarian?->name }}</p>
@@ -188,6 +189,7 @@
                     <div class="data-point"><label>Frec. Resp.</label><span>{{ $vitalSigns['rr'] ?? '--' }} rpm</span></div>
                     <div class="data-point"><label>Mucosas</label><span>{{ $vitalSigns['mucous'] ?? '--' }}</span></div>
                     <div class="data-point"><label>TLLC</label><span>{{ $vitalSigns['tllc'] ?? '--' }} s</span></div>
+                    <div class="data-point"><label>CC (BCS)</label><span>{{ $record->physical_state ?? '--' }}</span></div>
                 </div>
             </div>
         </div>
@@ -195,12 +197,16 @@
             <div class="section-header">Historial / Anamnesis</div>
             <div class="section-content">
                 <div class="data-point"><label>Motivo</label><span>{{ $anamnesis['reason'] ?? 'Sin motivo registrado.' }}</span></div>
-                <div class="grid grid-2" style="margin-top: 10px;">
+                <div class="grid grid-3" style="margin-top: 10px; gap: 5px;">
                     <div class="data-point"><label>Mood</label><span>{{ $anamnesis['mood'] ?? '--' }}</span></div>
                     <div class="data-point"><label>Apetito</label><span>{{ $anamnesis['appetite'] ?? '--' }}</span></div>
+                    <div class="data-point"><label>Vómito</label><span>{{ $anamnesis['vomiting'] ?? '--' }}</span></div>
+                    <div class="data-point"><label>Heces</label><span>{{ $anamnesis['stool'] ?? '--' }}</span></div>
+                    <div class="data-point"><label>Diarrea</label><span>{{ $anamnesis['diarrhea'] ?? '--' }}</span></div>
+                    <div class="data-point"><label>Micción</label><span>{{ $anamnesis['urination'] ?? '--' }}</span></div>
                 </div>
-                @if(($anamnesis['vomiting'] ?? '') === 'Presente')
-                    <div class="tag" style="margin-top: 5px; background: #fee2e2; color: #b91c1c;">Vómito Detectado</div>
+                @if(($anamnesis['vomiting'] ?? '') === 'Presente' || ($anamnesis['diarrhea'] ?? '') === 'Presente')
+                    <div class="tag" style="margin-top: 5px; background: #fee2e2; color: #b91c1c;">Alerta Digestiva Detectada</div>
                 @endif
             </div>
         </div>
@@ -237,6 +243,34 @@
                     </div>
                 @endif
                 <div class="text">{{ $record->plan ?? 'Sin indicaciones registradas.' }}</div>
+
+                @if(!empty($record->applied_medications))
+                    <div style="margin-top: 15px; border-top: 1px solid rgba(14, 165, 233, 0.2); pt-10">
+                        <header style="color: #0ea5e9; font-size: 8px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; margin-top: 10px;">Medicamentos Aplicados en Clínica</header>
+                        <table style="width: 100%; font-size: 9px; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #e2e8f0; text-align: left;">
+                                    <th style="padding: 4px;">Fármaco</th>
+                                    <th style="padding: 4px;">Dosis mg/kg</th>
+                                    <th style="padding: 4px;">Total</th>
+                                    <th style="padding: 4px;">Vía</th>
+                                    <th style="padding: 4px;">Notas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($record->applied_medications as $amed)
+                                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                                        <td style="padding: 4px; font-weight: 700;">{{ $amed['name'] }}</td>
+                                        <td style="padding: 4px;">{{ $amed['dose_mg_kg'] ?? '--' }}</td>
+                                        <td style="padding: 4px; font-weight: 700; color: {{ $primaryColor }};">{{ $amed['total_dose'] ?? '--' }}{{ $amed['unit'] ?? 'ml' }}</td>
+                                        <td style="padding: 4px;">{{ $amed['route'] ?? '--' }}</td>
+                                        <td style="padding: 4px; font-style: italic;">{{ $amed['notes'] ?? '--' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
