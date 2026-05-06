@@ -247,8 +247,8 @@
                 @endif
 
                 @if(!empty($record->applied_medications))
-                    <div class="applied-section" style="margin-top: 10px; margin-bottom: 20px; padding: 12px; border: 1px dashed {{ $primaryColor }}33; border-radius: 12px; background: {{ $primaryColor }}05;">
-                        <p style="font-size: 8px; font-weight: 900; color: {{ $primaryColor }}; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.1em;">Administrado en Clínica / Hospitalización</p>
+                    <div class="applied-section" style="margin-top: 10px; margin-bottom: 20px; padding: 12px; border: 1px dashed #f59e0b66; border-radius: 12px; background: #f59e0b05;">
+                        <p style="font-size: 8px; font-weight: 900; color: #f59e0b; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.1em;">Aplicación en Consulta / Control Farmacia</p>
                         @foreach($record->applied_medications as $med)
                             <div style="font-size: 10px; margin-bottom: 5px; color: #475569;">
                                 <strong>{{ $med['name'] }}</strong>: {{ $med['total_dose'] ?? '--' }}{{ $med['unit'] ?? '' }} — {{ $med['route'] ?? 'Vía N/A' }}

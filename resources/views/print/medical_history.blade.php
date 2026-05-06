@@ -245,8 +245,8 @@
                 <div class="text">{{ $record->plan ?? 'Sin indicaciones registradas.' }}</div>
 
                 @if(!empty($record->applied_medications))
-                    <div style="margin-top: 15px; border-top: 1px solid rgba(14, 165, 233, 0.2); pt-10">
-                        <header style="color: #0ea5e9; font-size: 8px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; margin-top: 10px;">Medicamentos Aplicados en Clínica</header>
+                    <div style="margin-top: 15px; border-top: 1px solid rgba(245, 158, 11, 0.2); pt-10">
+                        <header style="color: #f59e0b; font-size: 8px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; margin-top: 10px;">Tratamientos y Fármacos Aplicados en Consulta / Farmacia</header>
                         <table style="width: 100%; font-size: 9px; border-collapse: collapse;">
                             <thead>
                                 <tr style="border-bottom: 1px solid #e2e8f0; text-align: left;">

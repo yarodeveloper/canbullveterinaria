@@ -702,68 +702,78 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                                         className="w-full bg-white dark:bg-[#111822] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-[2rem] text-sm p-6 focus:ring-brand-primary focus:border-brand-primary shadow-sm mb-4 min-h-[150px]" 
                                         placeholder="Escribe las indicaciones generales para el propietario (dieta, reposo, cuidados especiales)..."></textarea>
 
-                                    {/* TRATAMIENTO BASE O FÁRMACOS APLICADOS (EN CLÍNICA) */}
-                                    <div className="mb-8">
-                                        <MedicationsEditor 
-                                            title="Tratamiento Base O Fármacos Aplicados (En Clínica)"
-                                            medications={data.applied_medications}
-                                            onChange={(meds) => setData('applied_medications', meds)}
-                                            products={products.filter(p => !p.is_service)}
-                                            canManage={true}
-                                            isAlwaysEditing={true}
-                                            petWeight={data.vital_signs.weight || pet?.weight}
-                                        />
-                                    </div>
-
-                                    {/* Listado de Medicamentos/Servicios con estilo unificado */}
-                                    <div className="space-y-3 mt-4">
-                                        {data.medications.length > 0 && <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-2">Artículos y Servicios Programados (Receta)</p>}
-                                            <div className="grid grid-cols-1 gap-2">
-                                                {data.medications.map((m, i) => (
-                                                    <div key={`m-list-${i}`} className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group/med-item">
-                                                        <div className="flex justify-between items-center px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700/50">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-brand-primary"></span>
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={m.name} 
-                                                                    onChange={e => updateMedication(i, 'name', e.target.value)}
-                                                                    className="bg-transparent border-none focus:ring-0 p-0 text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight w-full"
-                                                                    placeholder="Nombre del medicamento..."
-                                                                />
-                                                            </div>
-                                                            <button 
-                                                                type="button" 
-                                                                onClick={() => removeMedication(i)} 
-                                                                className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                                                            >
-                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-                                                            </button>
+                                    {/* Listado de Medicamentos/Servicios con estilo unificado (RECETA EXTERNA) */}
+                                    <div className="space-y-3 mt-4 mb-8">
+                                        {data.medications.length > 0 && (
+                                            <p className="text-[10px] font-black text-brand-primary uppercase tracking-widest px-2 mb-2 flex items-center gap-2">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                                                Artículos y Servicios Programados (Receta Externa)
+                                            </p>
+                                        )}
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {data.medications.map((m, i) => (
+                                                <div key={`m-list-${i}`} className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group/med-item">
+                                                    <div className="flex justify-between items-center px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700/50">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-brand-primary"></span>
+                                                            <input 
+                                                                type="text" 
+                                                                value={m.name} 
+                                                                onChange={e => updateMedication(i, 'name', e.target.value)}
+                                                                className="bg-transparent border-none focus:ring-0 p-0 text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight w-full"
+                                                                placeholder="Nombre del medicamento..."
+                                                            />
                                                         </div>
-                                                        <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                            <div>
-                                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Dosis / Aplicación</label>
-                                                                <input type="text" placeholder="Ej: 5ml / 1 tableta" value={m.dosage} onChange={e => updateMedication(i, 'dosage', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-xl text-[11px] py-1.5 focus:ring-brand-primary focus:bg-white dark:focus:bg-slate-900 transition-all font-bold" />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Frecuencia / Cada</label>
-                                                                <input type="text" placeholder="Ej: Cada 8 horas" value={m.frequency} onChange={e => updateMedication(i, 'frequency', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-xl text-[11px] py-1.5 focus:ring-brand-primary focus:bg-white dark:focus:bg-slate-900 transition-all font-bold" />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Duración del Tto.</label>
-                                                                <input type="text" placeholder="Ej: Por 5 días" value={m.duration} onChange={e => updateMedication(i, 'duration', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-xl text-[11px] py-1.5 focus:ring-brand-primary focus:bg-white dark:focus:bg-slate-900 transition-all font-bold" />
-                                                            </div>
-                                                            <div className="sm:col-span-3">
-                                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Observaciones / Recomendaciones (Ej: Con alimento)</label>
-                                                                <input type="text" placeholder="Instrucciones adicionales..." value={m.notes} onChange={e => updateMedication(i, 'notes', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-xl text-[11px] py-1.5 focus:ring-brand-primary focus:bg-white dark:focus:bg-slate-900 transition-all" />
-                                                            </div>
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => removeMedication(i)} 
+                                                            className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                        </button>
+                                                    </div>
+                                                    <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                        <div>
+                                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Dosis / Aplicación</label>
+                                                            <input type="text" placeholder="Ej: 5ml / 1 tableta" value={m.dosage} onChange={e => updateMedication(i, 'dosage', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-xl text-[11px] py-1.5 focus:ring-brand-primary focus:bg-white dark:focus:bg-slate-900 transition-all font-bold" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Frecuencia / Cada</label>
+                                                            <input type="text" placeholder="Ej: Cada 8 horas" value={m.frequency} onChange={e => updateMedication(i, 'frequency', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-xl text-[11px] py-1.5 focus:ring-brand-primary focus:bg-white dark:focus:bg-slate-900 transition-all font-bold" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Duración del Tto.</label>
+                                                            <input type="text" placeholder="Ej: Por 5 días" value={m.duration} onChange={e => updateMedication(i, 'duration', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-xl text-[11px] py-1.5 focus:ring-brand-primary focus:bg-white dark:focus:bg-slate-900 transition-all font-bold" />
+                                                        </div>
+                                                        <div className="sm:col-span-3">
+                                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Observaciones / Recomendaciones (Ej: Con alimento)</label>
+                                                            <input type="text" placeholder="Instrucciones adicionales..." value={m.notes} onChange={e => updateMedication(i, 'notes', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 rounded-xl text-[11px] py-1.5 focus:ring-brand-primary focus:bg-white dark:focus:bg-slate-900 transition-all" />
                                                         </div>
                                                     </div>
-                                                ))}
-                                            </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* TRATAMIENTO BASE O FÁRMACOS APLICADOS (EN CLÍNICA / FARMACIA) */}
+                                    <div className="relative pt-6 mt-6 border-t-2 border-dashed border-slate-200 dark:border-slate-700">
+                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg z-10">
+                                            Control Farmacia / Aplicación Interna
+                                        </div>
+                                        <div className="bg-slate-50/50 dark:bg-slate-900/20 rounded-[2rem] p-4 sm:p-6 ring-1 ring-amber-500/10">
+                                            <MedicationsEditor 
+                                                title="Tratamiento Base O Fármacos Aplicados (Durante Consulta)"
+                                                medications={data.applied_medications}
+                                                onChange={(meds) => setData('applied_medications', meds)}
+                                                products={products.filter(p => !p.is_service)}
+                                                canManage={true}
+                                                isAlwaysEditing={true}
+                                                petWeight={data.vital_signs.weight || pet?.weight}
+                                            />
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
                             {/* Subida de Archivos Avanzada */}
                             <div className={cardBase}>
