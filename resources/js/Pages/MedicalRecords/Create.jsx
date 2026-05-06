@@ -866,7 +866,7 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                                             {data.applied_medications.map((m, i) => (
                                                 <div key={`prev-app-${i}`} className="text-[11px]">
                                                     <span className="font-black text-slate-700 dark:text-slate-300 uppercase">{m.name}</span>
-                                                    <span className="ml-2 text-slate-500">{m.dosage} • {m.frequency}</span>
+                                                    <span className="ml-2 text-slate-500">{m.total_dose || '--'}{m.unit || ''} • {m.route || 'Vía N/A'}</span>
                                                 </div>
                                             ))}
                                         </div>

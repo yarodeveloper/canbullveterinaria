@@ -251,7 +251,10 @@
                         <p style="font-size: 8px; font-weight: 900; color: {{ $primaryColor }}; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.1em;">Administrado en Clínica / Hospitalización</p>
                         @foreach($record->applied_medications as $med)
                             <div style="font-size: 10px; margin-bottom: 5px; color: #475569;">
-                                <strong>{{ $med['name'] }}</strong>: {{ $med['dosage'] }} {{ $med['frequency'] }}
+                                <strong>{{ $med['name'] }}</strong>: {{ $med['total_dose'] ?? '--' }}{{ $med['unit'] ?? '' }} — {{ $med['route'] ?? 'Vía N/A' }}
+                                @if(!empty($med['notes']))
+                                    <span style="font-style: italic; font-size: 9px; opacity: 0.8;">({{ $med['notes'] }})</span>
+                                @endif
                             </div>
                         @endforeach
                     </div>
