@@ -225,24 +225,37 @@
         <main class="prescription-content">
             <div class="rx-icon">Rx</div>
             
-            @if(!empty($record->medications))
-                <div class="medications-list" style="margin-bottom: 25px;">
-                    @foreach($record->medications as $med)
-                        <div class="medication-item" style="margin-bottom: 20px; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px;">
-                            <div style="margin-bottom: 4px;">
-                                <p style="font-size: 13px; font-weight: 500; color: #1e293b;">
-                                    <strong style="font-weight: 900; text-transform: uppercase; color: #000;">{{ $med['name'] }}:</strong> 
-                                    <span style="color: {{ $primaryColor }}; font-weight: 700; background: #faf5ff; padding: 2px 6px; border-radius: 4px;">
-                                        {{ $med['dosage'] }} — {{ $med['frequency'] }} — {{ $med['duration'] }}
-                                    </span>
-                                </p>
+            @if(!empty($record->medications) || !empty($record->applied_medications))
+                @if(!empty($record->medications))
+                    <div class="medications-list" style="margin-bottom: 25px;">
+                        @foreach($record->medications as $med)
+                            <div class="medication-item" style="margin-bottom: 20px; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px;">
+                                <div style="margin-bottom: 4px;">
+                                    <p style="font-size: 13px; font-weight: 500; color: #1e293b;">
+                                        <strong style="font-weight: 900; text-transform: uppercase; color: #000;">{{ $med['name'] }}:</strong> 
+                                        <span style="color: {{ $primaryColor }}; font-weight: 700; background: #faf5ff; padding: 2px 6px; border-radius: 4px;">
+                                            {{ $med['dosage'] }} — {{ $med['frequency'] }} — {{ $med['duration'] }}
+                                        </span>
+                                    </p>
+                                </div>
+                                @if(!empty($med['notes']))
+                                    <p style="font-size: 11px; color: #64748b; font-weight: 500; padding-left: 5px; border-left: 2px solid #e2e8f0; margin-top: 5px;">{{ $med['notes'] }}</p>
+                                @endif
                             </div>
-                            @if(!empty($med['notes']))
-                                <p style="font-size: 11px; color: #64748b; font-weight: 500; padding-left: 5px; border-left: 2px solid #e2e8f0; margin-top: 5px;">{{ $med['notes'] }}</p>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if(!empty($record->applied_medications))
+                    <div class="applied-section" style="margin-top: 10px; margin-bottom: 20px; padding: 12px; border: 1px dashed {{ $primaryColor }}33; border-radius: 12px; background: {{ $primaryColor }}05;">
+                        <p style="font-size: 8px; font-weight: 900; color: {{ $primaryColor }}; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.1em;">Administrado en Clínica / Hospitalización</p>
+                        @foreach($record->applied_medications as $med)
+                            <div style="font-size: 10px; margin-bottom: 5px; color: #475569;">
+                                <strong>{{ $med['name'] }}</strong>: {{ $med['dosage'] }} {{ $med['frequency'] }}
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
                 
                 @if(!empty($record->plan))
                     <div style="background: #f8fafc; border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0;">

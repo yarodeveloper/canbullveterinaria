@@ -225,15 +225,33 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
         ? safeProducts.filter(p => normalize(p?.name).includes(safeQuery)).slice(0, 10)
         : [];
 
-    const addMedication = (product) => {
-        setData('medications', [...data.medications, {
+    const addMedication = (product, target = 'medications') => {
+        const newItem = {
             id: product?.id || null,
             name: product?.name || '',
             dosage: '',
             frequency: '',
             duration: '',
             notes: ''
-        }]);
+        };
+        
+        setData(target, [...data[target], newItem]);
+        
+        // If it's a known product and we are adding to recipe, 
+        // we might want to also add it to charges automatically or ask
+        if (target === 'medications' && product?.id) {
+            // Optionally auto-add to charges if it has a price
+            if (product.price > 0) {
+                setData('pending_charges', [...data.pending_charges, {
+                    product_id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    quantity: 1,
+                    notes: 'De la receta'
+                }]);
+            }
+        }
+        
         setMedSearchQuery('');
     };
 
@@ -281,12 +299,17 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                         <div className="flex items-center gap-2">
                             {isEditing && (
                                 <>
-                                    <a href={route('medical-records.prescription.print', record.id)} target="_blank" className="px-5 py-2.5 bg-brand-primary hover:opacity-90 text-white rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg transition-all flex items-center gap-2">
-                                        🖨️ Receta
-                                    </a>
-                                    <a href={route('medical-records.report.print', record.id)} target="_blank" className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg transition-all flex items-center gap-2">
-                                        📄 Reporte
-                                    </a>
+                                    <div className="flex flex-col items-end mr-2">
+                                        <div className="flex items-center gap-2">
+                                            <a href={route('medical-records.prescription.print', record.id)} target="_blank" className="px-5 py-2.5 bg-brand-primary hover:opacity-90 text-white rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg transition-all flex items-center gap-2">
+                                                🖨️ Receta
+                                            </a>
+                                            <a href={route('medical-records.report.print', record.id)} target="_blank" className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg transition-all flex items-center gap-2">
+                                                📄 Reporte
+                                            </a>
+                                        </div>
+                                        <p className="text-[8px] text-amber-500 font-bold uppercase mt-1">Guarda cambios para imprimir lo nuevo</p>
+                                    </div>
                                 </>
                             )}
                             <Link href={route('pets.show', pet.id)} className="px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg transition-all flex items-center gap-2">
@@ -648,7 +671,7 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                                                         <button 
                                                             key={`med-${med.id}`}
                                                             type="button"
-                                                            onClick={() => addMedication(med)}
+                                                            onClick={() => addMedication(med, 'medications')}
                                                             className="w-full text-left px-3 py-2.5 hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 rounded-lg text-[10px] font-bold text-slate-600 dark:text-slate-400 flex flex-col transition-colors border-b border-slate-50 dark:border-slate-700/50 last:border-0"
                                                         >
                                                             <div className="flex items-center justify-between gap-2">
@@ -833,7 +856,21 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-xs text-slate-400 font-bold italic">No se han agregado fármacos estructurados.</p>
+                                    <p className="text-xs text-slate-400 font-bold italic">No se han agregado fármacos a la receta externa.</p>
+                                )}
+
+                                {data.applied_medications.length > 0 && (
+                                    <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+                                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-4 italic">Fármacos Aplicados en Clínica</p>
+                                        <div className="space-y-3 opacity-75">
+                                            {data.applied_medications.map((m, i) => (
+                                                <div key={`prev-app-${i}`} className="text-[11px]">
+                                                    <span className="font-black text-slate-700 dark:text-slate-300 uppercase">{m.name}</span>
+                                                    <span className="ml-2 text-slate-500">{m.dosage} • {m.frequency}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
 
