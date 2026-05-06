@@ -1,0 +1,1 @@
+const o=e=>{if(!e)return"";const t=e.toString().replace(/\D/g,"");return t.length===10?"52"+t:t},a=(e,t="")=>{const n=o(e);if(!n)return"#";let r=`https://wa.me/${n}`;return t&&(r+=`?text=${t}`),r};export{a as g};
