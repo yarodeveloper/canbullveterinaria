@@ -236,22 +236,6 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
         };
         
         setData(target, [...data[target], newItem]);
-        
-        // If it's a known product and we are adding to recipe, 
-        // we might want to also add it to charges automatically or ask
-        if (target === 'medications' && product?.id) {
-            // Optionally auto-add to charges if it has a price
-            if (product.price > 0) {
-                setData('pending_charges', [...data.pending_charges, {
-                    product_id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    quantity: 1,
-                    notes: 'De la receta'
-                }]);
-            }
-        }
-        
         setMedSearchQuery('');
     };
 
@@ -767,8 +751,9 @@ export default function Create({ auth, pet, products, prefill, record, isEditing
                                                 onChange={(meds) => setData('applied_medications', meds)}
                                                 products={products.filter(p => !p.is_service)}
                                                 canManage={true}
-                                                isAlwaysEditing={true}
+                                                isAlwaysEditing={false}
                                                 petWeight={data.vital_signs.weight || pet?.weight}
+                                                onAddCharge={(p) => setData('pending_charges', [...data.pending_charges, p])}
                                             />
                                         </div>
                                     </div>

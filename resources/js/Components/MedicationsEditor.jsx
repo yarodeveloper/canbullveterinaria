@@ -36,7 +36,8 @@ export default function MedicationsEditor({
     title = "Tratamiento Base O Fármacos Programados", 
     iconColor = "bg-amber-500",
     isAlwaysEditing = false,
-    petWeight = 0
+    petWeight = 0,
+    onAddCharge = null
 }) {
     const [isEditing, setIsEditing] = useState(isAlwaysEditing);
     const [saving, setSaving] = useState(false);
@@ -160,12 +161,34 @@ export default function MedicationsEditor({
                             {filteredProducts.length > 0 && (
                                 <div className="absolute z-40 w-full mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-h-80 overflow-auto">
                                     {filteredProducts.map(p => (
-                                        <button key={p.id} type="button" onClick={() => addMedFromInventory(p)}
-                                            className="w-full text-left px-4 py-2.5 hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 transition flex items-center gap-3 text-sm">
-                                            {p.is_controlled && <span className="text-[9px] bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded font-black uppercase">Controlado</span>}
-                                            <span className="font-semibold text-slate-800 dark:text-white">{p.name}</span>
-                                            <span className="text-slate-400 text-xs">{p.unit}</span>
-                                        </button>
+                                        <div key={p.id} className="flex items-center gap-2 border-b border-slate-50 dark:border-slate-700 last:border-0">
+                                            <button type="button" onClick={() => addMedFromInventory(p)}
+                                                className="flex-1 text-left px-4 py-2.5 hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 transition flex items-center gap-3 text-sm">
+                                                {p.is_controlled && <span className="text-[9px] bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded font-black uppercase">Controlado</span>}
+                                                <span className="font-semibold text-slate-800 dark:text-white">{p.name}</span>
+                                                <span className="text-slate-400 text-xs">{p.unit}</span>
+                                            </button>
+                                            {onAddCharge && p.price > 0 && (
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => {
+                                                        onAddCharge({
+                                                            product_id: p.id,
+                                                            name: p.name,
+                                                            price: p.price,
+                                                            quantity: 1,
+                                                            notes: 'Aplicado en consulta'
+                                                        });
+                                                        addMedFromInventory(p);
+                                                    }}
+                                                    className="mr-2 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-black uppercase rounded-lg shadow-sm flex items-center gap-1 transition-all active:scale-95"
+                                                    title="Agregar a receta y cargar a caja"
+                                                >
+                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    +$
+                                                </button>
+                                            )}
+                                        </div>
                                     ))}
                                 </div>
                             )}
