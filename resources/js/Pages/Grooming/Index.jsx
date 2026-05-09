@@ -258,7 +258,7 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                     <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                         {!selectedPet ? (
                             <div className="space-y-3">
-                                <PetAsyncSearch onSelect={handlePetSelectAndSet} />
+                                <PetAsyncSearch excludeDeceased={true} onSelect={handlePetSelectAndSet} />
                             </div>
                         ) : (
                             <div className="space-y-3 animate-in slide-in-from-bottom-4 duration-300">

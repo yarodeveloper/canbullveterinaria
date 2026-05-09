@@ -40,8 +40,6 @@ export default function Create({ auth, pet: initialPet, clients: initialClients,
             pet_id: pet.id,
             initial_weight: pet.weight || '',
         }));
-        setPetSearch('');
-        setPetResults([]);
     };
 
     const handlePetCreated = (pet) => {
@@ -101,7 +99,7 @@ export default function Create({ auth, pet: initialPet, clients: initialClients,
                                             <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">
                                                 Seleccionar Paciente
                                             </label>
-                                            <PetAsyncSearch onSelect={handlePetSelect} />
+                                            <PetAsyncSearch excludeDeceased={true} onSelect={handlePetSelect} />
                                             <div className="flex items-center justify-between">
                                                 <p className="text-[10px] text-slate-400 uppercase">Busca por nombre, dueño, teléfono o chip</p>
                                                 <button

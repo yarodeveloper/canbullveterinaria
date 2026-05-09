@@ -227,6 +227,7 @@ class PetController extends Controller
 
         // Búsqueda global de mascotas para permitir pacientes móviles entre sucursales
         $results = Pet::query()
+            ->when($request->boolean('exclude_deceased'), fn($q) => $q->where('status', '!=', 'deceased'))
             ->where(function($q) use ($query, $strictName) {
                 $q->where('name', 'like', "%{$query}%");
                 

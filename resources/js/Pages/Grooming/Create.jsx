@@ -126,7 +126,7 @@ export default function Create({ auth, pet: initialPet, services, groomers, groo
                                             </div>
                                         ) : (
                                             <div className="mt-2 max-w-sm">
-                                                <PetAsyncSearch onSelect={handlePetSelect} />
+                                                <PetAsyncSearch excludeDeceased={true} onSelect={handlePetSelect} />
                                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Busca por nombre, chip o dueño</p>
                                             </div>
                                         )}

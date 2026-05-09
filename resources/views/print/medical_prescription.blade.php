@@ -209,12 +209,12 @@
                 <span>{{ $record->pet->name }}</span>
             </div>
             <div class="data-item">
-                <label>Especie / Raza</label>
-                <span>{{ $record->pet->species }} / {{ $record->pet->breed->name ?? $record->pet->breed ?? 'Mestizo' }}</span>
+                <label>Edad</label>
+                <span>{{ $record->pet->age }}</span>
             </div>
             <div class="data-item">
-                <label>Propietario</label>
-                <span>{{ $record->pet->owner?->name ?? '—' }}</span>
+                <label>Especie / Raza</label>
+                <span>{{ $record->pet->species }} / {{ $record->pet->breed->name ?? $record->pet->breed ?? 'Mestizo' }}</span>
             </div>
             <div class="data-item">
                 <label>Peso</label>

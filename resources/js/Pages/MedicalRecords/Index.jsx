@@ -208,7 +208,7 @@ export default function Index({ auth, medicalRecords, clients, pets: allPets, ve
                         {!selectedPet ? (
                             <div className="space-y-4">
                                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">1. BUSCAR PACIENTE O DUEÑO</label>
-                                <PetAsyncSearch onSelect={handlePetSelect} autoFocus={true} />
+                                <PetAsyncSearch excludeDeceased={true} onSelect={handlePetSelect} autoFocus={true} />
                             </div>
                         ) : (
                             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-300">

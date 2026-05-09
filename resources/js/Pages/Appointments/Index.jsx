@@ -26,6 +26,9 @@ const typeLabels = {
     euthanasia: 'Eutanasia'
 };
 
+const predefinedTypes = ['consultation', 'surgery', 'grooming', 'hospitalization', 'follow-up', 'emergency', 'euthanasia'];
+const getTypeLabel = (type) => typeLabels[type] || type;
+
 const typeIcons = {
     consultation: '🩺',
     surgery: '🔪',
@@ -35,6 +38,8 @@ const typeIcons = {
     emergency: '🚨',
     euthanasia: '🌈',
 };
+
+const getTypeIcon = (type) => typeIcons[type] || '⚙️';
 
 const statusColors = {
     scheduled: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -164,6 +169,7 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
     const openEditModal = (apt) => {
         setEditData({
             start_time: apt.start_time.substring(0, 16),
+            type: apt.type || 'consultation',
             veterinarian_id: apt.veterinarian_id || '',
             reason: apt.reason || '',
             status: apt.status || 'scheduled'
@@ -527,6 +533,9 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                                                                             {e.eventType === 'appointment' && <PetAvatar pet={e.pet} className="h-4 w-4" />}
                                                                             <span className="truncate max-w-[120px]">{e.eventType === 'task' ? e.title : e.pet.name}</span>
                                                                         </div>
+                                                                        <div className="ml-1 opacity-60">
+                                                                            {e.eventType === 'appointment' && <span>({getTypeLabel(e.type)})</span>}
+                                                                        </div>
                                                                         {e.status === 'completed' && <span>✓</span>}
                                                                     </div>
                                                                 ))}
@@ -610,7 +619,7 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                                                             <div className="flex flex-col items-start sm:items-end gap-1">
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="text-sm font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 px-2 py-0.5 rounded-lg flex items-center gap-1.5">
-                                                                        {typeIcons[apt.type]} <span className="text-[9px] uppercase tracking-wider">{typeLabels[apt.type]}</span>
+                                                                        {getTypeIcon(apt.type)} <span className="text-[9px] uppercase tracking-wider">{getTypeLabel(apt.type)}</span>
                                                                     </span>
                                                                     
                                                                     {/* Quick Status Toggle (Hidden on very small mobile if already in header) */}
@@ -727,7 +736,7 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                                                                         {isTask ? event.title : event.pet.name}
                                                                     </span>
                                                                     <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
-                                                                        {isTask ? 'Administrativo' : typeLabels[event.type]} 
+                                                                        {isTask ? 'Administrativo' : getTypeLabel(event.type)} 
                                                                         <span className="mx-1">•</span> 
                                                                         {event.status === 'completed' ? 'Realizado' : 
                                                                          event.status === 'cancelled' ? 'Cancelado' : 'No Asistió'}
@@ -952,6 +961,45 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                                 </div>
 
                                 <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Motivo</label>
+                                    <select
+                                        value={predefinedTypes.includes(editData.type) ? editData.type : 'other'}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            if (val === 'other') {
+                                                setEditData('type', '');
+                                            } else {
+                                                setEditData('type', val);
+                                            }
+                                        }}
+                                        className="w-full rounded-xl border-gray-200 py-2.5 focus:border-brand-primary focus:ring-0 dark:bg-gray-900 dark:border-gray-700 dark:text-white font-bold"
+                                    >
+                                        <option value="consultation">🩺 Consulta Médica</option>
+                                        <option value="surgery">🔪 Cirugía / Quirófano</option>
+                                        <option value="grooming">🛁 Estética / Baño</option>
+                                        <option value="hospitalization">🏥 Hospitalización</option>
+                                        <option value="euthanasia">🌈 Eutanasia</option>
+                                        <option value="follow-up">📋 Seguimiento / RECO</option>
+                                        <option value="emergency">🚨 Urgencia Inmediata</option>
+                                        <option value="other">⚙️ Otro (Especifique...)</option>
+                                    </select>
+                                </div>
+
+                                {(!predefinedTypes.includes(editData.type) || editData.type === '') && (
+                                    <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                                        <label className="block text-[10px] font-black text-brand-primary uppercase tracking-widest mb-1.5 ml-1 italic">Especifique el Motivo:</label>
+                                        <input
+                                            type="text"
+                                            maxLength="30"
+                                            value={editData.type === 'other' ? '' : editData.type}
+                                            onChange={e => setEditData('type', e.target.value)}
+                                            placeholder="Ej: Certificado de Viaje, Limpieza, etc."
+                                            className="w-full rounded-xl border-brand-primary/30 py-2.5 focus:border-brand-primary focus:ring-0 dark:bg-gray-900 dark:text-white font-bold text-sm"
+                                        />
+                                    </div>
+                                )}
+
+                                <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Situación / Estado</label>
                                     <select
                                         value={editData.status}
@@ -1030,7 +1078,7 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                             <div className="space-y-2">
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">1. Localizar Paciente</label>
                                 {!createData.pet_id ? (
-                                    <PetAsyncSearch onSelect={(pet) => {
+                                    <PetAsyncSearch excludeDeceased={true} onSelect={(pet) => {
                                         setCreateData('pet_id', pet.id);
                                         setSelectedPetObj(pet);
                                     }} />
@@ -1062,8 +1110,15 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                                 <div className="space-y-1.5">
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">2. Motivo</label>
                                     <select
-                                        value={createData.type}
-                                        onChange={e => setCreateData('type', e.target.value)}
+                                        value={predefinedTypes.includes(createData.type) ? createData.type : 'other'}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            if (val === 'other') {
+                                                setCreateData('type', '');
+                                            } else {
+                                                setCreateData('type', val);
+                                            }
+                                        }}
                                         className="w-full rounded-xl border-gray-200 py-2.5 focus:border-brand-primary focus:ring-0 dark:bg-gray-900 dark:border-gray-700 dark:text-white font-bold"
                                     >
                                         <option value="consultation">🩺 Consulta Médica</option>
@@ -1073,7 +1128,22 @@ export default function Index({ auth, appointments, tasks = [], selectedDate, st
                                         <option value="euthanasia">🌈 Eutanasia</option>
                                         <option value="follow-up">📋 Seguimiento / RECO</option>
                                         <option value="emergency">🚨 Urgencia Inmediata</option>
+                                        <option value="other">⚙️ Otro (Especifique...)</option>
                                     </select>
+                                    
+                                    {(!predefinedTypes.includes(createData.type) || createData.type === '') && (
+                                        <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                                            <label className="block text-[10px] font-black text-brand-primary uppercase tracking-widest mb-1.5 ml-1 italic">Especifique el Motivo:</label>
+                                            <input
+                                                type="text"
+                                                maxLength="30"
+                                                value={createData.type === 'other' ? '' : createData.type}
+                                                onChange={e => setCreateData('type', e.target.value)}
+                                                placeholder="Ej: Certificado de Viaje, Limpieza, etc."
+                                                className="w-full rounded-xl border-brand-primary/30 py-2.5 focus:border-brand-primary focus:ring-0 dark:bg-gray-900 dark:text-white font-bold text-sm"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-1.5">

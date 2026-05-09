@@ -208,6 +208,7 @@
             <div class="info-grid">
                 <div class="info-item"><label>Paciente</label><p>{{ $euthanasia->pet?->name }}</p></div>
                 <div class="info-item"><label>Especie / Raza</label><p>{{ $euthanasia->pet?->species }} — {{ $euthanasia->pet?->breed }}</p></div>
+                <div class="info-item"><label>Edad</label><p>{{ $euthanasia->pet?->age }}</p></div>
                 <div class="info-item"><label>Propietario / Responsable</label><p>{{ $euthanasia->owner_name_override ?: ($euthanasia->pet?->owner?->name ?? '—') }}</p></div>
                 
                 <div class="info-item"><label>Fecha y Hora</label><p>{{ $euthanasia->performed_at ? \Carbon\Carbon::parse($euthanasia->performed_at)->format('d/m/Y H:i') : '—' }}</p></div>

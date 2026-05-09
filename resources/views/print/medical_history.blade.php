@@ -169,9 +169,9 @@
         <div class="section-content">
             <div class="grid grid-4">
                 <div class="data-point"><label>Paciente</label><span>{{ $record->pet->name }}</span></div>
-                <div class="data-point"><label>Especie / Raza</label><span>{{ $record->pet->species }} ({{ $record->pet->breed->name ?? $record->pet->breed ?? 'Mestizo' }})</span></div>
-                <div class="data-point"><label>Sexo</label><span>{{ $record->pet->gender }}</span></div>
-                <div class="data-point"><label>Edad</label><span>{{ $record->pet->dob ? \Carbon\Carbon::parse($record->pet->dob)->age . ' años' : '—' }}</span></div>
+                <div class="data-point"><label>Especie / Raza</label><span>{{ $record->pet->species }} / {{ $record->pet->breed->name ?? $record->pet->breed ?? 'Mestizo' }}</span></div>
+                <div class="data-point"><label>Edad</label><span>{{ $record->pet->age }}</span></div>
+                <div class="data-point"><label>Sexo</label><span>{{ $record->pet->gender === 'male' ? 'Macho' : 'Hembra' }}</span></div>
                 <div class="data-point"><label>Propietario</label><span>{{ $record->pet->owner?->name ?? '—' }}</span></div>
                 <div class="data-point"><label>Teléfono</label><span>{{ $record->pet->owner?->phone ?? '—' }}</span></div>
             </div>

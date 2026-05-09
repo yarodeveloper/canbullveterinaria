@@ -200,8 +200,8 @@ class AppointmentController extends Controller
             'pet_id' => 'required|exists:pets,id',
             'veterinarian_id' => 'nullable|exists:users,id',
             'start_time' => 'required|date',
-            'duration' => 'required|integer|min:15|max:480', // duration in minutes (max 8 hours)
-            'type' => 'required|in:consultation,surgery,grooming,hospitalization,follow-up,emergency,euthanasia',
+            'duration' => 'required|integer|min:15|max:480',
+            'type' => 'required|string|max:50',
             'reason' => 'nullable|string',
         ]);
 
@@ -238,6 +238,7 @@ class AppointmentController extends Controller
             'status' => 'required|in:scheduled,confirmed,in-progress,completed,cancelled,no-show',
             'veterinarian_id' => 'nullable|exists:users,id',
             'start_time' => 'nullable|date',
+            'type' => 'nullable|string|max:50',
             'reason' => 'nullable|string',
         ]);
 
@@ -255,6 +256,9 @@ class AppointmentController extends Controller
         }
         if (isset($validated['reason'])) {
             $appointment->reason = $validated['reason'];
+        }
+        if (isset($validated['type'])) {
+            $appointment->type = $validated['type'];
         }
 
         $appointment->save();

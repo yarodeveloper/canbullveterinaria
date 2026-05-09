@@ -5,6 +5,8 @@ import axios from 'axios';
 import MedicationsEditor from '@/Components/MedicationsEditor';
 import PendingChargesEditor from '@/Components/PendingChargesEditor';
 import PetAsyncSearch from '@/Components/PetAsyncSearch';
+import PetAvatar from '@/Components/PetAvatar';
+import PetAlertIcons from '@/Components/PetAlertIcons';
 
 const REASONS = [
     'Enfermedad terminal / sin pronóstico favorable',

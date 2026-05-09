@@ -110,4 +110,25 @@ class Pet extends Model
     {
         return $this->hasMany(GroomingOrder::class);
     }
+
+    /**
+     * Calcula la edad formateada de la mascota
+     */
+    public function getAgeAttribute()
+    {
+        if (!$this->dob) return 'N/A';
+        
+        $now = \Carbon\Carbon::now();
+        $diff = $this->dob->diff($now);
+        
+        $parts = [];
+        if ($diff->y > 0) $parts[] = $diff->y . ($diff->y == 1 ? ' año' : ' años');
+        if ($diff->m > 0) $parts[] = $diff->m . ($diff->m == 1 ? ' mes' : ' meses');
+        
+        if (empty($parts)) {
+            return $diff->d . ($diff->d == 1 ? ' día' : ' días');
+        }
+        
+        return implode(', ', $parts);
+    }
 }

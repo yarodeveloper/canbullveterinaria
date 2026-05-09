@@ -20,6 +20,8 @@ const roleLabels = {
     staff: 'Staff'
 };
 
+const predefinedTypes = ['consultation', 'surgery', 'grooming', 'hospitalization', 'follow-up', 'emergency', 'euthanasia'];
+
 const TimelineItem = ({ event }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -1127,10 +1129,12 @@ export default function Show({ auth, pet, protocols, clients, veterinarians = []
                 <div className="relative">
                     <div className="h-1 bg-brand-primary absolute top-0 left-0 w-full"></div>
                     <form onSubmit={submitAppointment} className="p-4 sm:p-5">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-5">
                             <div>
-                                <h2 className="text-lg font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight">Agendar Nueva Cita</h2>
-                                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Paciente: <span className="text-brand-primary">{pet.name}</span></p>
+                                <h2 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Agendar Nueva Cita</h2>
+                                <p className="text-xl font-black text-slate-800 dark:text-white leading-none mt-1 italic">
+                                    {pet.name}
+                                </p>
                             </div>
                             <button type="button" onClick={closeAppointmentModal} className="text-gray-400 hover:text-gray-600 transition bg-gray-50 dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1142,8 +1146,15 @@ export default function Show({ auth, pet, protocols, clients, veterinarians = []
                                 <div className="space-y-1">
                                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">Motivo del Servicio</label>
                                     <select
-                                        value={aptData.type}
-                                        onChange={e => setAptData('type', e.target.value)}
+                                        value={predefinedTypes.includes(aptData.type) ? aptData.type : 'other'}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            if (val === 'other') {
+                                                setAptData('type', '');
+                                            } else {
+                                                setAptData('type', val);
+                                            }
+                                        }}
                                         className="w-full rounded-xl border-gray-200 py-1.5 focus:border-brand-primary focus:ring-0 dark:bg-gray-900 dark:border-gray-700 dark:text-white font-bold text-xs"
                                     >
                                         <option value="consultation">🩺 Consulta Médica</option>
@@ -1153,7 +1164,21 @@ export default function Show({ auth, pet, protocols, clients, veterinarians = []
                                         <option value="euthanasia">🌈 Eutanasia</option>
                                         <option value="follow-up">📋 Seguimiento</option>
                                         <option value="emergency">🚨 Urgencia</option>
+                                        <option value="other">⚙️ Otro (Especifique...)</option>
                                     </select>
+
+                                    {(!predefinedTypes.includes(aptData.type) || aptData.type === '') && (
+                                        <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                            <input
+                                                type="text"
+                                                maxLength="30"
+                                                value={aptData.type === 'other' ? '' : aptData.type}
+                                                onChange={e => setAptData('type', e.target.value)}
+                                                placeholder="Especifique el motivo..."
+                                                className="w-full rounded-xl border-brand-primary/30 py-1.5 focus:border-brand-primary focus:ring-0 dark:bg-gray-900 dark:text-white font-bold text-xs"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-1">

@@ -167,6 +167,7 @@ export default function Create({ auth, pet, templates, products, clients, petsLi
                                     <div className="md:col-span-2">
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Paciente (Mascota) *</label>
                                         <PetAsyncSearch 
+                                            excludeDeceased={true}
                                             onSelect={pet => {
                                                 setData(prev => ({ ...prev, pet_id: String(pet.id), client_id: String(pet.user_id || pet.owner?.id || '') }));
                                                 setPetWeight(pet.weight || 0);

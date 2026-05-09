@@ -142,8 +142,12 @@
                 <p>{{ $hospitalization->pet?->species }} / {{ $hospitalization->pet?->breed }}</p>
             </div>
             <div class="info-item">
-                <label>Sexo/Edad</label>
-                <p>{{ $hospitalization->pet?->gender === 'male' ? 'Macho' : 'Hembra' }} / {{ $hospitalization->pet?->dob ? \Carbon\Carbon::parse($hospitalization->pet->dob)->age . ' años' : 'N/A' }}</p>
+                <label>Sexo</label>
+                <p>{{ $hospitalization->pet?->gender === 'male' ? 'Macho' : 'Hembra' }}</p>
+            </div>
+            <div class="info-item">
+                <label>Edad</label>
+                <p>{{ $hospitalization->pet?->age }}</p>
             </div>
             <div class="info-item">
                 <label>Peso Inicial</label>

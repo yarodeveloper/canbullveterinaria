@@ -125,6 +125,7 @@
                 @endphp
                 <div style="font-size: 18px; font-weight: 900; color: {{ $primaryColor }}; text-transform: uppercase;">{{ $branchName }}</div>
                 <p style="font-size: 7px; color: #6b7280; font-weight: 700;">{{ $branch->address ?? '' }} | TEL: {{ $branch->phone ?? '' }}</p>
+                @endif
             </div>
             <div class="report-title">
                 <h1>PROTOCOLO DE CIRUGÍA</h1>
@@ -140,6 +141,7 @@
         <div class="info-grid">
             <div class="info-item"><label>Paciente</label><p>{{ $surgery->pet?->name }}</p></div>
             <div class="info-item"><label>Especie/Raza</label><p>{{ $surgery->pet?->species }} / {{ $surgery->pet?->breed }}</p></div>
+            <div class="info-item"><label>Edad</label><p>{{ $surgery->pet?->age }}</p></div>
             <div class="info-item"><label>Dueño</label><p>{{ $surgery->pet?->owner?->name }}</p></div>
             <div class="info-item"><label>Cirujano</label><p>{{ $surgery->leadSurgeon?->name }}</p></div>
             

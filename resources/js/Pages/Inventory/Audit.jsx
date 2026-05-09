@@ -371,44 +371,42 @@ export default function Audit({ auth, alerts, products, expiringLots = [] }) {
                             </div>
 
                             <div className="overflow-x-auto print:overflow-visible">
-                                <table className="w-full text-left print:text-[8px] print:leading-none">
+                                <table className="w-full text-left print:text-[7px] print:leading-tight">
                                     <thead>
-                                        <tr className="bg-slate-50 dark:bg-gray-900/40 text-[9px] font-black text-slate-400 uppercase tracking-widest print:bg-gray-200 print:text-black">
-                                            <th className="px-8 py-3 print:px-0.5 print:py-0.5 font-bold">SKU</th>
-                                            <th className="px-6 py-3 print:px-0.5 print:py-0.5 font-bold">Producto / Artículo</th>
-                                            <th className="px-6 py-3 text-center print:px-0.5 print:py-0.5 font-bold">Teórico</th>
-                                            <th className="px-6 py-3 text-center print:px-0.5 print:py-0.5 print:min-w-[80px] font-bold">Conteo Físico</th>
+                                        <tr className="bg-slate-50 dark:bg-gray-900/40 text-[9px] font-black text-slate-400 uppercase tracking-widest print:bg-gray-100 print:text-black print:border-b print:border-black">
+                                            <th className="px-8 py-3 print:px-1 print:py-1 font-bold">SKU</th>
+                                            <th className="px-6 py-3 print:px-1 print:py-1 font-bold">Producto / Artículo</th>
+                                            <th className="px-6 py-3 text-center print:px-1 print:py-1 font-bold">Existencia Teórica</th>
+                                            <th className="px-6 py-3 text-center print:px-1 print:py-1 print:min-w-[70px] font-bold">Conteo Físico</th>
                                             <th className="px-6 py-3 text-right print:hidden font-bold pr-8">Acción</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 print:divide-gray-300">
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 print:divide-gray-200">
                                         {Object.keys(groupedProducts).length > 0 ? Object.keys(groupedProducts).sort().map(categoryName => (
                                             <React.Fragment key={categoryName}>
-                                                {/* Header de la Categoría */}
-                                                <tr className="bg-slate-50 dark:bg-slate-900/20 print:bg-gray-100">
-                                                    <td colSpan="5" className="px-8 py-2 font-black text-brand-primary uppercase tracking-widest text-[10px] print:text-black print:px-0.5 print:py-0.5 print:text-[9px] border-y dark:border-slate-700/50 print:border-black italic">
-                                                        📁 {categoryName} <span className="ml-2 text-slate-400 dark:text-slate-500 opacity-60 print:text-gray-900 not-italic font-bold">({groupedProducts[categoryName].length} productos)</span>
+                                                <tr className="bg-slate-50 dark:bg-slate-900/20 print:bg-gray-50">
+                                                    <td colSpan="4" className="px-8 py-2 font-black text-brand-primary uppercase tracking-widest text-[10px] print:text-black print:px-1 print:py-0.5 print:text-[8px] border-y dark:border-slate-700/50 print:border-gray-300 italic">
+                                                        📁 {categoryName} <span className="ml-2 text-slate-400 dark:text-slate-500 opacity-60 print:text-gray-500 not-italic font-bold">({groupedProducts[categoryName].length})</span>
                                                     </td>
                                                 </tr>
-                                                {/* Filas de los productos agrupados */}
                                                 {groupedProducts[categoryName].map(product => (
-                                                    <tr key={product.id} className="hover:bg-brand-primary/5 transition-colors group print:border-b print:border-gray-100">
-                                                        <td className="px-8 py-2.5 text-xs font-black text-slate-500 dark:text-slate-400 print:text-[8px]">
+                                                    <tr key={product.id} className="hover:bg-brand-primary/5 transition-colors group print:border-b print:border-gray-50 page-break-inside-avoid">
+                                                        <td className="px-8 py-2.5 print:px-1 print:py-0.5 text-xs font-black text-slate-500 dark:text-slate-400 print:text-[7px]">
                                                             {product.sku || '-'}
                                                         </td>
-                                                        <td className="px-6 py-2.5">
-                                                            <p className="font-black text-xs text-slate-900 dark:text-white uppercase tracking-tight group-hover:text-brand-primary transition-colors print:text-[8px]">
+                                                        <td className="px-6 py-2.5 print:px-1 print:py-0.5">
+                                                            <p className="font-black text-xs text-slate-900 dark:text-white uppercase tracking-tight group-hover:text-brand-primary transition-colors print:text-[7px]">
                                                                 {product.name}
                                                             </p>
                                                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest print:hidden">{product.unit}s</p>
                                                         </td>
-                                                        <td className="px-6 py-2.5 text-center">
-                                                            <span className="font-black text-sm text-slate-900 dark:text-white print:text-[8px]">
+                                                        <td className="px-6 py-2.5 print:px-1 print:py-0.5 text-center">
+                                                            <span className="font-black text-sm text-slate-900 dark:text-white print:text-[7px]">
                                                                 {parseFloat(product.current_stock)}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-2.5 text-center">
-                                                            <div className="mx-auto w-20 h-10 border-b-2 border-slate-200 dark:border-slate-700 print:border-black/30 group-hover:border-brand-primary transition-colors"></div>
+                                                        <td className="px-6 py-2.5 print:px-1 print:py-0.5 text-center">
+                                                            <div className="mx-auto w-16 h-6 border-b border-slate-200 dark:border-slate-700 print:border-black/20 group-hover:border-brand-primary transition-colors"></div>
                                                         </td>
                                                         <td className="px-6 py-2.5 text-right print:hidden pr-8">
                                                             <Link

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PetAvatar from '@/Components/PetAvatar';
 
-export default function PetAsyncSearch({ onSelect, placeholder = "Buscar paciente o dueño...", autoFocus = false }) {
+export default function PetAsyncSearch({ onSelect, placeholder = "Buscar paciente o dueño...", autoFocus = false, excludeDeceased = false }) {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -11,7 +11,7 @@ export default function PetAsyncSearch({ onSelect, placeholder = "Buscar pacient
         const timeoutId = setTimeout(() => {
             if (query.length > 2) {
                 setIsSearching(true);
-                fetch(route('pets.search', { q: query }))
+                fetch(route('pets.search', { q: query, exclude_deceased: excludeDeceased ? 1 : 0 }))
                     .then(res => res.json())
                     .then(data => {
                         // Extraemos el objeto `pet` completo que viene en cada resultado
