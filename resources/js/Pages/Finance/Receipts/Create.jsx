@@ -9,8 +9,17 @@ export default function Create({ auth, clients, products, pets, selectedClientId
         payment_method: 'cash',
         mixed_cash_amount: '',
         notes: '',
+        discount_authorized_by: null,
+        discount_reason: '',
         pending_charge_ids: [],
     });
+
+    const [showDiscountAuthModal, setShowDiscountAuthModal] = useState(false);
+    const [adminPassword, setAdminPassword] = useState('');
+    const [discountReason, setDiscountReason] = useState('');
+    const [isDiscountAuthorized, setIsDiscountAuthorized] = useState(false);
+    const [authError, setAuthError] = useState(null);
+    const [authorizing, setAuthorizing] = useState(false);
 
     const { flash, settings } = usePage().props;
     const hasPermission = (permission) => auth.user?.role === 'admin' || auth.permissions?.includes(permission);
@@ -203,6 +212,8 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                     original_price: Number(product.price),
                     discount_percent: product.has_active_discount ? parseFloat(product.discount_percent) : 0,
                     discount_amount: discountAmount,
+                    manual_discount_percent: 0,
+                    manual_discount_amount: 0,
                     quantity: 1,
                     tax_iva: (product.tax_iva !== null && product.tax_iva !== undefined) ? parseFloat(product.tax_iva) : (product.is_service ? 0 : 16),
                     tax_ieps: (product.tax_ieps !== null && product.tax_ieps !== undefined) ? parseFloat(product.tax_ieps) : 0,
@@ -265,13 +276,71 @@ export default function Create({ auth, clients, products, pets, selectedClientId
         setData('items', newItems);
     };
 
+    const updateManualDiscount = (index, value) => {
+        const newItems = [...data.items];
+        const percent = Math.min(100, Math.max(0, parseFloat(value) || 0));
+        newItems[index].manual_discount_percent = percent;
+        setData('items', newItems);
+        setIsDiscountAuthorized(false); // Reset authorization on change
+    };
+
+    const needsAuthorization = useMemo(() => {
+        return data.items.some(item => (item.manual_discount_percent || 0) > 0);
+    }, [data.items]);
+
+    const handleAuthorizeDiscount = async (e) => {
+        e.preventDefault();
+        setAuthorizing(true);
+        setAuthError(null);
+        try {
+            const response = await axios.post(route('receipts.authorize-discount'), {
+                password: adminPassword,
+            });
+            if (response.data.success) {
+                setData(d => ({
+                    ...d,
+                    discount_authorized_by: response.data.admin_id,
+                    discount_reason: discountReason
+                }));
+                setIsDiscountAuthorized(true);
+                setShowDiscountAuthModal(false);
+                setAdminPassword('');
+                
+                // Trigger submission with the authorized data
+                post(route('receipts.store'), {
+                    data: {
+                        ...data,
+                        discount_authorized_by: response.data.admin_id,
+                        discount_reason: discountReason
+                    },
+                    onSuccess: () => {
+                        reset();
+                        setReceivedAmount('');
+                        setGeneralSearch('');
+                        setSelectedPet(null);
+                        setSelectedClient(generalPublicClient || null);
+                        setIsDiscountAuthorized(false);
+                        setDiscountReason('');
+                    }
+                });
+            }
+        } catch (err) {
+            setAuthError(err.response?.data?.message || 'Error de autorización.');
+        } finally {
+            setAuthorizing(false);
+        }
+    };
+
     const removeItem = (index) => setData('items', data.items.filter((_, i) => i !== index));
     const emptyCart = () => setData('items', []);
 
     const totals = useMemo(() => {
         return data.items.reduce((acc, item) => {
             const qty = Number(item.quantity || 0);
-            const lineFinal = qty * Number(item.unit_price || 0);
+            const manualDiscountP = Number(item.manual_discount_percent || 0) / 100;
+            const unitPrice = Number(item.unit_price || 0);
+            const lineFinal = qty * unitPrice * (1 - manualDiscountP);
+            const manualDiscountAmount = qty * unitPrice * manualDiscountP;
             
             const ivaP = Number(item.tax_iva || 0) / 100;
             const iepsP = Number(item.tax_ieps || 0) / 100;
@@ -286,9 +355,10 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                 subtotal: acc.subtotal + lineBase,
                 iva: acc.iva + lineIva,
                 ieps: acc.ieps + lineIeps,
-                total: acc.total + lineFinal
+                total: acc.total + lineFinal,
+                manual_discount_total: acc.manual_discount_total + manualDiscountAmount
             };
-        }, { subtotal: 0, iva: 0, ieps: 0, total: 0 });
+        }, { subtotal: 0, iva: 0, ieps: 0, total: 0, manual_discount_total: 0 });
     }, [data.items]);
 
     const subtotal = Math.round(totals.subtotal * 100) / 100;
@@ -301,6 +371,12 @@ export default function Create({ auth, clients, products, pets, selectedClientId
 
     const submit = (e) => {
         e.preventDefault();
+        
+        if (needsAuthorization && !isDiscountAuthorized) {
+            setShowDiscountAuthModal(true);
+            return;
+        }
+
         post(route('receipts.store'), {
             onSuccess: () => {
                 reset();
@@ -308,6 +384,8 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                 setGeneralSearch('');
                 setSelectedPet(null);
                 setSelectedClient(generalPublicClient || null);
+                setIsDiscountAuthorized(false);
+                setDiscountReason('');
             }
         });
     };
@@ -534,9 +612,22 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                                     <span className="font-black w-7 text-center text-gray-900 dark:text-white">{item.quantity}</span>
                                                     <button type="button" onClick={() => updateQuantity(idx, 1)} className="w-7 h-7 rounded-lg border text-gray-400 hover:border-purple-500 hover:text-purple-600 transition-colors">+</button>
                                                 </div>
+                                                <div className="w-20 text-center mx-2">
+                                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Desc %</p>
+                                                    <input 
+                                                        type="number" 
+                                                        min="0" 
+                                                        max="100" 
+                                                        value={item.manual_discount_percent} 
+                                                        onChange={(e) => updateManualDiscount(idx, e.target.value)}
+                                                        className={`w-full text-center bg-white dark:bg-[#111623] border rounded-lg py-1 text-xs font-black transition-colors ${item.manual_discount_percent > 0 ? 'border-amber-500 text-amber-600 bg-amber-50' : 'border-gray-200 dark:border-[#2A3347] text-gray-400'}`}
+                                                    />
+                                                </div>
                                                 <div className="w-32 text-right">
-                                                    <p className="font-black text-gray-900 dark:text-white text-base leading-none">${(item.quantity * item.unit_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
-                                                    {item.discount_percent > 0 && (
+                                                    <p className={`font-black text-base leading-none ${item.manual_discount_percent > 0 ? 'text-amber-600' : 'text-gray-900 dark:text-white'}`}>
+                                                        ${(item.quantity * item.unit_price * (1 - (item.manual_discount_percent || 0)/100)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                    </p>
+                                                    {(item.discount_percent > 0 || item.manual_discount_percent > 0) && (
                                                         <p className="text-[10px] text-gray-400 line-through mt-1">${(item.quantity * item.original_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
                                                     )}
                                                 </div>
@@ -578,6 +669,12 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                                             <div className="flex justify-between items-center text-white/70">
                                                 <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">IVA</span>
                                                 <span className="text-xs font-bold font-mono">${taxTotals.iva.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                            </div>
+                                        )}
+                                        {totals.manual_discount_total > 0 && (
+                                            <div className="flex justify-between items-center text-amber-300 mt-1 pt-1 border-t border-white/5">
+                                                <span className="text-[9px] font-black uppercase tracking-widest italic">Ahorro Manual</span>
+                                                <span className="text-xs font-bold">-${totals.manual_discount_total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                                             </div>
                                         )}
                                     </div>
@@ -824,6 +921,58 @@ export default function Create({ auth, clients, products, pets, selectedClientId
                     margin: 0; 
                 }
             `}} />
+            {showDiscountAuthModal && (
+                <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-md">
+                    <div className="bg-white dark:bg-[#1A2131] rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-[#2A3347] animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-gray-100 dark:border-[#2A3347] flex justify-between items-center bg-amber-50 dark:bg-amber-500/10">
+                            <div>
+                                <h3 className="text-lg font-black uppercase text-amber-600 dark:text-amber-400 leading-none">Autorización de Descuento</h3>
+                                <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest mt-2">Se requiere permiso de administrador</p>
+                            </div>
+                            <button onClick={() => setShowDiscountAuthModal(false)} className="text-3xl text-gray-400 hover:text-red-500">×</button>
+                        </div>
+                        <form onSubmit={handleAuthorizeDiscount} className="p-6 space-y-6">
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Contraseña de Administrador</label>
+                                    <input 
+                                        type="password" 
+                                        autoFocus
+                                        value={adminPassword} 
+                                        onChange={e => setAdminPassword(e.target.value)} 
+                                        className="w-full bg-gray-50 dark:bg-[#111623] dark:text-white border border-gray-200 dark:border-[#2A3347] rounded-xl py-3 px-4 font-black text-center text-lg focus:ring-1 focus:ring-amber-500" 
+                                        placeholder="••••••••"
+                                        required 
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Motivo del Descuento</label>
+                                    <textarea 
+                                        value={discountReason} 
+                                        onChange={e => setDiscountReason(e.target.value)} 
+                                        className="w-full bg-gray-50 dark:bg-[#111623] dark:text-white border border-gray-200 dark:border-[#2A3347] rounded-xl py-3 px-4 text-xs font-bold uppercase" 
+                                        rows="2" 
+                                        placeholder="Ej: ATENCION CLIENTE ESPECIAL..."
+                                        required
+                                    ></textarea>
+                                </div>
+                                {authError && (
+                                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                                        <p className="text-[10px] font-black text-red-600 uppercase text-center">{authError}</p>
+                                    </div>
+                                )}
+                            </div>
+                            <button 
+                                type="submit" 
+                                disabled={authorizing} 
+                                className="w-full bg-amber-500 hover:bg-amber-400 text-white py-4 rounded-2xl font-black uppercase tracking-widest transition active:scale-95 shadow-lg shadow-amber-500/20"
+                            >
+                                {authorizing ? 'VERIFICANDO...' : 'AUTORIZAR DESCUENTOS'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

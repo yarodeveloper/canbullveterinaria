@@ -127,6 +127,10 @@ export default function Print({ auth, cashRegister, receipts, movements }) {
                                         <span className="font-bold text-slate-600 dark:text-gray-300 uppercase tracking-tight">💵 Ingresos Extras (Manuales)</span>
                                         <span className="font-black text-emerald-600">+${movements.filter(m => m.type === 'in').reduce((sum, m) => sum + parseFloat(m.amount), 0).toFixed(2)}</span>
                                     </div>
+                                    <div className="flex justify-between items-center text-xs p-1.5 border-b border-slate-50">
+                                        <span className="font-bold text-slate-600 dark:text-gray-300 uppercase tracking-tight">🏷️ Descuentos Manuales (Autorizados)</span>
+                                        <span className="font-black text-amber-600">-${receipts.reduce((sum, r) => sum + parseFloat(r.manual_discount_total || 0), 0).toFixed(2)}</span>
+                                    </div>
                                     <div className="flex justify-between items-center text-xs p-1.5">
                                         <span className="font-bold text-slate-600 dark:text-gray-300 uppercase tracking-tight">💸 Salidas / Gastos / Retiros</span>
                                         <span className="font-black text-red-600">-${movements.filter(m => m.type === 'out').reduce((sum, m) => sum + parseFloat(m.amount), 0).toFixed(2)}</span>

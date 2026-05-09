@@ -130,4 +130,45 @@ class ReportController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Reporte de Cortesías y Descuentos Manuales (Auditoría)
+     */
+    public function courtesyReport(Request $request)
+    {
+        $user = Auth::user();
+        $branchId = $user->branch_id;
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
+
+        $discounts = Receipt::with(['client', 'authorizer', 'items'])
+            ->where('manual_discount_total', '>', 0)
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->whereBetween('date', [$startDate, Carbon::parse($endDate)->endOfDay()])
+            ->orderBy('date', 'desc')
+            ->get()
+            ->map(fn($receipt) => [
+                'id' => $receipt->id,
+                'number' => $receipt->receipt_number,
+                'date' => $receipt->date,
+                'client' => $receipt->client ? $receipt->client->name : 'Público General',
+                'authorizer' => $receipt->authorizer ? $receipt->authorizer->name : 'N/A',
+                'reason' => $receipt->discount_reason,
+                'amount' => $receipt->manual_discount_total,
+                'total_ticket' => $receipt->total,
+                'items' => $receipt->items->filter(fn($i) => $i->manual_discount_percent > 0)->map(fn($i) => [
+                    'concept' => $i->concept,
+                    'percent' => $i->manual_discount_percent,
+                    'discount' => $i->manual_discount_amount
+                ])
+            ]);
+
+        return Inertia::render('Reports/CourtesyReport', [
+            'discounts' => $discounts,
+            'filters' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ]
+        ]);
+    }
 }

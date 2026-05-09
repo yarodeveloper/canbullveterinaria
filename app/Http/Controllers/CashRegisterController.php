@@ -48,6 +48,10 @@ class CashRegisterController extends Controller
                 $q->where('cash_register_id', $activeRegister->id)->where('status', 'paid');
             })->where('type', 'service')->sum('total');
 
+            $manualDiscounts = Receipt::where('cash_register_id', $activeRegister->id)
+                ->where('status', 'paid')
+                ->sum('manual_discount_total');
+
             $expected = $activeRegister->opening_amount + $incomes - $expenses;
             
             $currentStats = [
@@ -56,6 +60,7 @@ class CashRegisterController extends Controller
                 'expenses' => $expenses,
                 'product_sales' => $productSales,
                 'service_sales' => $serviceSales,
+                'manual_discounts' => $manualDiscounts,
                 'expected_amount' => $expected,
             ];
         }

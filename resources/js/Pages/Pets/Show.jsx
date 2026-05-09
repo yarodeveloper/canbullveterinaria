@@ -5,6 +5,7 @@ import { Head, Link, useForm, router } from '@inertiajs/react';
 import { IconEye, IconPlus, IconEdit, IconPlay } from '@/Components/Icons';
 import PreventiveControl from './Partials/PreventiveControl';
 import PetAvatar from '@/Components/PetAvatar';
+import Modal from '@/Components/Modal';
 import { getWhatsAppLink } from '@/Utils/formatters';
 import { BehaviorBadge } from '@/Components/BehaviorSelector';
 import PrintDocumentModal from '@/Components/PrintDocumentModal';
@@ -176,11 +177,47 @@ const TimelineItem = ({ event }) => {
     );
 };
 
-export default function Show({ auth, pet, protocols, clients, documentTemplates = [] }) {
+export default function Show({ auth, pet, protocols, clients, veterinarians = [], documentTemplates = [] }) {
     const [timelineFilter, setTimelineFilter] = useState('all');
     const [localClients, setLocalClients] = useState(clients || []);
     const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [showPrintModal, setShowPrintModal] = useState(false);
+    const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+
+    // Form logic for New Appointment Modal
+    const { data: aptData, setData: setAptData, post: postApt, processing: aptProcessing, reset: resetApt, errors: aptErrors } = useForm({
+        pet_id: pet.id,
+        veterinarian_id: '',
+        start_time: '',
+        duration: '30',
+        type: 'consultation',
+        reason: '',
+    });
+
+    const openAppointmentModal = (e) => {
+        if (e) e.preventDefault();
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(Math.ceil(now.getMinutes() / 10) * 10).padStart(2, '0');
+        
+        setAptData('start_time', `${year}-${month}-${day}T${hours}:${minutes}`);
+        setIsAppointmentModalOpen(true);
+    };
+
+    const closeAppointmentModal = () => {
+        setIsAppointmentModalOpen(false);
+        resetApt();
+    };
+
+    const submitAppointment = (e) => {
+        e.preventDefault();
+        postApt(route('appointments.store'), {
+            onSuccess: () => closeAppointmentModal()
+        });
+    };
 
     const { data: docData, setData: setDocData, post: postDoc, processing: docProcessing, reset: resetDoc, errors: docErrors } = useForm({
         pet_id: pet.id,
@@ -860,9 +897,12 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                     <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Próximas Citas</h3>
                                     <div className="flex items-center gap-3">
                                         <Link href={route('appointments.index')} className="text-indigo-600 text-[10px] uppercase font-bold hover:underline tracking-widest hidden sm:block">Ver Calendario</Link>
-                                        <Link href={route('appointments.create', { pet_id: pet.id })} className="bg-indigo-500 hover:bg-indigo-600 text-white text-[10px] font-bold px-4 py-2 rounded-lg uppercase tracking-widest transition shadow-sm">
+                                        <button 
+                                            onClick={openAppointmentModal}
+                                            className="bg-indigo-500 hover:bg-indigo-600 text-white text-[10px] font-bold px-4 py-2 rounded-lg uppercase tracking-widest transition shadow-sm"
+                                        >
                                             + Nueva Cita
-                                        </Link>
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="p-4 sm:p-5">
@@ -904,12 +944,12 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                                     ) : (
                                         <div className="text-center py-4">
                                             <p className="text-gray-500 text-xs italic mb-4">No hay citas programadas.</p>
-                                            <Link
-                                                href={route('appointments.create', { pet_id: pet.id })}
+                                            <button
+                                                onClick={openAppointmentModal}
                                                 className="text-xs font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-4 py-2 rounded-lg hover:bg-indigo-100 transition"
                                             >
                                                 + Agendar Cita
-                                            </Link>
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -1081,6 +1121,115 @@ export default function Show({ auth, pet, protocols, clients, documentTemplates 
                 pet={pet}
                 documentTemplates={documentTemplates}
             />
+
+            {/* Compact Appointment Modal */}
+            <Modal show={isAppointmentModalOpen} onClose={closeAppointmentModal} maxWidth="lg">
+                <div className="relative">
+                    <div className="h-1 bg-brand-primary absolute top-0 left-0 w-full"></div>
+                    <form onSubmit={submitAppointment} className="p-4 sm:p-5">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h2 className="text-lg font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight">Agendar Nueva Cita</h2>
+                                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Paciente: <span className="text-brand-primary">{pet.name}</span></p>
+                            </div>
+                            <button type="button" onClick={closeAppointmentModal} className="text-gray-400 hover:text-gray-600 transition bg-gray-50 dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">Motivo del Servicio</label>
+                                    <select
+                                        value={aptData.type}
+                                        onChange={e => setAptData('type', e.target.value)}
+                                        className="w-full rounded-xl border-gray-200 py-1.5 focus:border-brand-primary focus:ring-0 dark:bg-gray-900 dark:border-gray-700 dark:text-white font-bold text-xs"
+                                    >
+                                        <option value="consultation">🩺 Consulta Médica</option>
+                                        <option value="surgery">🔪 Cirugía / Quirófano</option>
+                                        <option value="grooming">🛁 Estética / Baño</option>
+                                        <option value="hospitalization">🏥 Hospitalización</option>
+                                        <option value="euthanasia">🌈 Eutanasia</option>
+                                        <option value="follow-up">📋 Seguimiento</option>
+                                        <option value="emergency">🚨 Urgencia</option>
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">Especialista</label>
+                                    <select
+                                        value={aptData.veterinarian_id}
+                                        onChange={e => setAptData('veterinarian_id', e.target.value)}
+                                        className="w-full rounded-xl border-gray-200 py-1.5 focus:border-brand-primary focus:ring-0 dark:bg-gray-900 dark:border-gray-700 dark:text-white text-xs"
+                                    >
+                                        <option value="">Cualquiera disponible</option>
+                                        {veterinarians.map(vet => (
+                                            <option key={vet.id} value={vet.id}>{vet.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">Programación</label>
+                                    <input
+                                        type="datetime-local"
+                                        step="600"
+                                        value={aptData.start_time}
+                                        onChange={e => setAptData('start_time', e.target.value)}
+                                        className="w-full rounded-xl border-gray-200 py-1.5 focus:border-brand-primary focus:ring-0 dark:bg-gray-900 dark:border-gray-700 dark:text-white font-bold text-xs"
+                                        required
+                                    />
+                                    {aptErrors.start_time && <p className="text-red-500 text-[8px] font-bold uppercase">{aptErrors.start_time}</p>}
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">Duración Estimada</label>
+                                    <select
+                                        value={aptData.duration}
+                                        onChange={e => setAptData('duration', e.target.value)}
+                                        className="w-full rounded-xl border-gray-200 py-1.5 focus:border-brand-primary focus:ring-0 dark:bg-gray-900 dark:border-gray-700 dark:text-white text-xs"
+                                    >
+                                        <option value="15">💡 15 min</option>
+                                        <option value="30">⚡ 30 min</option>
+                                        <option value="45">📊 45 min</option>
+                                        <option value="60">🕙 1 hora</option>
+                                        <option value="120">🏢 2 horas</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">Notas / Motivo</label>
+                                <textarea
+                                    value={aptData.reason}
+                                    onChange={e => setAptData('reason', e.target.value)}
+                                    className="w-full rounded-xl border-gray-200 py-2 focus:border-brand-primary focus:ring-0 dark:bg-gray-900 dark:border-gray-700 dark:text-white text-xs"
+                                    placeholder="Detalles sobre el motivo de la visita..."
+                                    rows="2"
+                                ></textarea>
+                            </div>
+                        </div>
+
+                        <div className="mt-5 flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
+                            <button
+                                type="button"
+                                onClick={closeAppointmentModal}
+                                className="px-4 py-2 text-gray-400 font-black text-[9px] uppercase tracking-widest hover:text-gray-600 transition"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={aptProcessing}
+                                className="px-8 py-2.5 bg-brand-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:opacity-90 transition shadow-lg shadow-brand-primary/20 disabled:opacity-50"
+                            >
+                                {aptProcessing ? '...' : 'Confirmar Cita'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }

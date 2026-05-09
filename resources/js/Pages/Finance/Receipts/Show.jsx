@@ -95,31 +95,69 @@ export default function Show({ auth, receipt }) {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y dark:divide-gray-800">
-                                    {receipt.items.map((item, idx) => (
-                                        <tr key={idx}>
-                                            <td className="py-6 px-4">
-                                                <p className="font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">{item.concept}</p>
-                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                                                    {item.type === 'service' ? 'Servicio Clínico' : 'Insumo/Farmacia'}
-                                                    {item.assigned_user && ` • Atendió: ${item.assigned_user.name}`}
-                                                </p>
-                                            </td>
-                                            <td className="py-6 px-4 text-center font-bold text-gray-600 dark:text-gray-400">{parseFloat(item.quantity)}</td>
-                                            <td className="py-6 px-4 text-right font-bold text-gray-600 dark:text-gray-400">${parseFloat(item.unit_price).toLocaleString()}</td>
-                                            <td className="py-6 px-4 text-right font-black text-gray-900 dark:text-gray-100">${parseFloat(item.subtotal).toLocaleString()}</td>
-                                        </tr>
-                                    ))}
+                                    {receipt.items.map((item, idx) => {
+                                        const originalUnitPrice = parseFloat(item.unit_price) + (parseFloat(item.manual_discount_amount || 0) / parseFloat(item.quantity));
+                                        return (
+                                            <tr key={idx}>
+                                                <td className="py-6 px-4">
+                                                    <p className="font-black text-gray-800 dark:text-gray-200 uppercase tracking-tight">{item.concept}</p>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                                        {item.type === 'service' ? 'Servicio Clínico' : 'Insumo/Farmacia'}
+                                                        {item.assigned_user && ` • Atendió: ${item.assigned_user.name}`}
+                                                    </p>
+                                                    {parseFloat(item.manual_discount_percent) > 0 && (
+                                                        <p className="text-[10px] font-black text-amber-600 italic mt-1 uppercase tracking-tighter">
+                                                            * Descuento Especial {parseFloat(item.manual_discount_percent)}%: -${parseFloat(item.manual_discount_amount).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                        </p>
+                                                    )}
+                                                </td>
+                                                <td className="py-6 px-4 text-center font-bold text-gray-600 dark:text-gray-400">{parseFloat(item.quantity)}</td>
+                                                <td className="py-6 px-4 text-right font-bold text-gray-600 dark:text-gray-400">
+                                                    <div className="flex flex-col">
+                                                        {parseFloat(item.manual_discount_percent) > 0 && (
+                                                            <span className="text-[10px] line-through text-gray-300">${originalUnitPrice.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                                        )}
+                                                        <span>${parseFloat(item.unit_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-6 px-4 text-right font-black text-gray-900 dark:text-gray-100">${parseFloat(item.subtotal).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* Auditoría de Descuentos */}
+                        {parseFloat(receipt.manual_discount_total) > 0 && (
+                            <div className="mb-12 bg-amber-50/50 dark:bg-amber-900/10 border-2 border-dashed border-amber-200 dark:border-amber-500/20 rounded-[2rem] p-8">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-amber-500/20">🛡️</div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Autorización Administrativa</p>
+                                            <h4 className="text-lg font-black text-slate-800 dark:text-amber-400 uppercase tracking-tight">{receipt.authorizer?.name || 'Administrador'}</h4>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 max-w-md">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none">Motivo de la Cortesía</p>
+                                        <p className="text-sm font-bold text-slate-600 dark:text-slate-300 italic">"{receipt.discount_reason || 'Sin motivo especificado'}"</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1 leading-none">Total Ahorrado</p>
+                                        <p className="text-2xl font-black text-amber-600 tracking-tighter">-${parseFloat(receipt.manual_discount_total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Totales */}
                         <div className="flex justify-end pt-8 border-t dark:border-gray-700">
                             <div className="w-full flex justify-between gap-12">
                                 <div className="flex-1">
                                     {receipt.notes && (
-                                        <div className="p-6 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl">
-                                            <p className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-2 px-1 leading-none">Observaciones / Nota Interna</p>
+                                        <div className="p-6 bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 rounded-2xl">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1 leading-none">Observaciones del Recibo</p>
                                             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 italic">{receipt.notes}</p>
                                         </div>
                                     )}
@@ -133,8 +171,8 @@ export default function Show({ auth, receipt }) {
                                         <span className="font-bold text-gray-400 uppercase tracking-widest text-[10px]">Impuestos</span>
                                         <span className="font-black text-gray-700 dark:text-gray-300">${parseFloat(receipt.tax).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                                     </div>
-                                    <div className="flex justify-between items-center py-6 px-6 bg-brand-primary text-white rounded-[1.5rem] shadow-xl shadow-primary-50">
-                                        <span className="text-xs font-black uppercase tracking-widest">Total Pagado</span>
+                                    <div className="flex justify-between items-center py-6 px-6 bg-brand-primary text-white rounded-[1.5rem] shadow-xl shadow-brand-primary/20">
+                                        <span className="text-xs font-black uppercase tracking-widest">Total Liquidado</span>
                                         <span className="text-2xl font-black">${parseFloat(receipt.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                                     </div>
                                 </div>

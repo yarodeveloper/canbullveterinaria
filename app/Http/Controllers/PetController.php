@@ -94,6 +94,24 @@ class PetController extends Controller
     {
         $this->authorizeBranch($pet);
 
+        $branchId = Auth::user()->branch_id;
+        $veterinarians = User::query()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->where(function($q) {
+                $q->whereHas('roles', function($r) {
+                    $r->whereIn('name', ['admin', 'veterinarian', 'surgeon', 'specialist', 'groomer']);
+                })->orWhereIn('role', ['admin', 'veterinarian']);
+            })
+            ->with(['roles', 'branch'])
+            ->get()
+            ->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'role' => $user->roles->first() ? $user->roles->first()->name : $user->role
+                ];
+            });
+
         return Inertia::render('Pets/Show', [
             'pet' => $pet->load([
                 'owner', 
@@ -111,6 +129,7 @@ class PetController extends Controller
                 ->orWhere('branch_id', Auth::user()->branch_id)
                 ->get(),
             'clients' => [],
+            'veterinarians' => $veterinarians,
             'documentTemplates' => \App\Models\DocumentTemplate::where('is_active', true)
                 ->where(function($query) {
                     $query->whereNull('branch_id')

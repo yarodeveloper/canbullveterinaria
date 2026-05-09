@@ -83,45 +83,12 @@ export default function Dashboard({ auth, stats, peakHours = [], appointmentsByT
                             colorClass="bg-emerald-50 text-emerald-600"
                         />
                         <StatCard 
-                            title="Vistas del Sistema" 
-                            value={(stats?.total_system_views || 0).toLocaleString()} 
-                            icon="👁️" 
-                            colorClass="bg-purple-50 text-purple-600"
+                            title="Cuentas por Cobrar" 
+                            value={"$" + (stats?.pending_accounts_receivable || 0).toLocaleString()} 
+                            icon="📉" 
+                            colorClass="bg-red-50 text-red-600"
                         />
                     </div>
-
-                    {/* YEARLY SALES TREND (Restored & Improved) */}
-                    {isAdmin && (
-                        <div className="bg-[#1B2132] dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-2xl border border-white/5 overflow-hidden group">
-                           <div className="flex justify-between items-center mb-8">
-                                <div>
-                                    <h3 className="text-lg font-black text-white italic tracking-tighter uppercase leading-none">Tendencia de Ingresos Anual</h3>
-                                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em] mt-2">Crecimiento operativo mensual - {(new Date()).getFullYear()}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest leading-none mb-1">Total Facturado Anual</p>
-                                    <p className="text-3xl font-black text-white tracking-tighter">${(yearlySales.reduce((acc, curr) => acc + curr.revenue, 0)).toLocaleString()}</p>
-                                </div>
-                           </div>
-                           <div className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={yearlySales}>
-                                        <defs>
-                                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
-                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
-                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: '800'}} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: '800'}} tickFormatter={(v) => `$${v >= 1000 ? v/1000 + 'k' : v}`} />
-                                        <Tooltip contentStyle={{ borderRadius: '1.2rem', backgroundColor: '#1B2132', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px', fontWeight: '800' }} />
-                                        <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={5} fillOpacity={1} fill="url(#colorRevenue)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                           </div>
-                        </div>
-                    )}
 
                     {/* BUSINESS METRICS ROW */}
                     {isAdmin && (
@@ -218,6 +185,39 @@ export default function Dashboard({ auth, stats, peakHours = [], appointmentsByT
                                 </div>
                             </div>
 
+                        </div>
+                    )}
+
+                    {/* YEARLY SALES TREND (Moved Lower) */}
+                    {isAdmin && (
+                        <div className="bg-[#1B2132] dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-2xl border border-white/5 overflow-hidden group">
+                           <div className="flex justify-between items-center mb-8">
+                                <div>
+                                    <h3 className="text-lg font-black text-white italic tracking-tighter uppercase leading-none">Tendencia de Ingresos Anual</h3>
+                                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em] mt-2">Crecimiento operativo mensual - {(new Date()).getFullYear()}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest leading-none mb-1">Total Facturado Anual</p>
+                                    <p className="text-3xl font-black text-white tracking-tighter">${(yearlySales.reduce((acc, curr) => acc + curr.revenue, 0)).toLocaleString()}</p>
+                                </div>
+                           </div>
+                           <div className="h-[300px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={yearlySales}>
+                                        <defs>
+                                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
+                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: '800'}} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: '800'}} tickFormatter={(v) => `$${v >= 1000 ? v/1000 + 'k' : v}`} />
+                                        <Tooltip contentStyle={{ borderRadius: '1.2rem', backgroundColor: '#1B2132', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px', fontWeight: '800' }} />
+                                        <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={5} fillOpacity={1} fill="url(#colorRevenue)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                           </div>
                         </div>
                     )}
 

@@ -62,46 +62,13 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <img src="/icons/woman-svgrepo-com.svg" className="w-4 h-4 mr-2.5 icon-adaptive" alt="" />
                                         Clientes
                                     </NavLink>
-                                    {/* PDV + Cotizador Submenu */}
-                                    <div className="hidden sm:ms-0 sm:flex sm:items-center">
-                                        <div className="relative">
-                                            <Dropdown trigger="hover">
-                                                <Dropdown.Trigger>
-                                                    <span className="inline-flex rounded-md">
-                                                        <button
-                                                            type="button"
-                                                            className={`inline-flex items-center px-4 py-4 text-[11px] font-black tracking-tight transition duration-150 ease-in-out focus:outline-none border-b-2 ${
-                                                                route().current('receipts.*') || route().current('quotes.*')
-                                                                ? 'text-brand-primary border-brand-primary'
-                                                                : 'text-slate-500 hover:text-slate-900 border-transparent dark:text-slate-400 dark:hover:text-white'
-                                                            }`}
-                                                        >
-                                                            <img src="/icons/shop-svgrepo-com.svg" className="w-4 h-4 mr-2.5 icon-adaptive" alt="" />
-                                                            PDV
-                                                            <svg className="-me-1 ms-1.5 h-3.5 w-3.5 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                                            </svg>
-                                                        </button>
-                                                    </span>
-                                                </Dropdown.Trigger>
-                                                <Dropdown.Content width="56" contentClasses="py-1 bg-white dark:bg-gray-800">
-                                                    <Dropdown.Link href={route('receipts.create')}>
-                                                        <div className="flex items-center">
-                                                            <img src="/icons/shop-svgrepo-com.svg" className="w-4 h-4 mr-3 icon-adaptive opacity-70 group-hover:opacity-100 transition-opacity" alt="" />
-                                                            <span className="font-bold">Punto de Venta</span>
-                                                        </div>
-                                                    </Dropdown.Link>
-                                                    <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-                                                    <Dropdown.Link href={route('quotes.index')}>
-                                                        <div className="flex items-center">
-                                                            <img src="/icons/file-3-svgrepo-com.svg" className="w-4 h-4 mr-3 icon-adaptive opacity-70 group-hover:opacity-100 transition-opacity" alt="" />
-                                                            <span className="font-bold">Cotizador</span>
-                                                        </div>
-                                                    </Dropdown.Link>
-                                                </Dropdown.Content>
-                                            </Dropdown>
-                                        </div>
-                                    </div>
+                                    <NavLink
+                                        href={route('receipts.create')}
+                                        active={route().current('receipts.*')}
+                                    >
+                                        <img src="/icons/shop-svgrepo-com.svg" className="w-4 h-4 mr-2.5 icon-adaptive" alt="" />
+                                        PDV
+                                    </NavLink>
 
                                     {/* Submenu Procedimientos */}
                                     <div className="hidden sm:ms-0 sm:flex sm:items-center">
@@ -252,7 +219,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                             <button
                                                                 type="button"
                                                                 className={`inline-flex items-center px-4 py-4 text-[11px] font-black tracking-tight transition duration-150 ease-in-out focus:outline-none border-b-2 ${
-                                                                    route().current('cash-register.*') || route().current('cash.*') 
+                                                                    route().current('cash-register.*') || route().current('cash.*') || route().current('quotes.*')
                                                                     ? 'text-brand-primary border-brand-primary' 
                                                                     : 'text-slate-500 hover:text-slate-900 border-transparent dark:text-slate-400 dark:hover:text-white'
                                                                 }`}
@@ -276,6 +243,19 @@ export default function AuthenticatedLayout({ header, children }) {
                                                             <div className="flex items-center">
                                                                 <img src="/icons/price-tag-svgrepo-com.svg" className="w-4 h-4 mr-3 icon-adaptive opacity-70 group-hover:opacity-100 transition-opacity" alt="" />
                                                                 <span className="font-bold">Egresos Extras</span>
+                                                            </div>
+                                                        </Dropdown.Link>
+                                                        <Dropdown.Link href={route('receipts.index')}>
+                                                            <div className="flex items-center">
+                                                                <img src="/icons/shop-svgrepo-com.svg" className="w-4 h-4 mr-3 icon-adaptive opacity-70 group-hover:opacity-100 transition-opacity" alt="" />
+                                                                <span className="font-bold">Ventas y Auditoría</span>
+                                                            </div>
+                                                        </Dropdown.Link>
+                                                        <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                                                        <Dropdown.Link href={route('quotes.index')}>
+                                                            <div className="flex items-center">
+                                                                <img src="/icons/file-3-svgrepo-com.svg" className="w-4 h-4 mr-3 icon-adaptive opacity-70 group-hover:opacity-100 transition-opacity" alt="" />
+                                                                <span className="font-bold text-brand-primary">Cotizador</span>
                                                             </div>
                                                         </Dropdown.Link>
                                                     </Dropdown.Content>
@@ -529,13 +509,6 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <img src="/icons/shop-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
                                 PDV
                             </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                href={route('quotes.index')}
-                                active={route().current('quotes.*')}
-                            >
-                                <img src="/icons/file-3-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
-                                Cotizador
-                            </ResponsiveNavLink>
 
                             <div className="px-4 py-2 text-xs font-black text-slate-500 uppercase tracking-widest border-t border-gray-100 dark:border-gray-700 mt-2">
                                 Procedimientos
@@ -625,6 +598,21 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <img src="/icons/price-tag-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
                                         Egresos Extras
                                     </ResponsiveNavLink>
+                                        <ResponsiveNavLink
+                                            href={route('receipts.index')}
+                                            active={route().current('receipts.index')}
+                                        >
+                                            <img src="/icons/shop-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
+                                            Ventas y Auditoría
+                                        </ResponsiveNavLink>
+                                        <div className="border-t border-gray-100 dark:border-gray-700 my-1 mx-4"></div>
+                                        <ResponsiveNavLink
+                                            href={route('quotes.index')}
+                                            active={route().current('quotes.*')}
+                                        >
+                                            <img src="/icons/file-3-svgrepo-com.svg" className="w-4 h-4 mr-2 inline-block icon-adaptive opacity-70" alt="" />
+                                            <span className="text-brand-primary font-bold">Cotizador</span>
+                                        </ResponsiveNavLink>
                                 </>
                             )}
 

@@ -236,7 +236,7 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
             </div>
 
             <Modal show={showCreateModal} onClose={resetModal} maxWidth="lg">
-                <div className="bg-white dark:bg-[#1B2132] overflow-hidden rounded-3xl sm:rounded-[2rem]">
+                <div className="bg-white dark:bg-[#1B2132] rounded-3xl sm:rounded-[2rem]">
                     <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
                         <div className="flex items-center gap-3">
                             <div>

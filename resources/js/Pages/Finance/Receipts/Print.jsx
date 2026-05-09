@@ -104,7 +104,14 @@ export default function Print({ receipt, posPrinterName, posTicketPreview }) {
                                     {item.discount_amount > 0 && (
                                         <tr>
                                             <td colSpan="3" className="text-[8px] italic font-black pb-1">
-                                                * Descuento: ${parseFloat(item.discount_amount).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                * Descuento: -${parseFloat(item.discount_amount * item.quantity).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                            </td>
+                                        </tr>
+                                    )}
+                                    {parseFloat(item.manual_discount_amount) > 0 && (
+                                        <tr>
+                                            <td colSpan="3" className="text-[8px] italic font-black pb-1">
+                                                * Descuento Especial ({parseFloat(item.manual_discount_percent)}%): -${parseFloat(item.manual_discount_amount).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                             </td>
                                         </tr>
                                     )}
@@ -139,10 +146,13 @@ export default function Print({ receipt, posPrinterName, posTicketPreview }) {
                 </div>
 
                 {/* Leyenda de Ahorro */}
-                {receipt.items.some(i => parseFloat(i.discount_amount) > 0) && (
+                {(receipt.items.some(i => parseFloat(i.discount_amount) > 0 || parseFloat(i.manual_discount_amount) > 0)) && (
                     <div className="text-center mb-4 p-2 bg-slate-50 border border-black border-dotted rounded">
                         <p className="text-[10px] font-black uppercase italic">
-                            ¡USTED AHORRÓ ${receipt.items.reduce((acc, item) => acc + (parseFloat(item.discount_amount || 0) * item.quantity), 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} EN ESTA COMPRA!
+                            ¡USTED AHORRÓ ${(
+                                receipt.items.reduce((acc, item) => acc + (parseFloat(item.discount_amount || 0) * item.quantity), 0) +
+                                parseFloat(receipt.manual_discount_total || 0)
+                            ).toLocaleString('es-MX', { minimumFractionDigits: 2 })} EN ESTA COMPRA!
                         </p>
                     </div>
                 )}

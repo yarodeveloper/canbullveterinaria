@@ -12,6 +12,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import PetAvatar from '@/Components/PetAvatar';
 import PetRegistrationForm from '@/Components/PetRegistrationForm';
 import PetAlertIcons from '@/Components/PetAlertIcons';
+import PetAsyncSearch from '@/Components/PetAsyncSearch';
 
 const roleLabels = {
     admin: 'Adm.',
@@ -23,8 +24,6 @@ const roleLabels = {
 
 export default function Create({ auth, pet: initialPet, veterinarians, clients: initialClients, selectedPetId, appointment_id, products = [] }) {
     const [selectedPet, setSelectedPet] = useState(initialPet);
-    const [petSearch, setPetSearch] = useState('');
-    const [petResults, setPetResults] = useState([]);
     const [showQuickPetModal, setShowQuickPetModal] = useState(false);
     const [localClients, setLocalClients] = useState(initialClients);
 
@@ -43,17 +42,7 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
         pending_charges: []
     });
 
-    useEffect(() => {
-        if (petSearch.length > 2) {
-            const timeoutId = setTimeout(() => {
-                axios.get(route('pets.search', { q: petSearch }))
-                    .then(res => setPetResults(res.data));
-            }, 300);
-            return () => clearTimeout(timeoutId);
-        } else {
-            setPetResults([]);
-        }
-    }, [petSearch]);
+
 
     const handlePetSelect = (item) => {
         const pet = item.pet || item;
@@ -115,43 +104,9 @@ export default function Create({ auth, pet: initialPet, veterinarians, clients: 
                                     <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Paciente</label>
                                     {!selectedPet ? (
                                         <div className="space-y-3">
-                                            <div className="relative">
-                                                <input
-                                                    type="text"
-                                                    placeholder="🔍 Buscar mascota o dueño..."
-                                                    value={petSearch}
-                                                    onChange={(e) => setPetSearch(e.target.value)}
-                                                    className="w-full bg-slate-50 dark:bg-gray-900 border-slate-200 dark:border-gray-700 rounded-xl py-2.5 px-5 focus:ring-brand-primary focus:border-brand-primary transition-all font-bold text-sm text-slate-900 dark:text-white"
-                                                />
-                                                {petResults.length > 0 && (
-                                                    <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-auto">
-                                                        {petResults.map(p => (
-                                                            <button
-                                                                key={p.id}
-                                                                type="button"
-                                                                onClick={() => handlePetSelect(p)}
-                                                                className="w-full px-5 py-3 flex items-center gap-3 hover:bg-brand-primary/10 dark:hover:bg-slate-700 transition-colors text-left border-b dark:border-gray-700 last:border-0"
-                                                            >
-                                                                <PetAvatar pet={p} className="w-9 h-9 rounded-full" />
-                                                                 <div className="flex-1 min-w-0">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <p className="font-bold text-sm text-slate-900 dark:text-white leading-none">{p.pet?.name || p.name}</p>
-                                                                        <PetAlertIcons pet={p.pet || p} size="sm" />
-                                                                    </div>
-                                                                    <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-tight truncate">
-                                                                        {(p.pet?.species || p.species)} • {(p.pet?.breed || p.breed) || 'Sin Raza'} • {p.owner_name || p.owner?.name}
-                                                                    </p>
-                                                                </div>
-                                                                <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${(p.pet?.species || p.species) === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
-                                                                    {(p.pet?.species || p.species) || 'Mascota'}
-                                                                </span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <PetAsyncSearch onSelect={handlePetSelect} />
                                             <div className="flex items-center justify-between">
-                                                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">3+ letras para buscar</p>
+                                                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Busca por nombre, dueño, teléfono o chip</p>
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowQuickPetModal(true)}

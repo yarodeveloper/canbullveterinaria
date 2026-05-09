@@ -104,42 +104,49 @@ export default function Create({ auth, pet: initialPet, veterinarians, products,
                                 </div>
                             )}
 
-                            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                {/* Selección de Paciente */}
                                 <div className="md:col-span-1">
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Paciente *</label>
-                                    {selectedPet ? (
-                                        <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-800 rounded-2xl">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center text-xl font-black text-purple-600">
-                                                    {selectedPet.species === 'Canino' ? '🐕' : '🐈'}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-black text-slate-800 dark:text-white truncate">{selectedPet.name}</p>
-                                                    <p className="text-[10px] text-slate-500 truncate">{selectedPet.species} • {selectedPet.breed}</p>
-                                                </div>
-                                            </div>
-                                            <button type="button" onClick={() => { setSelectedPet(null); setData('pet_id', ''); }} className="text-slate-400 hover:text-red-500 transition">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="relative">
+                                    <label className="block text-[10px] font-black text-brand-primary uppercase tracking-widest mb-2">Paciente para Procedimiento *</label>
+                                    {!selectedPet ? (
+                                        <div className="space-y-2">
                                             <PetAsyncSearch onSelect={selectPet} />
-                                            <p className="mt-2 text-xs text-slate-400">
-                                                ¿No está registrado?{' '}
+                                            <div className="flex justify-between items-center px-1">
+                                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Busca por nombre, chip o dueño</p>
                                                 <Link
                                                     href={route('pets.create')}
-                                                    className="text-purple-600 hover:text-purple-800 font-bold underline underline-offset-2"
+                                                    className="text-[9px] text-brand-primary hover:text-brand-primary/80 font-black uppercase tracking-widest underline underline-offset-2 transition-colors"
                                                     target="_blank"
                                                 >
-                                                    + Agregar nuevo paciente
+                                                    + Agregar Nuevo Paciente
                                                 </Link>
-                                            </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-between p-3 bg-brand-primary/5 dark:bg-brand-primary/10 border border-brand-primary/20 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="flex items-center gap-3">
+                                                <PetAvatar pet={selectedPet} className="w-10 h-10 rounded-xl border border-brand-primary/20" />
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-black text-slate-900 dark:text-white truncate uppercase text-xs leading-none">{selectedPet.name}</p>
+                                                        <PetAlertIcons pet={selectedPet} size="xs" />
+                                                    </div>
+                                                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1 truncate tracking-tight">
+                                                        {selectedPet.species} • {selectedPet.breed?.name || selectedPet.breed || 'Mestizo'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => { setSelectedPet(null); setData('pet_id', ''); }} 
+                                                className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors ml-4"
+                                            >
+                                                Cambiar
+                                            </button>
                                         </div>
                                     )}
-                                    {errors.pet_id && <p className="text-red-500 text-xs mt-1">{errors.pet_id}</p>}
+                                    {errors.pet_id && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase">{errors.pet_id}</p>}
                                 </div>
-
                                 {/* Propietario / Firmante */}
                                 <div className="md:col-span-1">
                                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nombre del Propietario / Firmante</label>

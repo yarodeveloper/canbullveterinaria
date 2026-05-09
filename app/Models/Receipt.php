@@ -21,6 +21,9 @@ class Receipt extends Model
         'tax_ieps',
         'tax',
         'total',
+        'manual_discount_total',
+        'discount_authorized_by',
+        'discount_reason',
         'payment_method',
         'status',
         'notes',
@@ -38,6 +41,11 @@ class Receipt extends Model
     public function client()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function authorizer()
+    {
+        return $this->belongsTo(User::class, 'discount_authorized_by');
     }
 
     public function branch()

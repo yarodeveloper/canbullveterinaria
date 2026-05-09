@@ -133,6 +133,7 @@ export default function CashRegisterIndex({ auth, activeRegister, currentStats, 
                                             <div className="space-y-1.5">
                                                 <p className="flex justify-between">📦 Productos: <span className="font-black text-slate-800 dark:text-white">${currentStats?.product_sales ? parseFloat(currentStats.product_sales).toFixed(2) : '0.00'}</span></p>
                                                 <p className="flex justify-between">✨ Servicios: <span className="font-black text-slate-800 dark:text-white">${currentStats?.service_sales ? parseFloat(currentStats.service_sales).toFixed(2) : '0.00'}</span></p>
+                                                {currentStats?.manual_discounts > 0 && <p className="flex justify-between text-amber-600 font-bold">🏷️ Descuentos Manuales: <span>-${parseFloat(currentStats.manual_discounts).toFixed(2)}</span></p>}
                                                 {currentStats?.incomes > 0 && <p className="flex justify-between">💵 Extras: <span className="font-black text-emerald-600">+${parseFloat(currentStats.incomes).toFixed(2)}</span></p>}
                                             </div>
                                         </div>

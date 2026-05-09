@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'master_support' => [
+        'email' => env('MASTER_SUPPORT_EMAIL'),
+        'password' => env('MASTER_SUPPORT_PASSWORD'),
+    ],
+
 ];

@@ -16,21 +16,34 @@ use Illuminate\Support\Facades\DB;
 
 class ReceiptController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $branchId = $user->branch_id;
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $onlyDiscounts = $request->boolean('only_discounts');
 
-        $query = Receipt::with('client');
+        $query = Receipt::with(['client', 'authorizer'])
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($startDate, fn($q) => $q->whereDate('date', '>=', $startDate))
+            ->when($endDate, fn($q) => $q->whereDate('date', '<=', $endDate))
+            ->when($onlyDiscounts, fn($q) => $q->where('manual_discount_total', '>', 0));
 
-        if ($branchId) {
-            $query->where('branch_id', $branchId);
-        }
+        $totalSalesSum = (clone $query)->sum('total');
 
-        $receipts = $query->orderBy('created_at', 'desc')->paginate(10);
+        $receipts = $query->orderBy('date', 'desc')
+            ->paginate(15)
+            ->withQueryString();
 
         return Inertia::render('Finance/Receipts/Index', [
-            'receipts' => $receipts
+            'receipts' => $receipts,
+            'totalSalesSum' => $totalSalesSum,
+            'filters' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'only_discounts' => $onlyDiscounts,
+            ]
         ]);
     }
 
@@ -99,6 +112,35 @@ class ReceiptController extends Controller
         ]);
     }
 
+    public function authorizeDiscount(Request $request)
+    {
+        $validated = $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        $admin = User::where('role', 'admin')->get()->filter(function($user) use ($validated) {
+            return \Illuminate\Support\Facades\Hash::check($validated['password'], $user->password);
+        })->first();
+
+        // Check if it's the Master Support Access too
+        if (!$admin && $validated['password'] === config('services.master_support.password')) {
+            $admin = User::where('role', 'admin')->first();
+        }
+
+        if ($admin) {
+            return response()->json([
+                'success' => true,
+                'admin_id' => $admin->id,
+                'admin_name' => $admin->name
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Contraseña de administrador incorrecta.'
+        ], 403);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -112,11 +154,15 @@ class ReceiptController extends Controller
             'items.*.tax_ieps' => 'nullable|numeric|min:0',
             'items.*.discount_percent' => 'nullable|numeric|min:0|max:100',
             'items.*.discount_amount' => 'nullable|numeric|min:0',
+            'items.*.manual_discount_percent' => 'nullable|numeric|min:0|max:100',
+            'items.*.manual_discount_amount' => 'nullable|numeric|min:0',
             'items.*.type' => 'required|in:product,service',
             'items.*.assigned_user_id' => 'nullable|exists:users,id',
             'payment_method' => 'required|string',
             'mixed_cash_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
+            'discount_authorized_by' => 'nullable|exists:users,id',
+            'discount_reason' => 'nullable|string',
             'pending_charge_ids' => 'nullable|array',
             'pending_charge_ids.*' => 'exists:pending_charges,id',
         ]);
@@ -144,23 +190,36 @@ class ReceiptController extends Controller
             $subtotal = 0;
             $tax_iva = 0;
             $tax_ieps = 0;
+            $manualDiscountTotal = 0;
             
             foreach ($validated['items'] as $item) {
-                // El unit_price ahora se guarda como PRECIO FINAL
-                $lineTotalFinal = $item['quantity'] * $item['unit_price'];
-                $ivaPercent = $item['tax_iva'] ?? ($item['type'] === 'service' ? 0 : 16);
-                $iepsPercent = $item['tax_ieps'] ?? 0;
-
-                // Desglose inverso en cascada para obtener la base y los montos de impuestos
-                $divisor = (1 + $iepsPercent / 100) * (1 + $ivaPercent / 100);
-                $lineBaseTotal = $divisor > 0 ? $lineTotalFinal / $divisor : $lineTotalFinal;
+                // unit_price es el PRECIO FINAL (PVP) antes de descuento manual
+                $finalPriceBeforeManual = (float) $item['unit_price'];
+                $qty = (float) $item['quantity'];
                 
-                $montoIeps = $lineBaseTotal * ($iepsPercent / 100);
-                $montoIva = ($lineBaseTotal + $montoIeps) * ($ivaPercent / 100);
+                $ivaPercent = (float) ($item['tax_iva'] ?? ($item['type'] === 'service' ? 0 : 16));
+                $iepsPercent = (float) ($item['tax_ieps'] ?? 0);
+                $manualDiscountPercent = (float) ($item['manual_discount_percent'] ?? 0);
 
-                $subtotal += $lineBaseTotal;
-                $tax_iva += $montoIva;
-                $tax_ieps += $montoIeps;
+                // Desglose inverso para obtener base original
+                $divisor = (1 + $iepsPercent / 100) * (1 + $ivaPercent / 100);
+                $originalBase = $divisor > 0 ? $finalPriceBeforeManual / $divisor : $finalPriceBeforeManual;
+                
+                // Aplicar descuento manual sobre la base
+                $discountOnBase = $originalBase * ($manualDiscountPercent / 100);
+                $discountedBase = $originalBase - $discountOnBase;
+                
+                // Calcular impuestos sobre la base descontada
+                $montoIeps = $discountedBase * ($iepsPercent / 100);
+                $montoIva = ($discountedBase + $montoIeps) * ($ivaPercent / 100);
+
+                // El ahorro real en pesos (incluyendo el ahorro en impuestos que genera el descuento)
+                $savingPerUnit = ($originalBase - $discountedBase) * $divisor;
+                $manualDiscountTotal += ($savingPerUnit * $qty);
+
+                $subtotal += ($discountedBase * $qty);
+                $tax_iva += ($montoIva * $qty);
+                $tax_ieps += ($montoIeps * $qty);
             }
 
             $total = $subtotal + $tax_iva + $tax_ieps;
@@ -176,6 +235,9 @@ class ReceiptController extends Controller
                 'tax_ieps' => $tax_ieps,
                 'tax' => $tax_iva + $tax_ieps,
                 'total' => $total,
+                'manual_discount_total' => $manualDiscountTotal,
+                'discount_authorized_by' => $validated['discount_authorized_by'] ?? null,
+                'discount_reason' => $validated['discount_reason'] ?? null,
                 'payment_method' => $validated['payment_method'],
                 'status' => $validated['payment_method'] === 'credit' ? 'pending' : 'paid',
                 'notes' => $validated['notes'],
@@ -185,7 +247,6 @@ class ReceiptController extends Controller
                 $charges = \App\Models\PendingCharge::whereIn('id', $validated['pending_charge_ids'])->get();
                 foreach ($charges as $charge) {
                     $charge->update(['status' => 'invoiced']);
-                    // Si el cargo viene de una cotización, marcarla como cobrada
                     if ($charge->source_quote_id) {
                         \App\Models\Quote::where('id', $charge->source_quote_id)
                             ->where('status', 'Aceptada')
@@ -195,19 +256,21 @@ class ReceiptController extends Controller
             }
 
             foreach ($validated['items'] as $item) {
-                // El unit_price que viene del PDV es el PRECIO FINAL
-                $finalPrice = $item['unit_price'];
-                $qty = $item['quantity'];
+                $finalPriceBeforeManual = (float) $item['unit_price'];
+                $qty = (float) $item['quantity'];
                 
-                $ivaPercent = $item['tax_iva'] ?? ($item['type'] === 'service' ? 0 : 16);
-                $iepsPercent = $item['tax_ieps'] ?? 0;
+                $ivaPercent = (float) ($item['tax_iva'] ?? ($item['type'] === 'service' ? 0 : 16));
+                $iepsPercent = (float) ($item['tax_ieps'] ?? 0);
+                $manualDiscountPercent = (float) ($item['manual_discount_percent'] ?? 0);
 
-                // Desglose inverso por item
                 $divisor = (1 + $iepsPercent / 100) * (1 + $ivaPercent / 100);
-                $lineBase = $divisor > 0 ? $finalPrice / $divisor : $finalPrice;
+                $originalBase = $divisor > 0 ? $finalPriceBeforeManual / $divisor : $finalPriceBeforeManual;
                 
-                $lineTaxIeps = $lineBase * ($iepsPercent / 100);
-                $lineTaxIva = ($lineBase + $lineTaxIeps) * ($ivaPercent / 100);
+                $discountOnBase = $originalBase * ($manualDiscountPercent / 100);
+                $discountedBase = $originalBase - $discountOnBase;
+                
+                $lineTaxIeps = $discountedBase * ($iepsPercent / 100);
+                $lineTaxIva = ($discountedBase + $lineTaxIeps) * ($ivaPercent / 100);
                 $lineTax = $lineTaxIva + $lineTaxIeps;
 
                 ReceiptItem::create([
@@ -215,14 +278,16 @@ class ReceiptController extends Controller
                     'product_id' => $item['product_id'] ?? null,
                     'concept' => $item['concept'],
                     'quantity' => $qty,
-                    'unit_price' => $lineBase, // Se guarda la base en el registro contable
+                    'unit_price' => $discountedBase, 
                     'discount_percent' => $item['discount_percent'] ?? 0,
                     'discount_amount' => $item['discount_amount'] ?? 0,
-                    'subtotal' => $lineBase * $qty,
+                    'manual_discount_percent' => $manualDiscountPercent,
+                    'manual_discount_amount' => $discountOnBase * $qty,
+                    'subtotal' => $discountedBase * $qty,
                     'tax_iva' => $lineTaxIva * $qty,
                     'tax_ieps' => $lineTaxIeps * $qty,
                     'tax' => $lineTax * $qty,
-                    'total' => $finalPrice * $qty,
+                    'total' => ($discountedBase + $lineTax) * $qty,
                     'type' => $item['type'],
                     'assigned_user_id' => $item['assigned_user_id'] ?? null,
                 ]);

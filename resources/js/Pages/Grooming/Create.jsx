@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import PetAlertIcons from '@/Components/PetAlertIcons';
+import PetAsyncSearch from '@/Components/PetAsyncSearch';
+import PetAvatar from '@/Components/PetAvatar';
 
 const roleLabels = {
     admin: 'Adm.',
@@ -13,11 +15,13 @@ const roleLabels = {
     staff: 'Staff'
 };
 
-export default function Create({ auth, pet, services, groomers, groomingStyles = [], ...props }) {
+export default function Create({ auth, pet: initialPet, services, groomers, groomingStyles = [], ...props }) {
+    const [selectedPet, setSelectedPet] = useState(initialPet);
+
     const { data, setData, post, processing, errors } = useForm({
         appointment_id: props.appointment_id || '',
-        pet_id: pet.id,
-        client_id: pet.owner ? pet.owner.id : '',
+        pet_id: initialPet?.id || '',
+        client_id: initialPet?.owner ? initialPet.owner.id : '',
         user_id: props.prefill?.groomer_id || '',
         arrival_condition: '',
         notes: '',
@@ -25,6 +29,16 @@ export default function Create({ auth, pet, services, groomers, groomingStyles =
         items: [], // list of {product_id, quantity, concept, price}
         complete_after: false
     });
+
+    const handlePetSelect = (item) => {
+        const pet = item.pet || item;
+        setSelectedPet(pet);
+        setData(d => ({
+            ...d,
+            pet_id: pet.id,
+            client_id: pet.owner?.id || pet.user_id || ''
+        }));
+    };
 
     const [selectedService, setSelectedService] = useState('');
 
@@ -67,7 +81,7 @@ export default function Create({ auth, pet, services, groomers, groomingStyles =
             user={auth.user}
             header={<h2 className="font-black text-lg text-gray-800 dark:text-gray-200 leading-tight uppercase tracking-widest">Nueva Orden de Estética</h2>}
         >
-            <Head title={`Orden de Estética - ${pet.name}`} />
+            <Head title={selectedPet ? `Orden de Estética - ${selectedPet.name}` : "Nueva Orden de Estética"} />
 
             <div className="py-8">
                 <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
@@ -76,35 +90,55 @@ export default function Create({ auth, pet, services, groomers, groomingStyles =
                             
                             {/* Pet Banner */}
                             <div className="bg-brand-primary/5 dark:bg-brand-primary/10 p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center text-3xl shadow-lg border border-white dark:border-gray-700">
+                                <div className="flex items-center gap-4 w-full md:w-auto">
+                                    <div className="w-14 h-14 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center text-3xl shadow-lg border border-white dark:border-gray-700 shrink-0">
                                         ✂️
                                     </div>
-                                    <div>
+                                    <div className="flex-1 min-w-0">
                                         <h3 className="text-[9px] font-black text-brand-primary uppercase tracking-[0.2em] mb-0.5">Paciente para Grooming</h3>
-                                        <div className="flex items-center gap-2">
-                                            <h4 className="text-xl font-black text-gray-900 dark:text-white leading-none tracking-tight">{pet.name}</h4>
-                                            <PetAlertIcons pet={pet} size="sm" />
-                                        </div>
-                                        <div className="flex items-center gap-3 mt-1.5">
-                                            <span className="text-[9px] font-black text-gray-500 uppercase flex items-center gap-1">
-                                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                                                Dueño: {pet.owner?.name || 'N/A'}
-                                            </span>
-                                            {pet.breed && (
-                                                <span className="text-[9px] font-black text-gray-500 uppercase flex items-center gap-1">
-                                                    <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                                                    Raza: {pet.breed}
-                                                </span>
-                                            )}
-                                        </div>
+                                        {selectedPet ? (
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <h4 className="text-xl font-black text-gray-900 dark:text-white leading-none tracking-tight truncate">{selectedPet.name}</h4>
+                                                        <PetAlertIcons pet={selectedPet} size="sm" />
+                                                    </div>
+                                                    <div className="flex items-center gap-3 mt-1.5">
+                                                        <span className="text-[9px] font-black text-gray-500 uppercase flex items-center gap-1">
+                                                            <span className="w-1.5 h-1.5 bg-brand-primary rounded-full"></span>
+                                                            Dueño: {selectedPet.owner?.name || 'N/A'}
+                                                        </span>
+                                                        {selectedPet.breed && (
+                                                            <span className="text-[9px] font-black text-gray-500 uppercase flex items-center gap-1">
+                                                                <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
+                                                                Raza: {selectedPet.breed?.name || selectedPet.breed}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedPet(null)}
+                                                    className="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors ml-4 shrink-0"
+                                                >
+                                                    Cambiar
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="mt-2 max-w-sm">
+                                                <PetAsyncSearch onSelect={handlePetSelect} />
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Busca por nombre, chip o dueño</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur px-5 py-3 rounded-2xl border border-white dark:border-gray-700 shadow-sm text-center">
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Total Estimado</p>
-                                    <p className="text-xl font-black text-brand-primary">${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
-                                </div>
+                                {selectedPet && (
+                                    <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur px-5 py-3 rounded-2xl border border-white dark:border-gray-700 shadow-sm text-center">
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Total Estimado</p>
+                                        <p className="text-xl font-black text-brand-primary">${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                                    </div>
+                                )}
                             </div>
 
                             <form className="p-6">
@@ -162,7 +196,7 @@ export default function Create({ auth, pet, services, groomers, groomingStyles =
 
                                         <div className="flex flex-wrap items-center gap-3 pt-2">
                                             <Link
-                                                href={route('pets.show', pet.id)}
+                                                href={selectedPet ? route('pets.show', selectedPet.id) : route('grooming-orders.index')}
                                                 className="px-6 py-3 text-[9px] font-black text-gray-400 hover:text-gray-900 dark:hover:text-white uppercase tracking-widest transition-all"
                                             >
                                                 Cancelar
@@ -172,7 +206,7 @@ export default function Create({ auth, pet, services, groomers, groomingStyles =
                                                 <button
                                                     type="button"
                                                     onClick={(e) => submit(e, true)}
-                                                    disabled={processing || data.items.length === 0}
+                                                    disabled={processing || data.items.length === 0 || !data.pet_id}
                                                     className="flex-1 bg-white dark:bg-gray-800 text-brand-primary border border-brand-primary hover:bg-brand-primary hover:text-white px-4 py-3 rounded-2xl font-black uppercase tracking-widest text-[9px] transition-all shadow-lg disabled:opacity-50"
                                                 >
                                                     {processing ? '...' : 'Crear y Finalizar'}
@@ -181,7 +215,7 @@ export default function Create({ auth, pet, services, groomers, groomingStyles =
                                                 <button
                                                     type="button"
                                                     onClick={(e) => submit(e, false)}
-                                                    disabled={processing || data.items.length === 0}
+                                                    disabled={processing || data.items.length === 0 || !data.pet_id}
                                                     className="flex-[1.5] bg-brand-primary hover:opacity-90 active:scale-95 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-brand-primary/20 disabled:opacity-50"
                                                 >
                                                     {processing ? '...' : 'Crear Orden'}

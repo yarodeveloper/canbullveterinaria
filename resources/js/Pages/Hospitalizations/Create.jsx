@@ -13,11 +13,10 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import PetAvatar from '@/Components/PetAvatar';
 import PetRegistrationForm from '@/Components/PetRegistrationForm';
 import PetAlertIcons from '@/Components/PetAlertIcons';
+import PetAsyncSearch from '@/Components/PetAsyncSearch';
 
 export default function Create({ auth, pet: initialPet, clients: initialClients, appointment_id, products = [] }) {
     const [selectedPet, setSelectedPet] = useState(initialPet);
-    const [petSearch, setPetSearch] = useState('');
-    const [petResults, setPetResults] = useState([]);
     const [showQuickPetModal, setShowQuickPetModal] = useState(false);
     const [localClients, setLocalClients] = useState(initialClients);
 
@@ -31,17 +30,7 @@ export default function Create({ auth, pet: initialPet, clients: initialClients,
         pending_charges: [],
     });
 
-    useEffect(() => {
-        if (petSearch.length > 2) {
-            const timeoutId = setTimeout(() => {
-                axios.get(route('pets.search', { q: petSearch }))
-                    .then(res => setPetResults(res.data));
-            }, 300);
-            return () => clearTimeout(timeoutId);
-        } else {
-            setPetResults([]);
-        }
-    }, [petSearch]);
+
 
     const handlePetSelect = (item) => {
         const pet = item.pet || item;
@@ -112,43 +101,9 @@ export default function Create({ auth, pet: initialPet, clients: initialClients,
                                             <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">
                                                 Seleccionar Paciente
                                             </label>
-                                            <div className="relative">
-                                                <input
-                                                    type="text"
-                                                    className="w-full bg-slate-50 dark:bg-[#111822] border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white px-5 py-2.5 focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all font-semibold"
-                                                    placeholder="Buscar mascota..."
-                                                    value={petSearch}
-                                                    onChange={(e) => setPetSearch(e.target.value)}
-                                                />
-                                                {petResults.length > 0 && (
-                                                    <div className="absolute z-10 w-full mt-2 bg-white dark:bg-[#1B2132] border border-slate-200 dark:border-slate-700/50 rounded-xl shadow-2xl overflow-hidden">
-                                                        {petResults.map(p => (
-                                                            <button
-                                                                key={p.id}
-                                                                type="button"
-                                                                onClick={() => handlePetSelect(p)}
-                                                                className="w-full px-5 py-3 flex items-center gap-4 hover:bg-brand-primary/10 dark:hover:bg-slate-800 transition-colors text-left"
-                                                            >
-                                                                <PetAvatar pet={p} className="w-9 h-9 rounded-full border border-slate-200" />
-                                                                 <div className="flex-1 min-w-0">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <p className="font-bold text-sm text-slate-900 dark:text-white leading-none">{p.pet?.name || p.name}</p>
-                                                                        <PetAlertIcons pet={p.pet || p} size="sm" />
-                                                                    </div>
-                                                                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tight mt-1 truncate">
-                                                                        {(p.pet?.species || p.species)} • {(p.pet?.breed || p.breed) || 'Sin Raza'} • {p.owner_name || p.owner?.name}
-                                                                    </p>
-                                                                </div>
-                                                                <span className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-widest border shrink-0 ml-3 ${(p.pet?.species || p.species) === 'Canino' ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-amber-100 text-amber-600 border-amber-200'}`}>
-                                                                    {(p.pet?.species || p.species) || 'Mascota'}
-                                                                </span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <PetAsyncSearch onSelect={handlePetSelect} />
                                             <div className="flex items-center justify-between">
-                                                <p className="text-[10px] text-slate-400 uppercase">3+ letras para buscar</p>
+                                                <p className="text-[10px] text-slate-400 uppercase">Busca por nombre, dueño, teléfono o chip</p>
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowQuickPetModal(true)}

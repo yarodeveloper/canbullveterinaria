@@ -195,7 +195,7 @@ export default function Index({ auth, medicalRecords, clients, pets: allPets, ve
             </div>
 
             <Modal show={showCreateModal} onClose={resetModal} maxWidth="2xl">
-                <div className="bg-white dark:bg-[#1B2132] overflow-hidden">
+                <div className="bg-white dark:bg-[#1B2132]">
                     <div className="p-8 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
                         <div>
                             <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">🩺 Nueva Consulta Clínica</h3>

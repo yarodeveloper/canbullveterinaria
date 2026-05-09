@@ -82,9 +82,12 @@ class GroomingOrderController extends Controller
 
     public function create(Request $request)
     {
-        $pet = Pet::with(['owner'])->findOrFail($request->pet_id);
+        $pet = null;
+        if ($request->filled('pet_id')) {
+            $pet = Pet::with(['owner'])->find($request->pet_id);
+        }
+
         // Products that are aesthetic services (we assume all services could be used or a subset)
-        // Perhaps all is_service products
         $services = Product::where('is_service', true)->get();
 
         $groomers = User::whereHas('roles', function($q) {
@@ -112,7 +115,8 @@ class GroomingOrderController extends Controller
             'groomingStyles' => $groomingStyles,
             'appointment_id' => $request->appointment_id,
             'prefill' => $request->only(['groomer_id', 'time']),
-            'defaultNextVisitDate' => $defaultNextVisitDate
+            'defaultNextVisitDate' => $defaultNextVisitDate,
+            'selectedPetId' => $request->pet_id
         ]);
     }
 

@@ -152,6 +152,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/cash-register/{cashRegister}/print', [\App\Http\Controllers\CashRegisterController::class, 'print'])->name('cash-register.print');
 
     Route::resource('receipts', \App\Http\Controllers\ReceiptController::class);
+    Route::post('/receipts/authorize-discount', [\App\Http\Controllers\ReceiptController::class, 'authorizeDiscount'])->name('receipts.authorize-discount');
     Route::get('/receipts/{receipt}/print', [\App\Http\Controllers\ReceiptController::class, 'print'])->name('receipts.print');
     Route::get('/cash', [\App\Http\Controllers\CashController::class, 'index'])->name('cash.index');
     Route::post('/cash', [\App\Http\Controllers\CashController::class, 'store'])->name('cash.store');
@@ -166,6 +167,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/sales-by-employee', [\App\Http\Controllers\ReportController::class, 'salesByEmployee'])->name('reports.sales-by-employee');
     Route::get('/reports/patients-attended', [\App\Http\Controllers\ReportController::class, 'patientsAttended'])->name('reports.patients-attended');
     Route::get('/reports/stock-by-branch', [\App\Http\Controllers\ReportController::class, 'stockByBranch'])->name('reports.stock-by-branch');
+    Route::get('/reports/courtesy', [\App\Http\Controllers\ReportController::class, 'courtesyReport'])->name('reports.courtesy');
 
     Route::resource('staff', \App\Http\Controllers\StaffController::class);
     Route::resource('roles', \App\Http\Controllers\RoleController::class);

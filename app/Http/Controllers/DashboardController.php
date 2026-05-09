@@ -43,12 +43,9 @@ class DashboardController extends Controller
                 ->whereBetween('created_at', [$startDate, Carbon::parse($endDate)->endOfDay()])
                 ->distinct('pet_id')
                 ->count('pet_id'),
-            'total_system_views' => DB::table('internal_analytics')
-                ->when($branchId, function($q) use($branchId) {
-                    return $q->join('users', 'internal_analytics.user_id', '=', 'users.id')
-                             ->where('users.branch_id', $branchId);
-                })
-                ->count(),
+            'pending_accounts_receivable' => PendingCharge::where('status', 'pending')
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->sum(DB::raw('price * quantity')),
         ];
 
         // Horas de mayor atención
