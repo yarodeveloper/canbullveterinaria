@@ -76,6 +76,12 @@ export default function QuickGuide({ auth }) {
             example: '555-0123',
             icon: '📞'
         },
+        { 
+            tag: '{branch_rfc}', 
+            description: 'RFC / Tax ID de la sucursal o global del negocio', 
+            example: 'CANB123456XYZ',
+            icon: '🆔'
+        },
     ];
 
     return (

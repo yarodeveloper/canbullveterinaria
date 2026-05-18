@@ -52,7 +52,8 @@ class DocumentTemplateController extends Controller
         $dummyBranch = (object)[
             'name' => 'Clínica Veterinaria CanBull (Demo)',
             'address' => 'Av. Juárez #456',
-            'phone' => '555-9876'
+            'phone' => '555-9876',
+            'tax_id' => 'CANB123456XYZ (Demo)'
         ];
 
         $content = $this->parseTemplate($template->content, [

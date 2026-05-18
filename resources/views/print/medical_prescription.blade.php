@@ -288,6 +288,12 @@
                 <p>{{ $record->branch?->address ?? $settings['site_address'] ?? '' }}</p>
                 <p>{{ $record->branch?->phone ?? $settings['site_phone'] ?? '' }}</p>
                 <p>{{ $record->branch?->email ?? $settings['site_email'] ?? '' }}</p>
+                @php
+                    $taxId = $record->branch?->tax_id ?? $settings['tax_id'] ?? null;
+                @endphp
+                @if($taxId)
+                    <p>RFC: {{ $taxId }}</p>
+                @endif
             </div>
         </footer>
     </div>

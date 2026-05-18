@@ -124,7 +124,13 @@
                     $branchName = $branch->name ?? $siteName;
                 @endphp
                 <div style="font-size: 18px; font-weight: 900; color: {{ $primaryColor }}; text-transform: uppercase;">{{ $branchName }}</div>
-                <p style="font-size: 7px; color: #6b7280; font-weight: 700;">{{ $branch->address ?? '' }} | TEL: {{ $branch->phone ?? '' }}</p>
+                @php
+                    $taxId = $branch->tax_id ?? $settings['tax_id'] ?? null;
+                @endphp
+                <p style="font-size: 7px; color: #6b7280; font-weight: 700;">
+                    {{ $branch->address ?? '' }} | TEL: {{ $branch->phone ?? '' }}
+                    @if($taxId) | RFC: {{ $taxId }} @endif
+                </p>
                 @endif
             </div>
             <div class="report-title">

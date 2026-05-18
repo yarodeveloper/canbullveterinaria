@@ -202,6 +202,7 @@ export default function Index({ auth, templates }) {
                                                 { tag: '{veterinarian_name}', label: 'Veterinario' },
                                                 { tag: '{veterinarian_cedula}', label: 'Cédula Vet.' },
                                                 { tag: '{branch_name}', label: 'Sucursal' },
+                                                { tag: '{branch_rfc}', label: 'Sucursal RFC' },
                                                 { tag: '{date}', label: 'Fecha' },
                                                 { tag: '{time}', label: 'Hora' },
                                                 { tag: '{folio}', label: 'Folio' },

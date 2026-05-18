@@ -57,6 +57,11 @@ export default function Show({ auth, receipt }) {
                                 <div className="mt-8 text-sm">
                                     <p className="font-black text-gray-900 dark:text-gray-100 uppercase">{receipt.branch.name}</p>
                                     <p className="text-gray-500 font-medium">Sucursal Oficial</p>
+                                    {(receipt.branch?.tax_id || settings?.tax_id) && (
+                                        <p className="text-gray-400 text-xs font-bold uppercase mt-1">
+                                            RFC: {receipt.branch?.tax_id || settings?.tax_id}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                             <div className="text-right">

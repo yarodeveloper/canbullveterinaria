@@ -144,10 +144,12 @@
                     $address = $branch->address ?? $settings['contact_address'] ?? '';
                     $phone = $branch->phone ?? $settings['contact_phone'] ?? '';
                     $email = $branch->email ?? $settings['contact_email'] ?? '';
+                    $taxId = $branch->tax_id ?? $settings['tax_id'] ?? null;
                 @endphp
                 {{ $address }} <br>
                 @if($phone) TEL: {{ $phone }} | @endif
                 @if($email) {{ $email }} | @endif
+                @if($taxId) RFC: {{ $taxId }} | @endif
                 {{ \Carbon\Carbon::now()->translatedFormat('d F, Y') }}
             </p>
         </div>

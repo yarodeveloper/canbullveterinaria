@@ -62,10 +62,14 @@ trait ParsesDocumentTemplates
         }
 
         // 3. Branch Information
+        $globalTaxId = \App\Models\SiteSetting::where('key', 'tax_id')->value('value') ?? null;
         if (isset($data['branch'])) {
             $replacements['{branch_name}'] = $data['branch']->name;
             $replacements['{branch_address}'] = $data['branch']->address ?? '---';
             $replacements['{branch_phone}'] = $data['branch']->phone ?? '---';
+            $replacements['{branch_rfc}'] = $data['branch']->tax_id ?? $globalTaxId ?? '---';
+        } else {
+            $replacements['{branch_rfc}'] = $globalTaxId ?? '---';
         }
 
         // 4. Custom Placeholders (Folio, etc.)
@@ -83,6 +87,7 @@ trait ParsesDocumentTemplates
             '{veterinarian_cedula}' => '_________________',
             '{folio}' => '_________________',
             '{witness_name}' => '_________________',
+            '{branch_rfc}' => '_________________',
         ];
 
         foreach ($defaults as $tag => $val) {

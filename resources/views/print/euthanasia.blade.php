@@ -186,9 +186,13 @@
                     @php
                         $branch = $euthanasia->branch ?? $euthanasia->pet?->branch ?? null;
                         $branchName = $branch->name ?? $siteName;
+                        $taxId = $branch->tax_id ?? $settings['tax_id'] ?? null;
                     @endphp
                     <div style="font-size: 28px; font-weight: 900; color: {{ $primaryColor }}; letter-spacing: -1px; text-transform: uppercase;">{{ $branchName }}</div>
-                    <p style="font-size: 8px; color: #6b7280; font-weight: 700;">{{ $branch->address ?? '' }} | TEL: {{ $branch->phone ?? '' }}</p>
+                    <p style="font-size: 8px; color: #6b7280; font-weight: 700;">
+                        {{ $branch->address ?? '' }} | TEL: {{ $branch->phone ?? '' }}
+                        @if($taxId) | RFC: {{ $taxId }} @endif
+                    </p>
                 </div>
                 
                 <div style="text-align: right;">

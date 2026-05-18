@@ -293,8 +293,10 @@
             <p>{{ $record->branch?->name ?? $siteName }} Software Veterinario — Registro #{{ $record->id }}</p>
             @php
                 $branch = $record->branch ?? null;
+                $taxId = $branch?->tax_id ?? $settings['tax_id'] ?? null;
             @endphp
             @if($branch && $branch->phone) <p>Tel: {{ $branch->phone }}</p> @endif
+            @if($taxId) <p>RFC: {{ $taxId }}</p> @endif
             <p>Ced: {{ $record->veterinarian?->professional_id ?? 'N/A' }}</p>
         </div>
     </div>
