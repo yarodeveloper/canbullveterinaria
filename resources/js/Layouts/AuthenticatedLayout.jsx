@@ -90,7 +90,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                         >
                                                             <img src="/icons/vet-with-cat-svgrepo-com.svg" className="w-4 h-4 mr-2.5 icon-adaptive" alt="" />
                                                             Procedimientos
-                                                            <svg className="-me-1 ms-1.5 h-3.5 w-3.5 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                            <svg className="-me-1 ms-1.5 h-3.5 w-3.5 opacity-50 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                                 <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                                                             </svg>
                                                         </button>
@@ -169,7 +169,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                         >
                                                             <img src="/icons/box-svgrepo-com.svg" className="w-4 h-4 mr-2.5 icon-adaptive shadow-sm" alt="" />
                                                             Inventario
-                                                            <svg className="-me-1 ms-1.5 h-3.5 w-3.5 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                            <svg className="-me-1 ms-1.5 h-3.5 w-3.5 opacity-50 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                                 <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                                                             </svg>
                                                         </button>
@@ -226,7 +226,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                             >
                                                                 <img src="/icons/bank-svgrepo-com.svg" className="w-4 h-4 mr-2.5 icon-adaptive shadow-sm" alt="" />
                                                                 Finanzas
-                                                                <svg className="-me-1 ms-1.5 h-3.5 w-3.5 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                                <svg className="-me-1 ms-1.5 h-3.5 w-3.5 opacity-50 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                                     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                                                                 </svg>
                                                             </button>
@@ -277,7 +277,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                                 className="inline-flex items-center rounded-xl px-2 py-2.5 text-slate-500 transition duration-150 ease-in-out hover:bg-slate-100/80 hover:text-slate-900 focus:outline-none dark:bg-gray-800 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-white"
                                                             >
                                                                 <img src="/icons/set-up-svgrepo-com.svg" className="w-4 h-4 icon-adaptive opacity-60 group-hover:opacity-100 transition-opacity" alt="Configuración" />
-                                                                <svg className="ms-1 h-3 w-3 opacity-30" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                                <svg className="ms-1 h-3 w-3 opacity-30 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                                     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                                                                 </svg>
                                                             </button>
@@ -397,7 +397,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                     </div>
 
                                                     <svg
-                                                        className="-me-0.5 ms-2 h-4 w-4"
+                                                        className="-me-0.5 ms-2 h-4 w-4 shrink-0"
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         viewBox="0 0 20 20"
                                                         fill="currentColor"

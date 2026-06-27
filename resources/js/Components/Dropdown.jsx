@@ -1,11 +1,12 @@
 import { Transition } from '@headlessui/react';
 import { Link } from '@inertiajs/react';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 const DropDownContext = createContext();
 
 const Dropdown = ({ children, trigger = 'click' }) => {
     const [open, setOpen] = useState(false);
+    const containerRef = useRef(null);
 
     const toggleOpen = () => {
         setOpen((previousState) => !previousState);
@@ -23,9 +24,27 @@ const Dropdown = ({ children, trigger = 'click' }) => {
         }
     };
 
+    // Click outside detector to close the dropdown on touch/click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (containerRef.current && !containerRef.current.contains(event.target)) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener('click', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside); // Support mobile touch events
+        
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, []);
+
     return (
         <DropDownContext.Provider value={{ open, setOpen, toggleOpen, trigger }}>
             <div 
+                ref={containerRef}
                 className="relative"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
@@ -37,19 +56,12 @@ const Dropdown = ({ children, trigger = 'click' }) => {
 };
 
 const Trigger = ({ children }) => {
-    const { open, setOpen, toggleOpen, trigger } = useContext(DropDownContext);
+    const { toggleOpen } = useContext(DropDownContext);
 
     return (
-        <>
-            <div onClick={() => trigger === 'click' && toggleOpen()}>{children}</div>
-
-            {open && trigger === 'click' && (
-                <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setOpen(false)}
-                ></div>
-            )}
-        </>
+        <div onClick={toggleOpen} className="cursor-pointer">
+            {children}
+        </div>
     );
 };
 
