@@ -8,6 +8,7 @@ import PetAlertIcons from '@/Components/PetAlertIcons';
 import Pagination from '@/Components/Pagination';
 import PetAvatar from '@/Components/PetAvatar';
 import PetAsyncSearch from '@/Components/PetAsyncSearch';
+import SearchableServiceSelect from '@/Components/SearchableServiceSelect';
 
 const roleLabels = {
     admin: 'Adm.',
@@ -289,25 +290,14 @@ export default function Index({ auth, groomingOrders, clients, pets: allPets, gr
                                 {/* Servicios */}
                                 <div className="space-y-2">
                                     <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Servicios *</label>
-                                    <select
-                                        value=""
-                                        onChange={e => {
-                                            const val = e.target.value;
-                                            if (!val) return;
-                                            const s = services.find(x => x.id == val);
+                                    <SearchableServiceSelect
+                                        services={services}
+                                        onSelect={s => {
                                             if (s && !data.items.find(i => i.product_id == s.id)) {
                                                 setData('items', [...data.items, { product_id: s.id, concept: s.name, unit_price: s.price, quantity: 1 }]);
                                             }
                                         }}
-                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-brand-primary focus:ring-brand-primary rounded-xl py-2 px-3 font-bold text-slate-700 dark:text-slate-300 text-xs block"
-                                    >
-                                        <option value="">+ Toca para añadir servicio...</option>
-                                        {services.map(s => (
-                                            <option key={s.id} value={s.id}>
-                                                {s.name} — ${parseFloat(s.price).toLocaleString('es-MX')}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    />
                                     {data.items.length > 0 && (
                                         <div className="space-y-1 max-h-32 overflow-y-auto">
                                             {data.items.map((item, i) => (

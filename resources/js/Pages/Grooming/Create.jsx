@@ -4,6 +4,7 @@ import { Head, useForm, Link, router } from '@inertiajs/react';
 import PetAlertIcons from '@/Components/PetAlertIcons';
 import PetAsyncSearch from '@/Components/PetAsyncSearch';
 import PetAvatar from '@/Components/PetAvatar';
+import SearchableServiceSelect from '@/Components/SearchableServiceSelect';
 
 const roleLabels = {
     admin: 'Adm.',
@@ -264,25 +265,18 @@ export default function Create({ auth, pet: initialPet, services, groomers, groo
                                                 Servicios del Catálogo
                                             </h4>
                                             
-                                            <div className="flex gap-1.5 w-full">
-                                                <select
-                                                    className="flex-1 min-w-0 w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 focus:ring-brand-primary font-bold text-gray-700 dark:text-gray-300 transition-all text-[10px] truncate"
-                                                    value={selectedService}
-                                                    onChange={e => setSelectedService(e.target.value)}
-                                                >
-                                                    <option value="">Añadir servicio...</option>
-                                                    {services.map(s => (
-                                                        <option key={s.id} value={s.id}>{s.name} - ${parseFloat(s.price).toLocaleString('es-MX')}</option>
-                                                    ))}
-                                                </select>
-                                                <button
-                                                    type="button"
-                                                    onClick={addService}
-                                                    className="bg-brand-primary hover:bg-brand-primary/90 text-white w-9 h-9 flex items-center justify-center rounded-xl transition shadow-lg shadow-brand-primary/20 shrink-0"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-                                                </button>
-                                            </div>
+                                            <SearchableServiceSelect
+                                                services={services}
+                                                placeholder="Añadir servicio..."
+                                                onSelect={s => {
+                                                    if (s && !data.items.find(i => i.product_id == s.id)) {
+                                                        setData('items', [
+                                                            ...data.items,
+                                                            { product_id: s.id, concept: s.name, unit_price: s.price, quantity: 1 }
+                                                        ]);
+                                                    }
+                                                }}
+                                            />
 
                                             <div className={`space-y-2 overflow-y-auto pr-1 transition-all ${data.items.length > 0 ? 'max-h-[200px]' : 'h-0'}`}>
                                                 {data.items.map((item, idx) => (

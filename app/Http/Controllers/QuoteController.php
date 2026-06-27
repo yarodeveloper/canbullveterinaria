@@ -133,6 +133,29 @@ class QuoteController extends Controller
         ]);
     }
 
+    public function edit(\App\Models\Quote $quote)
+    {
+        if ($quote->branch_id !== auth()->user()->branch_id) {
+            abort(403);
+        }
+
+        if ($quote->status === 'Cobrada') {
+            return redirect()->route('quotes.show', $quote->id)
+                ->withErrors(['error' => 'No se puede editar una cotización que ya ha sido cobrada.']);
+        }
+
+        $templates = \App\Models\ServiceTemplate::with('items.product')->where('is_active', true)->get();
+        $products = \App\Models\Product::where('is_active', true)->get(['id', 'name', 'price', 'unit', 'is_service']);
+        $settings = \App\Models\SiteSetting::first();
+
+        return \Inertia\Inertia::render('Quotes/Edit', [
+            'quote'     => $quote->load(['items.product', 'pet.owner']),
+            'templates' => $templates,
+            'products'  => $products,
+            'settings'  => $settings,
+        ]);
+    }
+
     public function update(Request $request, \App\Models\Quote $quote)
     {
         if ($quote->branch_id !== auth()->user()->branch_id) {
@@ -143,14 +166,80 @@ class QuoteController extends Controller
             return back()->withErrors(['error' => 'No se puede modificar una cotización que ya ha sido cobrada.']);
         }
 
-        $validated = $request->validate([
-            'status'      => 'nullable|string|in:Borrador,Enviada,Aceptada,Rechazada,Vencida,Cobrada',
-            'valid_until' => 'nullable|date',
-        ]);
+        // If this is a quick update (status or valid_until only, from detail view)
+        if (!$request->has('items')) {
+            $validated = $request->validate([
+                'status'      => 'nullable|string|in:Borrador,Enviada,Aceptada,Rechazada,Vencida,Cobrada',
+                'valid_until' => 'nullable|date',
+            ]);
 
-        $quote->update(array_filter($validated));
+            $quote->update(array_filter($validated));
 
-        return back()->with('message', 'Cotización actualizada.');
+            return back()->with('message', 'Cotización actualizada.');
+        }
+
+        // Full edit
+        $isGuest = $request->boolean('is_guest');
+
+        $rules = [
+            'status'              => 'required|string|in:Borrador,Enviada,Aceptada,Rechazada,Vencida,Cobrada',
+            'valid_until'         => 'nullable|date',
+            'notes'               => 'nullable|string',
+            'items'               => 'required|array|min:1',
+            'items.*.product_id'  => 'nullable|exists:products,id',
+            'items.*.category'    => 'required|string',
+            'items.*.description' => 'required|string',
+            'items.*.quantity'    => 'required|numeric',
+            'items.*.unit_price'  => 'required|numeric',
+            'items.*.subtotal'    => 'required|numeric',
+        ];
+
+        if ($isGuest) {
+            $rules['guest_client_name'] = 'required|string|max:255';
+            $rules['guest_pet_name']    = 'required|string|max:255';
+            $rules['guest_species']     = 'nullable|string|max:100';
+        } else {
+            $rules['pet_id']    = 'required|exists:pets,id';
+            $rules['client_id'] = 'required|exists:users,id';
+        }
+
+        $validated = $request->validate($rules);
+
+        $weight = null;
+        if (!$isGuest && isset($validated['pet_id'])) {
+            $pet    = \App\Models\Pet::findOrFail($validated['pet_id']);
+            $weight = $pet->weight;
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($quote, $validated, $isGuest, $weight) {
+            $quote->update([
+                'pet_id'            => $isGuest ? null : ($validated['pet_id'] ?? null),
+                'client_id'         => $isGuest ? null : ($validated['client_id'] ?? null),
+                'guest_client_name' => $isGuest ? $validated['guest_client_name'] : null,
+                'guest_pet_name'    => $isGuest ? $validated['guest_pet_name'] : null,
+                'guest_species'     => $isGuest ? ($validated['guest_species'] ?? null) : null,
+                'status'            => $validated['status'],
+                'weight_at_time'    => $weight,
+                'valid_until'       => $validated['valid_until'],
+                'notes'             => $validated['notes'],
+            ]);
+
+            // Clear previous items and recreate
+            $quote->items()->delete();
+
+            $subtotal = 0;
+            foreach ($validated['items'] as $itemData) {
+                $quote->items()->create($itemData);
+                $subtotal += $itemData['subtotal'];
+            }
+
+            $quote->update([
+                'subtotal' => $subtotal,
+                'total'    => $subtotal,
+            ]);
+        });
+
+        return redirect()->route('quotes.show', $quote->id)->with('message', 'Cotización actualizada: ' . $quote->folio);
     }
 
     public function convertToCharge(Request $request, \App\Models\Quote $quote)

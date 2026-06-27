@@ -34,10 +34,12 @@ class CashRegisterController extends Controller
                 
             $incomes = CashMovement::where('cash_register_id', $activeRegister->id)
                 ->where('type', 'in')
+                ->where('method', 'cash')
                 ->sum('amount');
                 
             $expenses = CashMovement::where('cash_register_id', $activeRegister->id)
                 ->where('type', 'out')
+                ->where('method', 'cash')
                 ->sum('amount');
                 
             $productSales = \App\Models\ReceiptItem::whereHas('receipt', function($q) use ($activeRegister) {
@@ -127,10 +129,12 @@ class CashRegisterController extends Controller
             
         $incomes = CashMovement::where('cash_register_id', $cashRegister->id)
             ->where('type', 'in')
+            ->where('method', 'cash')
             ->sum('amount');
             
         $expenses = CashMovement::where('cash_register_id', $cashRegister->id)
             ->where('type', 'out')
+            ->where('method', 'cash')
             ->sum('amount');
             
         $expectedAmount = $cashRegister->opening_amount + $incomes - $expenses;

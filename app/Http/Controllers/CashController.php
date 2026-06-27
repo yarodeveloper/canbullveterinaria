@@ -24,8 +24,8 @@ class CashController extends Controller
         
         if ($activeRegister) {
             $query->where('cash_register_id', $activeRegister->id);
-            $ins = CashMovement::where('cash_register_id', $activeRegister->id)->where('type', 'in')->sum('amount');
-            $outs = CashMovement::where('cash_register_id', $activeRegister->id)->where('type', 'out')->sum('amount');
+            $ins = CashMovement::where('cash_register_id', $activeRegister->id)->where('type', 'in')->where('method', 'cash')->sum('amount');
+            $outs = CashMovement::where('cash_register_id', $activeRegister->id)->where('type', 'out')->where('method', 'cash')->sum('amount');
             $todayTotal = $ins - $outs;
         } else {
             $query->whereRaw('1 = 0'); // No box open = no movements show

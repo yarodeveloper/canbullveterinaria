@@ -162,6 +162,17 @@ export default function Show({ auth, quote, settings }) {
                             </svg>
                         </button>
 
+                        {quote.status !== 'Cobrada' && (
+                            <Link
+                                href={route('quotes.edit', quote.id)}
+                                title="Editar"
+                                className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-brand-primary text-brand-primary rounded-full text-[10px] font-black uppercase hover:bg-brand-primary hover:text-white transition shadow-sm flex items-center gap-1.5"
+                            >
+                                <img src="/icons/pencil-svgrepo-com.svg" className="w-3.5 h-3.5 icon-adaptive" alt="" />
+                                Editar
+                            </Link>
+                        )}
+
                         <button
                             onClick={() => triggerPrint('full')}
                             title="Imprimir"

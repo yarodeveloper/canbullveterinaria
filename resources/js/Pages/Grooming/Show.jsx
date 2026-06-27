@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PetAlertIcons from '@/Components/PetAlertIcons';
 import PetAvatar from '@/Components/PetAvatar';
+import SearchableServiceSelect from '@/Components/SearchableServiceSelect';
 
 const roleLabels = {
     admin: 'Adm.',
@@ -238,22 +239,15 @@ export default function Show({ auth, order, services, groomingStyles = [], defau
                                                 <h4 className="text-[9px] font-black text-brand-primary uppercase tracking-widest">Servicios Agendados</h4>
                                             </div>
                                             {canEdit && (
-                                                <select
-                                                    className="w-full bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl px-3 py-2 text-[10px] font-bold focus:ring-brand-primary transition-all block"
-                                                    value=""
-                                                    onChange={e => {
-                                                        const val = e.target.value;
-                                                        if (!val) return;
-                                                        const s = services.find(x => x.id == val);
+                                                <SearchableServiceSelect
+                                                    services={services}
+                                                    placeholder="+ Añadir servicio extra..."
+                                                    onSelect={s => {
                                                         if (s) {
                                                             setData('items', [...data.items, { product_id: s.id, concept: s.name, unit_price: s.price, quantity: 1 }]);
-                                                            setSelectedService('');
                                                         }
                                                     }}
-                                                >
-                                                    <option value="">+ Añadir servicio extra...</option>
-                                                    {services.map(s => <option key={s.id} value={s.id}>{s.name} — ${parseFloat(s.price).toLocaleString('es-MX')}</option>)}
-                                                </select>
+                                                />
                                             )}
                                             <div className="space-y-2 max-h-[180px] overflow-y-auto pr-2 custom-scrollbar">
                                                 {data.items.map((item, index) => (
